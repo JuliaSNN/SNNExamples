@@ -16,7 +16,7 @@ network = let
     # Define synaptic interactions between neurons and interneurons
     E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, σ = 3.0)
     E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, σ = 0.5)#, param = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, σ = 4.)
+    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, σ = 4.0)
     I_to_E = SNN.SpikingSynapse(
         I,
         E,
@@ -25,7 +25,7 @@ network = let
         σ = 1,
         param = SNN.iSTDPParameterRate(r = 4Hz),
     )
-    norm = SNN.SynapseNormalization(E, [E_to_E], param=SNN.AdditiveNorm(τ=30ms))
+    norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
     # Store neurons and synapses into a dictionary
     pop = dict2ntuple(@strdict E I)
     syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
@@ -55,14 +55,14 @@ synapses = [network.syn..., noise.syn..., measured_syn]
 @info "Initializing network"
 simtime = SNN.Time()
 SNN.monitor([network.pop...], [:fire])
-train!(populations, synapses, duration = 25000ms, time=simtime, dt=0.125f0, pbar=true)
+train!(populations, synapses, duration = 25000ms, time = simtime, dt = 0.125f0, pbar = true)
 
 spiketimes = SNN.spiketimes(network.pop.E)
 SNN.raster([network.pop...], [1s, 2s])
 # SNN.vecplot(network.pop.E, [:ge], neurons = 1:10, r = 800ms:4999ms)
 rates = SNN.firing_rate(network.pop.E, 100ms)
 # plot(rates[1:100,1:end]', legend=false)
-plot(mean(rates, dims=1)[1,:], legend=false)
+plot(mean(rates, dims = 1)[1, :], legend = false)
 ##
 
 network.pop.E.records
