@@ -36,27 +36,9 @@ function define_network(N=800)
     network = (pop = pop, syn = syn)
 end
 
-subnets = map(1:10) do i
-    network = define_network(200)
-end
 
-for i in 1:10
-    noise = ExcNoise(subnets[i].pop.E, σ = 10.8f0)
-    syns = dict2ntuple(
-        map(1:10) do j
-        E1_to_I2 = SNN.SpikingSynapse(subnets[i].pop.E, subnets[j].pop.I, :ge, p = 0.2, σ = 20.25)#, param = SNN.vSTDPParameter())
-    end)
-    # merge_models( @strdict noise=noise inter=(syn=syns, pop=()))
-end
-
-
-
-
-    # simulation = merge_models(@strdict network noise)
-    # no_noise = merge_models(@strdict network)
-    # SNN.monitor([no_noise.pop...], [:fire])
-    # train!(model=simulation, duration = 15000ms)
-    # SNN.raster([no_noise.pop...], [10s, 15s])
+network1 = define_network(800)
+network2 = define_network(800)
 noise1 = ExcNoise(network1.pop.E, σ = 10.8f0)
 noise2 = ExcNoise(network2.pop.E, σ = 10.8f0)
 E1_to_I2 = SNN.SpikingSynapse(network1.pop.E, network2.pop.I, :ge, p = 0.2, σ = 20.25)#, param = SNN.vSTDPParameter())
@@ -72,10 +54,10 @@ SNN.raster([no_noise.pop...], [10s, 15s])
 
 ##
 using Statistics
-rate1 = SNN.firing_rate(no_noise.pop.network1_E, 100ms)
-rate2 = SNN.firing_rate(no_noise.pop.network2_E, 100ms)
-r1 = mean(rate1, dims = 1)[1,1:10:end]
-r2 = mean(rate2, dims = 1)[1,1:10:end]
+rate1, intervals = SNN.firing_rate(no_noise.pop.network1_E, τ=10ms)
+rate2, intervals = SNN.firing_rate(no_noise.pop.network2_E, τ=10ms)
+r1 = mean(rate1)
+r2 = mean(rate2)
 cor(r1, r2)
 plot(r1, label = "Network 1", xlabel = "Time (s)", ylabel = "Firing rate (Hz)")
 plot!(r2, label = "Network 2", title="Correlation: $(cor(r1, r2))")
