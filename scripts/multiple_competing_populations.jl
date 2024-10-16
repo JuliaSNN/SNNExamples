@@ -38,8 +38,9 @@ function define_network(N = 800)
     network = (pop = pop, syn = syn)
 end
 
+n_assemblies = 3 
 ## Instantiate the network assemblies and local inhibitory populations
-subnets = Dict("network$n" => define_network(200) for n = 1:10)
+subnets = Dict("network$n" => define_network(200) for n = 1:n_assemblies)
 # Add noise to each assembly
 noise =
     Dict("$(i)_noise" => ExcNoise(subnets[i].pop.E, σ = 10.8f0) for i in eachindex(subnets))
@@ -61,28 +62,39 @@ for i in eachindex(subnets)
     end
 end
 
-## Merge the models and run the simulation
+## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
 network = SNN.merge_models(noise, subnets, syn = syns)
+
+# Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
 train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
 
 ## Create a model object with only the populations to run the analysis
 populations = SNN.merge_models(subnets).pop
+
+# Plot the raster plot of the network
 SNN.raster([populations...], [14s, 15s])
 
+# define the time interval for the analysis
 interval = 0:20:SNN.get_time(time_keeper)
-indices = SNN.population_indices(populations, :E)
-exc_populations = SNN.filter_populations(populations, :E)
-spiketimes = SNN.spiketimes(exc_populations)
 
+# select only excitatory populations
+exc_populations = SNN.filter_populations(populations, :E)
+
+# get the spiketimes of the excitatory populations and the indices of each population
+spiketimes = SNN.spiketimes(exc_populations)
+indices = SNN.population_indices(populations, :E)
+
+# calculate the firing rate of each excitatory population
 rates = map(eachindex(indices)) do i
     rates, intervals = SNN.firing_rate(spiketimes, interval, pop = indices[i], τ = 50)
     mean_rate = mean(rates)
 end
 
-plot()
+## Plot the firing rate of each assembly and the correlation matrix
+p1 = plot()
 for i in eachindex(rates)
-    plot!(interval, rates[i], label = "Network $i")
+    plot!(interval, rates[i], label = "Assembly $i", xlabel = "Time (ms)", ylabel = "Firing rate (Hz)", xlims=(10_000, 15_000), legend = :topleft)
 end
 plot!()
 
@@ -92,4 +104,5 @@ for i in eachindex(rates)
         cor_mat[i, j] = cor(rates[i], rates[j])
     end
 end
-heatmap(cor_mat, c = :bluesreds, clims = (-1, 1))
+p2 = heatmap(cor_mat, c = :bluesreds, clims = (-1, 1), xlabel = "Assembly", ylabel = "Assembly", title = "Correlation matrix", xticks = 1:3, yticks = 1:3)
+plot(p1, p2, layout = (2, 1), size = (600, 800), margin=5Plots.mm)
