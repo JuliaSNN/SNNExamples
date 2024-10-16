@@ -25,10 +25,11 @@ network = let
         σ = 1,
         param = SNN.iSTDPParameterRate(r = 4Hz),
     )
-    norm = SNN.SynapseNormalization(E, [E_to_E], param=SNN.AdditiveNorm(τ=10ms))
+    norm = SNN.SynapseNormalization(E, [E_to_E], param=SNN.AdditiveNorm(τ=30ms))
     # Store neurons and synapses into a dictionary
     pop = dict2ntuple(@strdict E I)
     syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
+    # Return the network as a tuple
     # Return the network as a tuple
     (pop = pop, syn = syn)
 end
@@ -50,14 +51,20 @@ measured_syn = SNN.SpikingSynapse(
 
 populations = [network.pop..., noise.pop...]
 synapses = [network.syn..., noise.syn..., measured_syn]
-# @info "Initializing network"
-SNN.monitor([network.pop...], [:fire, :v, :ge])
-train!(populations, synapses, duration = 15000ms)
-SNN.raster([network.pop...], [1s, 4.6s])
+
+@info "Initializing network"
+simtime = SNN.Time()
+SNN.monitor([network.pop...], [:fire])
+train!(populations, synapses, duration = 25000ms, time=simtime, dt=0.125f0, pbar=true)
+
+spiketimes = SNN.spiketimes(network.pop.E)
+SNN.raster([network.pop...], [1s, 2s])
 # SNN.vecplot(network.pop.E, [:ge], neurons = 1:10, r = 800ms:4999ms)
 rates = SNN.firing_rate(network.pop.E, 100ms)
 # plot(rates[1:100,1:end]', legend=false)
 plot(mean(rates, dims=1)[1,:], legend=false)
 ##
+
+network.pop.E.records
 
 ## The simulation achieves > 1.0 iteration per second on my M1 Pro machine.
