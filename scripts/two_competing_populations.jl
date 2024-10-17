@@ -1,10 +1,10 @@
 using DrWatson
-@quickactivate "network_models"
 using Revise
+using Plots
+@quickactivate "network_models"
 using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
-using Plots
 
 # Define the network
 function define_network(N = 800)
@@ -41,16 +41,16 @@ network1 = define_network(800)
 network2 = define_network(800)
 noise1 = ExcNoise(network1.pop.E, σ = 10.8f0)
 noise2 = ExcNoise(network2.pop.E, σ = 10.8f0)
-E1_to_I2 = SNN.SpikingSynapse(network1.pop.E, network2.pop.I, :ge, p = 0.2, σ = 20.25)#, param = SNN.vSTDPParameter())
-E2_to_I1 = SNN.SpikingSynapse(network2.pop.E, network1.pop.I, :ge, p = 0.2, σ = 20.25)#, param = SNN.vSTDPParameter())
+E1_to_I2 = SNN.SpikingSynapse(network1.pop.E, network2.pop.I, :ge, p = 0.2, σ = 10.25)#, param = SNN.vSTDPParameter())
+E2_to_I1 = SNN.SpikingSynapse(network2.pop.E, network1.pop.I, :ge, p = 0.2, σ = 10.25)#, param = SNN.vSTDPParameter())
 inter = (syn = (dict2ntuple(@strdict E1_to_I2 E2_to_I1)), pop = ())
 simulation = merge_models(@strdict network1 noise1 network2 noise2 inter)
 no_noise = merge_models(@strdict network1 network2 inter)
 
 ## @info "Initializing network"
 SNN.monitor([no_noise.pop...], [:fire])
-train!(model = simulation, duration = 15000ms)
-SNN.raster([no_noise.pop...], [10s, 15s])
+train!(model = simulation, duration = 15000ms, pbar = true, dt=0.125ms)
+SNN.raster([no_noise.pop...], [14s, 15s])
 
 ##
 using Statistics
