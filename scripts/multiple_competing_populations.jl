@@ -1,5 +1,6 @@
 using Revise
 using SpikingNeuralNetworks
+using DrWatson
 SNN.@load_units;
 using SNNUtils
 using Plots
@@ -10,7 +11,7 @@ function define_network(N = 800)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV, At=2mV))
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV, At = 2mV))
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
@@ -36,7 +37,7 @@ function define_network(N = 800)
     network = (pop = pop, syn = syn)
 end
 
-n_assemblies = 3 
+n_assemblies = 3
 ## Instantiate the network assemblies and local inhibitory populations
 subnets = Dict("network$n" => define_network(200) for n = 1:n_assemblies)
 # Add noise to each assembly
@@ -85,14 +86,23 @@ indices = SNN.population_indices(populations, :E)
 
 # calculate the firing rate of each excitatory population
 rates = map(eachindex(indices)) do i
-    rates, intervals = SNN.firing_rate(spiketimes, interval=interval, pop = indices[i], τ = 50)
+    rates, intervals =
+        SNN.firing_rate(spiketimes, interval = interval, pop = indices[i], τ = 50)
     mean_rate = mean(rates)
 end
 
 ## Plot the firing rate of each assembly and the correlation matrix
 p1 = plot()
 for i in eachindex(rates)
-    plot!(interval, rates[i], label = "Assembly $i", xlabel = "Time (ms)", ylabel = "Firing rate (Hz)", xlims=(10_000, 15_000), legend = :topleft)
+    plot!(
+        interval,
+        rates[i],
+        label = "Assembly $i",
+        xlabel = "Time (ms)",
+        ylabel = "Firing rate (Hz)",
+        xlims = (10_000, 15_000),
+        legend = :topleft,
+    )
 end
 plot!()
 
@@ -102,5 +112,14 @@ for i in eachindex(rates)
         cor_mat[i, j] = cor(rates[i], rates[j])
     end
 end
-p2 = heatmap(cor_mat, c = :bluesreds, clims = (-1, 1), xlabel = "Assembly", ylabel = "Assembly", title = "Correlation matrix", xticks = 1:3, yticks = 1:3)
-plot(p1, p2, layout = (2, 1), size = (600, 800), margin=5Plots.mm)
+p2 = heatmap(
+    cor_mat,
+    c = :bluesreds,
+    clims = (-1, 1),
+    xlabel = "Assembly",
+    ylabel = "Assembly",
+    title = "Correlation matrix",
+    xticks = 1:3,
+    yticks = 1:3,
+)
+plot(p1, p2, layout = (2, 1), size = (600, 800), margin = 5Plots.mm)

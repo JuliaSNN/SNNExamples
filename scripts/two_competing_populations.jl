@@ -49,7 +49,7 @@ no_noise = merge_models(@strdict network1 network2 inter)
 
 ## @info "Initializing network"
 SNN.monitor([no_noise.pop...], [:fire])
-train!(model = simulation, duration = 15000ms, pbar = true, dt=0.125ms)
+train!(model = simulation, duration = 15000ms, pbar = true, dt = 0.125ms)
 SNN.raster([no_noise.pop...], [14s, 15s])
 
 ##

@@ -56,10 +56,10 @@ plot(
     ylabel = "Inh. Firing rate (Hz)",
     lc = [:blue],
     lw = 4,
-    label="",
+    label = "",
     legend = :topright,
 )
-plot!([[], []], lc = [:blue :red ], label = ["Inhibitory" "Excitatory"], lw = 4)
+plot!([[], []], lc = [:blue :red], label = ["Inhibitory" "Excitatory"], lw = 4)
 plot!(
     twinx(),
     Irange,
@@ -67,7 +67,7 @@ plot!(
     lc = [:red],
     lw = 4,
     ylabel = "Exc. firing rate (Hz)",
-    label="",
+    label = "",
     legend = :topright,
 )
 
