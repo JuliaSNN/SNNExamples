@@ -1,5 +1,3 @@
-using DrWatson
-@quickactivate "network_models"
 using Revise
 using SpikingNeuralNetworks
 SNN.@load_units;
@@ -12,7 +10,7 @@ function define_network(N = 800)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV))
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV, At=2mV))
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
@@ -82,12 +80,12 @@ interval = 0:20:SNN.get_time(time_keeper)
 exc_populations = SNN.filter_populations(populations, :E)
 
 # get the spiketimes of the excitatory populations and the indices of each population
-spiketimes = SNN.spiketimes(exc_populations)
+spiketimes = SNN.spiketimes(exc_populations.network1_E)
 indices = SNN.population_indices(populations, :E)
 
 # calculate the firing rate of each excitatory population
 rates = map(eachindex(indices)) do i
-    rates, intervals = SNN.firing_rate(spiketimes, interval, pop = indices[i], τ = 50)
+    rates, intervals = SNN.firing_rate(spiketimes, interval=interval, pop = indices[i], τ = 50)
     mean_rate = mean(rates)
 end
 
