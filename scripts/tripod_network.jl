@@ -12,10 +12,6 @@ using ProgressBars
 # %% [markdown]
 # Network
 
-
-dend_syn = Synapse(EyalGluDend, MilesGabaDend)
-dend_syn.AMPA.g0
-
 Random.seed!(123)
 network = let
     NE = 400
