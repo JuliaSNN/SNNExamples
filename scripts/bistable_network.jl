@@ -130,5 +130,5 @@ p2 = heatmap(
 plot(p1, p2, layout = (2, 1), size = (600, 800), margin = 5Plots.mm)
 
 using Statistics
-# pcor = plot()
+pcor = plot()
 plot!(pcor, 0:5:(5*100), autocor(rates[1], 0:100))
