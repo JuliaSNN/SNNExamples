@@ -62,10 +62,10 @@ for i in eachindex(subnets)
 end
 
 r1 = function (t, parity)
-    if (SNN.get_time(t) ÷ 500)%2 == parity
+    if (t ÷ 500)%2 == parity
         return 0.0
     else
-        return 20.0Hz
+        return 300.0Hz
     end
 end
 

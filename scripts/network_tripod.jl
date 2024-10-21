@@ -1,5 +1,5 @@
 using DrWatson
-@quickactivate "network_models"
+# @quickactivate "network_models"
 using Plots
 using SpikingNeuralNetworks
 SNN.@load_units;
@@ -34,7 +34,7 @@ network = let
         :inh,
         p = 0.2,
         σ = 5.0,
-        param = SNN.iSTDPParameterPotential(v0 = -50mV),
+        param = SNN.iSTDPParameterPotential(v0 = -60mV),
     )
     I1_to_E = SNN.CompartmentSynapse(
         I1,
@@ -43,7 +43,7 @@ network = let
         :inh,
         p = 0.2,
         σ = 5.0,
-        param = SNN.iSTDPParameterRate(r = 10Hz),
+        param = SNN.iSTDPParameterRate(r = 4Hz),
     )
     E_to_E_d1 = SNN.CompartmentSynapse(
         E,
@@ -51,7 +51,7 @@ network = let
         :d1,
         :exc,
         p = 0.2,
-        σ = 30,
+        σ = 10,
         param = SNN.vSTDPParameter(),
     )
     E_to_E_d2 = SNN.CompartmentSynapse(
@@ -60,11 +60,9 @@ network = let
         :d2,
         :exc,
         p = 0.2,
-        σ = 30,
+        σ = 10,
         param = SNN.vSTDPParameter(),
     )
-    pop = dict2ntuple(@strdict E I1 I2)
-    syn = dict2ntuple(@strdict E_to_E_d1 E_to_E_d2 I1_to_E I2_to_E E_to_I1 E_to_I2)
     recurrent_norm_d1 = SNN.SynapseNormalization(
         E,
         [E_to_E_d1],
@@ -75,48 +73,40 @@ network = let
         [E_to_E_d2],
         param = SNN.MultiplicativeNorm(τ = 100ms),
     )
-    norm = dict2ntuple(@strdict d1 = recurrent_norm_d1 d2 = recurrent_norm_d2)
-    (pop = pop, syn = syn, norm = norm)
+    pop = dict2ntuple(@strdict E I1 I2)
+    syn = dict2ntuple(@strdict E_to_E_d1 E_to_E_d2 I1_to_E I2_to_E E_to_I1 E_to_I2 norm1=recurrent_norm_d1 norm2=recurrent_norm_d2)
+    (pop = pop, syn = syn)
 end
 
-# background
-noise = TripodExcNoise(network.pop.E)
+function ramp(x::Float32)
+    if x > 5500ms && x < 5700ms
+        @show x
+        return 1000Hz
+    else
+        return 0.0
+    end
+end
+stimuli = Dict(
+    "noise_s" => SNN.PoissonStimulus(network.pop.E, :h_s, x->1000Hz, cells=:ALL, σ=10.f0),
+    "stim1_d1" => SNN.PoissonStimulus(network.pop.E, :h_d1, ramp, σ=10.f0)
+)
 
-populations = [network.pop..., noise.pop...]
-synapses = [network.syn..., noise.syn..., network.norm...]
 
-# populations, synapses = SNN.model([network, noise])
-# populations
-
-##
-SNN.clear_records([network.pop...])
-SNN.train!(populations, synapses, duration = 5000ms, pbar = true, dt = 0.125)
-
-
-# using BenchmarkTools
-# @btime SNN.sim!(populations, synapses, duration = 1000ms)
-# @profview SNN.sim!(populations, synapses, duration = 1000ms)
-
-# SNN.raster([network.pop...])
-# savefig(plotsdir("example_raster.pdf"))
+model = SNN.merge_models(network, stim=stimuli)
 
 ##
-SNN.monitor(network.pop.E, [:v_d1, :v_s, :fire])
+timer= SNN.Time()
+SNN.monitor(network.pop.E, [:v_d1, :v_s, :fire, :h_s])
 SNN.monitor(network.pop.I1, [:fire])
 SNN.monitor(network.pop.I2, [:fire])
-SNN.sim!(populations, synapses, duration = 1000ms)
+SNN.train!(model=model, duration = 5000ms, pbar = true, dt = 0.125, time=timer)
 
-SNN.raster([network.pop...])
-WI1 = network.syn.I1_to_E.W
-WI2 = network.syn.I2_to_E.W
-WEd1 = network.syn.E_to_E_d1.W
-WEd2 = network.syn.E_to_E_d2.W
-spikes = SNN.spiketimes(network.pop.E)
-data_new = dict2ntuple(@strdict WI1 WI2 WEd2 WEd1 spikes)
-# tagsave(datadir("network_test", "TripodNetwork.jld2"), data, safe=true)
 ##
-data_old = dict2ntuple(DrWatson.load(datadir("network_test", "TripodNetwork.jld2")))
-@assert sum(data_new.WI1 .- data_old.WI1) ≈ 0
-@assert sum(data_new.WI2 .- data_old.WI2) ≈ 0
-@assert sum(data_new.WEd2 .- data_old.WEd2) ≈ 0
-@assert sum(data_new.WEd1 .- data_old.WEd1) ≈ 0
+SNN.train!(model=model, duration = 1000ms, dt = 0.125, time=timer)
+SNN.raster([network.pop...], (5000,6000))
+fr, interval = SNN.firing_rate(network.pop.E, interval=5000:100:6000)
+average = SNN.average_firing_rate(network.pop.E)
+
+
+SNN.vecplot(network.pop.E, :v_d1, r=5400:6000, neurons=cells, dt=0.125)
+##
