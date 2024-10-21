@@ -78,17 +78,25 @@ network = let
     (pop = pop, syn = syn)
 end
 
-function ramp(x::Float32)
-    if x > 5500ms && x < 5700ms
-        @show x
+function ramp(time::Float32)
+    if time > 5500ms && time < 5700ms
         return 1000Hz
     else
         return 0.0
     end
 end
+
+function get_rand_cells(pop, L)
+    N = pop.N
+    return rand(1:N, L)
+end
+
+get_rand_cells(network.pop.E, 10)
+
 stimuli = Dict(
-    "noise_s" => SNN.PoissonStimulus(network.pop.E, :h_s, x->1000Hz, cells=:ALL, σ=10.f0),
-    "stim1_d1" => SNN.PoissonStimulus(network.pop.E, :h_d1, ramp, σ=10.f0)
+    ## Background noise
+    "noise_s"  => SNN.PoissonStimulus(network.pop.E, :h_s, x->1000Hz, cells=:ALL, σ=10.f0),
+    "stim1_d1" => SNN.PoissonStimulus(network.pop.E, :h_d1, ramp, σ=10.f0, cells=get_rand_cells(network.pop.E, 10)),
 )
 
 
@@ -99,13 +107,22 @@ timer= SNN.Time()
 SNN.monitor(network.pop.E, [:v_d1, :v_s, :fire, :h_s])
 SNN.monitor(network.pop.I1, [:fire])
 SNN.monitor(network.pop.I2, [:fire])
+SNN.clear_records([model.pop...])
 SNN.train!(model=model, duration = 5000ms, pbar = true, dt = 0.125, time=timer)
+
 
 ##
 SNN.train!(model=model, duration = 1000ms, dt = 0.125, time=timer)
 SNN.raster([network.pop...], (5000,6000))
-fr, interval = SNN.firing_rate(network.pop.E, interval=5000:100:6000)
+SNN.raster([network.pop.E], (5000,6000); neurons=[stimuli["stim1_d1"].cells, stimuli["stim1_d1"].cells])
+
+fr, interval = SNN.firing_rate(network.pop.E, interval=5000:10:6000)
 average = SNN.average_firing_rate(network.pop.E)
+st = SNN.spiketimes(network.pop.E)
+
+st[1]
+plot(interval, fr)
+scatter(average)
 
 
 SNN.vecplot(network.pop.E, :v_d1, r=5400:6000, neurons=cells, dt=0.125)
