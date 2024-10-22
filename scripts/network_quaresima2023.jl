@@ -63,7 +63,7 @@ SSTDuarte = SNN.IFParameter(
 # )
 
 ConnectivityParams = (
-    EdE = (p = 0.0,  μ = 1.8, dist = Normal, σ = 1),
+    EdE = (p = 0.2,  μ = 10.8, dist = Normal, σ = 1),
     IfE = (p = 0.2,  μ = log(5.7), dist = LogNormal, σ = 0.1),
     IsE = (p = 0.2,  μ = log(5.7), dist = LogNormal, σ = 0.1),
     EIf = (p = 0.2,  μ = log(15.8), dist = LogNormal, σ = 0),
@@ -239,11 +239,12 @@ SNN.raster([network.pop...], (0000,5000))
 ## Target activation with stimuli
 p = plot()
 cells = collect(Set(stimuli["word_BA_d2"].cells))
-SNN.vecplot!(p,model.pop.E, :v_d2, r=0.5s:2.5s, neurons=1cells, dt=0.125, pop_average=true)
+SNN.vecplot!(p,model.pop.E, :v_d2, r=0.5s:4.5s, neurons=1:20, dt=0.125, pop_average=true)
 myintervals = sign_intervals(seq.string2id["B"], seq)
 # vline!(myintervals, c=:red)
 # myintervals = sign_intervals(seq.string2id["AB"], seq)
 vline!(myintervals, c=:red)
 ##
+
 
 mean(length.(SNN.spiketimes(model.pop.E)))/5
