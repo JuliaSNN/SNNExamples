@@ -25,15 +25,15 @@ network = let
     )
     I1 = SNN.IF(; N = NI ÷ 2, param = SNN.IFParameter(τm = 7ms, El = -55mV))
     I2 = SNN.IF(; N = NI ÷ 2, param = SNN.IFParameter(τm = 20ms, El = -55mV))
-    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge, p = 0.2, σ = 15.0)
-    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge, p = 0.2, σ = 15.0)
+    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge, p = 0.2, μ = 15.0)
+    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge, p = 0.2, μ = 15.0)
     I2_to_E = SNN.CompartmentSynapse(
         I2,
         E,
         :d1,
         :inh,
         p = 0.2,
-        σ = 5.0,
+        μ = 5.0,
         param = SNN.iSTDPParameterPotential(v0 = -60mV),
     )
     I1_to_E = SNN.CompartmentSynapse(
@@ -42,7 +42,7 @@ network = let
         :s,
         :inh,
         p = 0.2,
-        σ = 5.0,
+        μ = 5.0,
         param = SNN.iSTDPParameterRate(r = 4Hz),
     )
     E_to_E_d1 = SNN.CompartmentSynapse(
@@ -51,7 +51,7 @@ network = let
         :d1,
         :exc,
         p = 0.2,
-        σ = 10,
+        μ = 10,
         param = SNN.vSTDPParameter(),
     )
     E_to_E_d2 = SNN.CompartmentSynapse(
@@ -60,7 +60,7 @@ network = let
         :d2,
         :exc,
         p = 0.2,
-        σ = 10,
+        μ = 10,
         param = SNN.vSTDPParameter(),
     )
     recurrent_norm_d1 = SNN.SynapseNormalization(
@@ -95,8 +95,8 @@ get_rand_cells(network.pop.E, 10)
 
 stimuli = Dict(
     ## Background noise
-    "noise_s"  => SNN.PoissonStimulus(network.pop.E, :h_s, x->1000Hz, cells=:ALL, σ=10.f0),
-    "stim1_d1" => SNN.PoissonStimulus(network.pop.E, :h_d1, ramp, σ=10.f0, cells=get_rand_cells(network.pop.E, 10)),
+    "noise_s"  => SNN.PoissonStimulus(network.pop.E, :h_s, x->1000Hz, cells=:ALL, μ=10.f0),
+    "stim1_d1" => SNN.PoissonStimulus(network.pop.E, :h_d1, ramp, μ=10.f0, cells=get_rand_cells(network.pop.E, 10)),
 )
 
 
