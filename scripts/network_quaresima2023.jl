@@ -34,9 +34,6 @@ SSTDuarte = SNN.IFParameter(
     τdi = 5.00ms,
 )
 
-
-
-
 ## ! Make them adaptive with these parameters (and verify the others)
 # PVDuarte = LIF(
 #     Er = -64.33,
@@ -184,50 +181,58 @@ end
 
 
 
-# Stimulus
+## Stimulus
 # Background noise
 init_noise(x)= x < 1s ? 1000Hz - x : 0.0
 stimuli = Dict(
-    "noise_s"  => SNN.PoissonStimulus(network.pop.E, :g_s, x->4.5kHz, cells=:ALL, μ=2.7f0,),
-    "noise_d1"  => SNN.PoissonStimulus(network.pop.E, :g_d1, x->2.5kHz, cells=:ALL, μ=2.f0,),
-    "noise_d2"  => SNN.PoissonStimulus(network.pop.E, :g_d2, x->2.5kHz, cells=:ALL, μ=2.f0,),
-    "noise_i1"  => SNN.PoissonStimulus(network.pop.I1, :ge, x->2.5kHz, cells=:ALL, μ=1.f0),
-    "noise_i2"  => SNN.PoissonStimulus(network.pop.I2, :ge, x->2.5kHz, cells=:ALL, μ=3.8f0),
+    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :g_s,  param=PSParam(rate= (x,y)->4.5kHz), cells=:ALL, μ=2.7f0,),
+    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :g_d1, param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=2.f0,),
+    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :g_d2, param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=2.f0,),
+    :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=1.f0),
+    :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=3.8f0),
 )
 
-dictionary = Dict("AB"=>["A", "B"], "BA"=>["B", "A"])
-duration = Dict("A"=>40, "B"=>60, "_"=>200)
+baseline = merge_models(stimuli, network)
+
+
+## Sequence input
+dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
+duration = Dict(:A=>40, :B=>60, :_=>200)
 config = (seq_length=100, silence=1, dictionary=dictionary, ph_duration=duration, init_silence=1s)
 seq = generate_sequence(config)
 
 
-function input(x, intervals) 
+function step_input(x, param::PSParam) 
+    intervals::Vector{Vector{Float32}} = param.variables[:intervals]
+    # intervals = param.variables[:intervals]
     if time_in_interval(x, intervals)
-        return 8000Hz
+        return 6000Hz
     else
         return 0.0
     end
 end
 
-sign_intervals(2, seq) 
+stim_d1 = Dict{Symbol,Any}()
+stim_d2 = Dict{Symbol,Any}()
 for w in seq.symbols.words
-    myintervals = sign_intervals(seq.string2id[w], seq)
-    push!(stimuli,"word_$(w)_d1"  => SNN.PoissonStimulus(network.pop.E, :h_d1, x->deepcopy(input(x, myintervals[:]))
-    , μ=5.f0, receptors=[1,2]))
-    push!(stimuli,"word_$(w)_d2"  => SNN.PoissonStimulus(network.pop.E, :h_d2, x->deepcopy(input(x, myintervals[:]))
-    , μ=5.f0, receptors=[1,2]))
+    param = PSParam(rate=step_input, variables=Dict(:intervals=>sign_intervals(seq.string2id[w], seq)))
+    push!(stim_d1,w  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d2,w  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
 end
 for p in seq.symbols.phonemes
-    myintervals = sign_intervals(seq.string2id[p], seq)
-    push!(stimuli,"phoneme_$(p)_d1"  => SNN.PoissonStimulus(network.pop.E, :h_d1, x->deepcopy(input(x, myintervals))
-    , μ=5.f0, receptors=[1,2]))
-    push!(stimuli,"phoneme_$(p)_d2"  => SNN.PoissonStimulus(network.pop.E, :h_d2, x->deepcopy(input(x, myintervals))
-    , μ=5.f0, receptors=[1,2]))
+    param = PSParam(rate=step_input, variables=Dict(:intervals=>sign_intervals(seq.string2id[p], seq)))
+    push!(stim_d1,p  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d2,p  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
 end
 
+stim_d1 = dict2ntuple(stim_d1)
+stim_d2 = dict2ntuple(stim_d2)
+model = merge_models(baseline, d1=stim_d1, d2=stim_d2)
+
+
+stim_d1.A.param.rate(10f0,stim_d1.A.param)
 
 ##
-model = SNN.merge_models(network, stim=stimuli)
 SNN.monitor(model.pop.E, [:fire, :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
 SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
 SNN.monitor(model.pop.I2, [:fire, :v, :ge, :gi])
@@ -238,11 +243,9 @@ SNN.raster([network.pop...], (0000,5000))
 
 ## Target activation with stimuli
 p = plot()
-cells = collect(Set(stimuli["word_BA_d2"].cells))
-SNN.vecplot!(p,model.pop.E, :v_d2, r=0.5s:4.5s, neurons=cells, dt=0.125, pop_average=true)
-myintervals = sign_intervals(seq.string2id["B"], seq)
-# vline!(myintervals, c=:red)
-# myintervals = sign_intervals(seq.string2id["AB"], seq)
+cells = collect(Set(stim_d1.AB.cells))
+SNN.vecplot!(p,model.pop.E, :v_d1, r=2.5s:4.5s, neurons=cells, dt=0.125, pop_average=true)
+myintervals = sign_intervals(seq.string2id[:AB], seq)
 vline!(myintervals, c=:red)
 ##
 
