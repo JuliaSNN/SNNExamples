@@ -8,18 +8,18 @@ using Statistics
 using Distributions
 
 ## Define the network parameters
-
-
+## ! Make them adaptive with these parameters (and verify the others)
 PVDuarte = SNN.IFParameter(
     τm = 104.52pF / 9.75nS,
     El = -64.33mV,
     Vt = -38.97mV,
     Vr = -57.47mV,
     τabs = 0.5ms,
-    # gsyn_e = 1.04,
-    # gsyn_i = 0.84,
     # τe = 0.70ms,
     # τi = 2.50ms
+    #     b = 10.0,       #(pA) 'sra' current increment
+    #     τw = 144,        #(s) adaptation time constant (~Ca-activated K current inactivation)
+#     idle = 0.52,       #(ms)
 )
 
 SSTDuarte = SNN.IFParameter(
@@ -32,37 +32,15 @@ SSTDuarte = SNN.IFParameter(
     τde = 1.80ms,
     τri = 0.19ms,
     τdi = 5.00ms,
-)
-
-## ! Make them adaptive with these parameters (and verify the others)
-# PVDuarte = LIF(
-#     Er = -64.33,
-#     u_r = -57.47,   #(mV)
-#     θ = -38.97,   #(mV)
-#     C = 104.52,    #(pF)
-#     gl = 9.75,       #(nS)
-#     a = 0.0,       #(nS) 'sub-threshold' adaptation conductance
-#     b = 10.0,       #(pA) 'sra' current increment
-#     τw = 144,        #(s) adaptation time constant (~Ca-activated K current inactivation)
-#     idle = 0.52,       #(ms)
-# )
-
-# SSTDuarte = LIF(
-#     Er = -61,
-#     u_r = -47.11,
-#     θ = -34.4,
-#     C = 102.87,     #(pF)
-#     gl = 4.61,       #(nS)
-#     a = 4.0,        #(nS) 'sub-threshold' adaptation conductance
 #     b = 80.5,       #(pA) 'sra' current increment
 #     τw = 144,        #(s) adaptation time constant (~Ca-activated K current inactivation)
 #     idle = 1.34,       #(ms)
-# )
+)
 
 ConnectivityParams = (
     EdE = (p = 0.2,  μ = 10.8, dist = Normal, σ = 1),
-    IfE = (p = 0.2,  μ = log(5.7), dist = LogNormal, σ = 0.1),
-    IsE = (p = 0.2,  μ = log(5.7), dist = LogNormal, σ = 0.1),
+    IfE = (p = 0.2,  μ = log(5.7),  dist = LogNormal, σ = 0.1),
+    IsE = (p = 0.2,  μ = log(5.7),  dist = LogNormal, σ = 0.1),
     EIf = (p = 0.2,  μ = log(15.8), dist = LogNormal, σ = 0),
     IsIf = (p = 0.2, μ = log(1.4),  dist = LogNormal, σ = 0.25),
     IfIf = (p = 0.2, μ = log(16.2), dist = LogNormal, σ = 0.14),
@@ -88,20 +66,34 @@ plasticity_quaresima2023 = (
             )
     )
 
-
-network = let
-    # Number of neurons in the network
-    NE = 1000
-    NI2 = 175
-    NI1 = 325
-    # Define neurons and synapses in the network
-	# proximal_distal = [(150um, 400um), (150um, 400um)], defines the dendrite dimensions later used in create_dendrite
-    E = SNN.Tripod(proximal_distal...;
+NE = 1000
+NI2 = 175
+NI1 = 325
+neurons_quaresima2023 = (
+    TripodParam= (
+        dend  =  [(150um, 400um), (150um, 400um)],
         N = NE,
         soma_syn = Synapse(DuarteGluSoma, MilesGabaSoma), # defines glutamaterbic and gabaergic receptors in the soma
         dend_syn = Synapse(EyalGluDend, MilesGabaDend), # defines glutamaterbic and gabaergic receptors in the dendrites
-        NMDA = SNN.EyalNMDA,
+        NMDA = SNN.EyalNMDA, # NMDA synapse
         param = SNN.AdExSoma(Vr = -55mV, Vt = -50mV),
+    ),
+    OtherNeuron = ()
+)
+
+@unpack TripodParam = neurons_quaresima2023
+
+network = let
+    # Number of neurons in the network
+    # Define neurons and synapses in the network
+	# proximal_distal = [(150um, 400um), (150um, 400um)], defines the dendrite dimensions later used in create_dendrite
+    @unpack TripodParam =   neurons_quaresima2023
+    E = SNN.Tripod(TripodParam.dend...;
+        N = TripodParam.N,
+        soma_syn = TripodParam.soma_syn,
+        dend_syn = TripodParam.dend_syn,
+        NMDA = TripodParam.NMDA,
+        param = TripodParam.param
     )
 
     # Define interneurons I1 and I2
@@ -183,15 +175,13 @@ end
 
 ## Stimulus
 # Background noise
-init_noise(x)= x < 1s ? 1000Hz - x : 0.0
 stimuli = Dict(
-    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :g_s,  param=PSParam(rate= (x,y)->4.5kHz), cells=:ALL, μ=2.7f0,),
-    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :g_d1, param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=2.f0,),
-    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :g_d2, param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=2.f0,),
-    :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=1.f0),
-    :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=PSParam(rate= (x,y)->2.5kHz), cells=:ALL, μ=3.8f0),
+    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :g_s,  param=4.5kHz, cells=:ALL, μ=2.7f0,),
+    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :g_d1, param=2.5kHz, cells=:ALL, μ=2.f0,),
+    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :g_d2, param=2.5kHz, cells=:ALL, μ=2.f0,),
+    :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=2.5kHz, cells=:ALL, μ=1.f0),
+    :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=2.5kHz, cells=:ALL, μ=4.f0),
 )
-
 baseline = merge_models(stimuli, network)
 
 
@@ -201,26 +191,28 @@ duration = Dict(:A=>40, :B=>60, :_=>200)
 config = (seq_length=100, silence=1, dictionary=dictionary, ph_duration=duration, init_silence=1s)
 seq = generate_sequence(config)
 
+sign_intervals(:AB, seq)
 
 function step_input(x, param::PSParam) 
     intervals::Vector{Vector{Float32}} = param.variables[:intervals]
-    # intervals = param.variables[:intervals]
     if time_in_interval(x, intervals)
-        return 6000Hz
+        return 6kHz
     else
-        return 0.0
+        return 0kHz
     end
 end
 
 stim_d1 = Dict{Symbol,Any}()
 stim_d2 = Dict{Symbol,Any}()
 for w in seq.symbols.words
-    param = PSParam(rate=step_input, variables=Dict(:intervals=>sign_intervals(seq.string2id[w], seq)))
+    param = PSParam(rate=step_input, 
+                    variables=Dict(:intervals=>sign_intervals(w, seq)))
     push!(stim_d1,w  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
     push!(stim_d2,w  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
 end
 for p in seq.symbols.phonemes
-    param = PSParam(rate=step_input, variables=Dict(:intervals=>sign_intervals(seq.string2id[p], seq)))
+    param = PSParam(rate=step_input, 
+                    variables=Dict(:intervals=>sign_intervals(p, seq)))
     push!(stim_d1,p  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
     push!(stim_d2,p  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
 end
@@ -229,8 +221,8 @@ stim_d1 = dict2ntuple(stim_d1)
 stim_d2 = dict2ntuple(stim_d2)
 model = merge_models(baseline, d1=stim_d1, d2=stim_d2)
 
+model.stim.noise_d1.param
 
-stim_d1.A.param.rate(10f0,stim_d1.A.param)
 
 ##
 SNN.monitor(model.pop.E, [:fire, :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
@@ -243,11 +235,8 @@ SNN.raster([network.pop...], (0000,5000))
 
 ## Target activation with stimuli
 p = plot()
-cells = collect(Set(stim_d1.AB.cells))
+cells = collect(intersect(Set(stim_d1.AB.cells), Set(stim_d1.B.cells)))
 SNN.vecplot!(p,model.pop.E, :v_d1, r=2.5s:4.5s, neurons=cells, dt=0.125, pop_average=true)
-myintervals = sign_intervals(seq.string2id[:AB], seq)
+myintervals = sign_intervals(:AB, seq)
 vline!(myintervals, c=:red)
 ##
-
-
-mean(length.(SNN.spiketimes(model.pop.E)))/5

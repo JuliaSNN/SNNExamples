@@ -11,17 +11,17 @@ function define_network(N = 800)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV, At = 2mV))
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 0mV, b=0, a=0))
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 0.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 1.0)
+    E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 1.0)
+    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
+    I_to_I = SNN.SpikingSynapse(I, I, :hi, p = 0.2, μ = 1.0)
     I_to_E = SNN.SpikingSynapse(
         I,
         E,
-        :gi,
+        :hi,
         p = 0.2,
         μ = 1,
         param = SNN.iSTDPParameterRate(r = 4Hz),
@@ -34,48 +34,45 @@ function define_network(N = 800)
     # Return the network as a tuple
     noise = ExcNoise(E, μ = 15.8f0)
     SNN.monitor([E, I], [:fire])
-    network = (pop = pop, syn = syn)
+    (pop = pop, syn = syn)
 end
 
 n_assemblies = 3
 ## Instantiate the network assemblies and local inhibitory populations
-subnets = Dict("network$n" => define_network(200) for n = 1:n_assemblies)
+subnets = Dict(Symbol("sub_$n") => define_network(400) for n = 1:n_assemblies)
 # Add noise to each assembly
-noise =
-    Dict("$(i)_noise" => ExcNoise(subnets[i].pop.E, μ = 10.8f0) for i in eachindex(subnets))
+noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=4.5kHz, cells=:ALL) for i in eachindex(subnets))
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
-syns = Dict{String,Any}()
+syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)
     for j in eachindex(subnets)
         i == j && continue
         push!(
             syns,
-            "$(i)E_to_$(j)I" => SNN.SpikingSynapse(
+            Symbol("lateral_$(i)E_to_$(j)I") => SNN.SpikingSynapse(
                 subnets[i].pop.E,
                 subnets[j].pop.I,
-                :ge,
+                :he,
                 p = 0.2,
-                μ = 20.25,
+                μ = 10.25,
             ),
         )
     end
 end
 
-subnets = SNN.merge_models(subnets)
 ## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
-network = SNN.merge_models(noise, subnets, syn = syns)
+network = SNN.merge_models(noise, subnets, syns)
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
 train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
 
-network.pop
-
 ## Create a model object with only the populations to run the analysis
-populations = SNN.merge_models(subnets).pop
+populations = network.pop
 
 # Plot the raster plot of the network
-SNN.raster([populations...], [14s, 15s])
+SNN.raster([populations...], [12s, 15s])
+##
 
 # define the time interval for the analysis
 interval = 0:20:SNN.get_time(time_keeper)
