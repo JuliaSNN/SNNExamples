@@ -19,7 +19,7 @@ PVDuarte = SNN.IFParameter(
     # τi = 2.50ms
     #     b = 10.0,       #(pA) 'sra' current increment
     #     τw = 144,        #(s) adaptation time constant (~Ca-activated K current inactivation)
-#     idle = 0.52,       #(ms)
+#     τabs = 0.52,       #(ms)
 )
 
 SSTDuarte = SNN.IFParameter(
@@ -34,7 +34,7 @@ SSTDuarte = SNN.IFParameter(
     τdi = 5.00ms,
 #     b = 80.5,       #(pA) 'sra' current increment
 #     τw = 144,        #(s) adaptation time constant (~Ca-activated K current inactivation)
-#     idle = 1.34,       #(ms)
+#     τabs = 1.34,       #(ms)
 )
 
 ConnectivityParams = (

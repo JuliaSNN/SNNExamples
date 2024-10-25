@@ -65,7 +65,11 @@ network = SNN.merge_models(noise, subnets, syns)
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
-train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
+train!(model = network, duration = 5000ms, time = time_keeper, pbar = true, dt = 0.125)
+
+time_keeper = SNN.Time()
+SNN.clear_records([network.pop...])
+sim!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
 
 ## Create a model object with only the populations to run the analysis
 populations = network.pop

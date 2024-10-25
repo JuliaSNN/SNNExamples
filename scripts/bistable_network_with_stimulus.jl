@@ -13,10 +13,10 @@ function define_network(N = 800)
     # Create dendrites for each neuron
     E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 0mV, b=0, a=0))
     # Define interneurons 
-    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
+    I = SNN.IF(; N = N ÷ 2, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 1.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
+    E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 2.0)
+    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 3.0)#, param = SNN.vSTDPParameter())
     I_to_I = SNN.SpikingSynapse(I, I, :hi, p = 0.2, μ = 1.0)
     I_to_E = SNN.SpikingSynapse(
         I,
@@ -32,7 +32,6 @@ function define_network(N = 800)
     pop = dict2ntuple(@strdict E I)
     syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
     # Return the network as a tuple
-    noise = ExcNoise(E, μ = 15.8f0)
     SNN.monitor([E, I], [:fire])
     (pop = pop, syn = syn)
 end
@@ -41,7 +40,7 @@ n_assemblies = 2
 ## Instantiate the network assemblies and local inhibitory populations
 subnets = Dict(Symbol("sub_$n") => define_network(400) for n = 1:n_assemblies)
 # Add noise to each assembly
-noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=4.5kHz, cells=:ALL) for i in eachindex(subnets))
+noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=2.5kHz, cells=:ALL) for i in eachindex(subnets))
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
 syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)
@@ -64,8 +63,8 @@ end
 input = function (t, param::PSParam)
     id::Int = param.variables[:id]
     n_assemblies::Int = param.variables[:n_assemblies]
-    if (t ÷ 100)%n_assemblies+1 == id
-        return 5kHz
+    if (t ÷ 1000)%n_assemblies+1 == id
+        return 5kHz * exp(-(t%1000)/200)
     else
         return 0
     end
@@ -101,9 +100,10 @@ train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt 
 
 
 # Plot the raster plot of the network
-SNN.raster([network.pop...], [14s, 15s])
+SNN.raster([network.pop...], [4s, 15s])
 ##
 
+network.syn.sub_2_I_to_E.W
 # define the time interval for the analysis
 
 exc_populations = SNN.filter_populations(populations, :E)
