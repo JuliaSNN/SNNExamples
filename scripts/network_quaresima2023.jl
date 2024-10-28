@@ -175,9 +175,9 @@ end
 ## Stimulus
 # Background noise
 stimuli = Dict(
-    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :he, :s,  param=5kHz, cells=:ALL, μ=2.7f0,),
-    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :he, :d1, param=1kHz, cells=:ALL, μ=2.f0,),
-    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :he, :d2, param=1kHz, cells=:ALL, μ=2.f0,),
+    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :he_s,  param=5kHz, cells=:ALL, μ=2.7f0,),
+    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :he_d1, param=1kHz, cells=:ALL, μ=2.f0,),
+    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :he_d2, param=1kHz, cells=:ALL, μ=2.f0,),
     :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=2.8kHz, cells=:ALL, μ=1.f0),
     :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=2.8kHz, cells=:ALL, μ=4.f0),
 )
@@ -187,11 +187,12 @@ baseline = merge_models(stimuli, network)
 # Sequence input
 dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
 duration = Dict(:A=>40, :B=>60, :_=>200)
-config = (seq_length=100, silence=1, dictionary=dictionary, ph_duration=duration, init_silence=1s)
-lexicon = generate_lexicon(config)
-seq = generate_sequence(lexicon, config, 1234)
 
-sign_intervals(:AB, seq)
+config_lexicon = ( ph_duration=duration, dictionary=dictionary)
+lexicon = generate_lexicon(config_lexicon)
+
+config_sequence = (init_silence=1s, seq_length=100, silence=1,)
+seq = generate_sequence(lexicon, config_sequence, 1234)
 
 function step_input(x, param::PSParam) 
     intervals::Vector{Vector{Float32}} = param.variables[:intervals]
@@ -220,8 +221,6 @@ end
 stim_d1 = dict2ntuple(stim_d1)
 stim_d2 = dict2ntuple(stim_d2)
 model = merge_models(baseline, d1=stim_d1, d2=stim_d2)
-
-model.stim.noise_d1.param
 
 
 # %%
