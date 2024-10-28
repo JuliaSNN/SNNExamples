@@ -37,25 +37,21 @@ end
 
 noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, cells=:ALL)
 model = SNN.merge_models(network=network, noise=noise)
-DrWatson.save("network.jld2", "model", model)
-
-## Load the model
-@info "Initializing network"
-new_model = DrWatson.load("network.jld2", "model")
-SNN.monitor([new_model.pop...], [:fire, :v])
+SNN.monitor([model.pop...], [:fire, :v])
 # SNN.monitor([network.syn.E_to_E], [:x])
 # SNN.monitor([network.syn.E_to_E], [:v])
 # SNN.monitor([network.syn.E_to_E], [:ρ])
 
 simtime = SNN.Time()
-train!(model=new_model, duration = 5000ms, time = simtime, dt = 0.1f0, pbar = true)
+train!(model=model, duration = 5000ms, time = simtime, dt = 0.1f0, pbar = true)
 
 
-SNN.vecplot(new_model.pop.network_E, [:v], neurons = 1:10, r = 800ms:4999ms)
+SNN.vecplot(model.pop.network_E, [:v], neurons = 1:10, r = 800ms:4999ms)
 
-spiketimes = SNN.spiketimes(new_model.pop.network_E)
-SNN.raster([new_model.pop...], [0s, 5s])
-rates = SNN.firing_rate(network.pop.E, 100ms)
+spiketimes = SNN.spiketimes(model.pop.network_E)
+SNN.raster([model.pop...], [0s, 5s])
+rates, intervals = SNN.firing_rate(network.pop.E, interval=0:10:5s, τ=100ms)
+plot(intervals,rates[1])
 plot(mean(rates, dims = 1)[1, :], legend = false)
 ##
 
