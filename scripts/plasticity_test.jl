@@ -37,17 +37,28 @@ end
 
 # Create background for the network simulation
 noise = SNN.PoissonStimulus(network.pop.E, :ge, param=1.8kHz, cells=:ALL)
+cellA = 23
+cellB = 58
+W = zeros(network.pop.E.N, network.pop.E.N)
+W[cellB, cellA] = 5
 
-# Combine all
-model = SNN.merge_models(network, noise=noise)
+measured_syn = SNN.SpikingSynapse(
+    network.pop.E,
+    network.pop.E,
+    :ge,
+    w = W,
+    param = SNN.vSTDPParameter(),
+)
 
-#
+## Combine all
+model = SNN.merge_models(network, noise=noise, measured_syn=measured_syn)
+
+
 @info "Initializing network"
 simtime = SNN.Time()
 SNN.monitor([network.pop...], [:fire])
 
-train!(model=model, duration = 15000ms, time = simtime, dt = 0.125f0, pbar = true)
-##
+train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
 
 
 

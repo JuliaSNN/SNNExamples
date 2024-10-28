@@ -37,7 +37,7 @@ network = let
         I2,
         E,
         :d,
-        :inh,
+        :hi,
         p = 0.2,
         μ = 1,
         param = SNN.iSTDPParameterPotential(v0 = -65mV),
@@ -46,7 +46,7 @@ network = let
         I1,
         E,
         :s,
-        :inh,
+        :hi,
         p = 0.2,
         μ = 1,
         param = SNN.iSTDPParameterRate(r = 10Hz),
@@ -56,7 +56,7 @@ network = let
         E,
         E,
         :d,
-        :exc,
+        :he,
         p = 0.2,
         μ = 10.0,#
     )

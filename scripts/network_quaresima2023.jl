@@ -8,7 +8,7 @@ using Statistics
 using Distributions
 
 ## Define the network parameters
-## ! Make them adaptive with these parameters (and verify the others)
+# ! Make them adaptive with these parameters (and verify the others)
 PVDuarte = SNN.IFParameter(
     τm = 104.52pF / 9.75nS,
     El = -64.33mV,
@@ -39,12 +39,12 @@ SSTDuarte = SNN.IFParameter(
 
 ConnectivityParams = (
     EdE = (p = 0.2,  μ = 10.8, dist = Normal, σ = 1),
-    IfE = (p = 0.2,  μ = log(5.7),  dist = LogNormal, σ = 0.1),
-    IsE = (p = 0.2,  μ = log(5.7),  dist = LogNormal, σ = 0.1),
-    EIf = (p = 0.2,  μ = log(15.8), dist = LogNormal, σ = 0),
+    IfE = (p = 0.2,  μ = log(3.7),  dist = LogNormal, σ = 0.1),
+    IsE = (p = 0.2,  μ = log(3.7),  dist = LogNormal, σ = 0.1),
+    EIf = (p = 0.2,  μ = log(10.8), dist = LogNormal, σ = 0),
     IsIf = (p = 0.2, μ = log(1.4),  dist = LogNormal, σ = 0.25),
     IfIf = (p = 0.2, μ = log(16.2), dist = LogNormal, σ = 0.14),
-    EdIs = (p = 0.2, μ = log(15.8), dist = LogNormal, σ = 0),
+    EdIs = (p = 0.2, μ = log(10.8), dist = LogNormal, σ = 0),
     IfIs = (p = 0.2, μ = log(0.83), dist = LogNormal, σ = 0.),
     IsIs = (p = 0.2, μ = log(0.83), dist = LogNormal, σ = 0.),
 
@@ -67,8 +67,9 @@ plasticity_quaresima2023 = (
     )
 
 NE = 1000
-NI2 = 175
-NI1 = 325
+NI = 1000 ÷ 4
+NI2 = round(Int,NI * 0.65)
+NI1 = round(Int,NI * 0.35)
 neurons_quaresima2023 = (
     TripodParam= (
         dend  =  [(150um, 400um), (150um, 400um)],
@@ -109,7 +110,7 @@ network = let
         I1,
         E,
         :s,
-        :inh;
+        :hi;
         param = plasticity_quaresima2023.iSTDP_rate,
         ConnectivityParams.EIf...,
     )
@@ -118,7 +119,7 @@ network = let
         I2,
         E,
         :d1,
-        :inh;
+        :hi;
         param = plasticity_quaresima2023.iSTDP_potential,
         ConnectivityParams.EdIs...,
     )
@@ -127,7 +128,7 @@ network = let
         I2,
         E,
         :d2,
-        :inh;
+        :hi;
         param = plasticity_quaresima2023.iSTDP_potential,
         ConnectivityParams.EdIs...,
     )
@@ -142,7 +143,7 @@ network = let
         E,
         E,
         :d1,
-        :exc;
+        :he;
         param = SNNUtils.quaresima2023.vstdp,
         ConnectivityParams.EdE...,
     )
@@ -151,7 +152,7 @@ network = let
         E,
         E,
         :d2,
-        :exc;
+        :he;
         param = SNNUtils.quaresima2023.vstdp,
         ConnectivityParams.EdE...,
     )
@@ -171,25 +172,24 @@ network = let
     (pop = pop, syn = syn)
 end
 
-
-
 ## Stimulus
 # Background noise
 stimuli = Dict(
-    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :g_s,  param=4.5kHz, cells=:ALL, μ=2.7f0,),
-    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :g_d1, param=2.5kHz, cells=:ALL, μ=2.f0,),
-    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :g_d2, param=2.5kHz, cells=:ALL, μ=2.f0,),
-    :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=2.5kHz, cells=:ALL, μ=1.f0),
-    :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=2.5kHz, cells=:ALL, μ=4.f0),
+    :noise_s   => SNN.PoissonStimulus(network.pop.E,  :he, :s,  param=5kHz, cells=:ALL, μ=2.7f0,),
+    :noise_d1  => SNN.PoissonStimulus(network.pop.E,  :he, :d1, param=1kHz, cells=:ALL, μ=2.f0,),
+    :noise_d2  => SNN.PoissonStimulus(network.pop.E,  :he, :d2, param=1kHz, cells=:ALL, μ=2.f0,),
+    :noise_i1  => SNN.PoissonStimulus(network.pop.I1, :ge,   param=2.8kHz, cells=:ALL, μ=1.f0),
+    :noise_i2  => SNN.PoissonStimulus(network.pop.I2, :ge,   param=2.8kHz, cells=:ALL, μ=4.f0),
 )
 baseline = merge_models(stimuli, network)
 
 
-## Sequence input
+# Sequence input
 dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
 duration = Dict(:A=>40, :B=>60, :_=>200)
 config = (seq_length=100, silence=1, dictionary=dictionary, ph_duration=duration, init_silence=1s)
-seq = generate_sequence(config)
+lexicon = generate_lexicon(config)
+seq = generate_sequence(lexicon, config, 1234)
 
 sign_intervals(:AB, seq)
 
@@ -207,14 +207,14 @@ stim_d2 = Dict{Symbol,Any}()
 for w in seq.symbols.words
     param = PSParam(rate=step_input, 
                     variables=Dict(:intervals=>sign_intervals(w, seq)))
-    push!(stim_d1,w  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
-    push!(stim_d2,w  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d1,w  => SNN.PoissonStimulus(network.pop.E, :he, :d1, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d2,w  => SNN.PoissonStimulus(network.pop.E, :he, :d2, μ=5.f0, receptors=[1,2], param=param))
 end
 for p in seq.symbols.phonemes
     param = PSParam(rate=step_input, 
                     variables=Dict(:intervals=>sign_intervals(p, seq)))
-    push!(stim_d1,p  => SNN.PoissonStimulus(network.pop.E, :h_d1, μ=5.f0, receptors=[1,2], param=param))
-    push!(stim_d2,p  => SNN.PoissonStimulus(network.pop.E, :h_d2, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d1,p  => SNN.PoissonStimulus(network.pop.E, :he, :d1, μ=5.f0, receptors=[1,2], param=param))
+    push!(stim_d2,p  => SNN.PoissonStimulus(network.pop.E, :he, :d2, μ=5.f0, receptors=[1,2], param=param))
 end
 
 stim_d1 = dict2ntuple(stim_d1)
@@ -224,18 +224,20 @@ model = merge_models(baseline, d1=stim_d1, d2=stim_d2)
 model.stim.noise_d1.param
 
 
-##
-SNN.monitor(model.pop.E, [:fire, :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
-SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
-SNN.monitor(model.pop.I2, [:fire, :v, :ge, :gi])
+# %%
+SNN.monitor(model.pop.E, [:fire, :v_d1])# :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
+# SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
+# SNN.monitor(model.pop.I2, [:fire, :v, :ge, :gi])
 SNN.monitor([network.pop...], [:fire])
 duration = sequence_end(seq)
-SNN.train!(model=model, duration= 5s, pbar=true, dt=0.125)
+# @profview 
+mytime = SNN.Time()
+SNN.train!(model=model, duration= 10s, pbar=true, dt=0.125, time=mytime)
 SNN.raster([network.pop...], (0000,5000))
 
 ## Target activation with stimuli
 p = plot()
-cells = collect(intersect(Set(stim_d1.AB.cells), Set(stim_d1.B.cells)))
+cells = collect(intersect(Set(stim_d1.AB.cells)))
 SNN.vecplot!(p,model.pop.E, :v_d1, r=2.5s:4.5s, neurons=cells, dt=0.125, pop_average=true)
 myintervals = sign_intervals(:AB, seq)
 vline!(myintervals, c=:red)
