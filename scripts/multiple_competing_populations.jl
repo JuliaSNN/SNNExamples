@@ -24,7 +24,7 @@ function define_network(N = 800)
         :hi,
         p = 0.2,
         μ = 1,
-        param = SNN.iSTDPParameterRate(r = 4Hz),
+        # param = SNN.iSTDPParameterRate(r = 4Hz),
     )
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
 
@@ -69,7 +69,7 @@ train!(model = network, duration = 5000ms, time = time_keeper, pbar = true, dt =
 
 time_keeper = SNN.Time()
 SNN.clear_records([network.pop...])
-sim!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
+train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
 
 ## Create a model object with only the populations to run the analysis
 populations = network.pop
