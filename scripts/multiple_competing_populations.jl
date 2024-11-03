@@ -62,10 +62,6 @@ end
 
 ## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
 network = SNN.merge_models(noise, subnets, syns)
-A = graph(network)
-using GraphRecipes
-graphplot(A, markersize = 0.2, fontsize = 10, linecolor = :darkgrey)
-names = 
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
