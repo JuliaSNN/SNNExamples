@@ -7,13 +7,13 @@ using Plots
 using Statistics
 
 # Define each of the network recurrent assemblies
-function define_network(N = 800)
+function define_network(N, name)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 0mV, b=0, a=0))
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 0mV, b=0, a=0), name="Exc_$name")
     # Define interneurons 
-    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
+    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV), name="Inh_$name")
     # Define synaptic interactions between neurons and interneurons
     E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 1.0)
     E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
@@ -37,9 +37,9 @@ function define_network(N = 800)
     (pop = pop, syn = syn)
 end
 
-n_assemblies = 3
+n_assemblies = 4
 ## Instantiate the network assemblies and local inhibitory populations
-subnets = Dict(Symbol("sub_$n") => define_network(400) for n = 1:n_assemblies)
+subnets = Dict(Symbol("sub_$n") => define_network(400, n) for n = 1:n_assemblies)
 # Add noise to each assembly
 noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=4.5kHz, cells=:ALL) for i in eachindex(subnets))
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
@@ -62,6 +62,10 @@ end
 
 ## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
 network = SNN.merge_models(noise, subnets, syns)
+A = graph(network)
+using GraphRecipes
+graphplot(A, markersize = 0.2, fontsize = 10, linecolor = :darkgrey)
+names = 
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
