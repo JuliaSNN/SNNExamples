@@ -1,12 +1,5 @@
 #!/bin/bash
 
-#=
-PROJECTDIR="/pasteur/appa/homes/aquaresi/spiking/network_models" 
-OUTDIR=${PROJECTDIR}/logs/out
-ERRDIR=${PROJECTDIR}/logs/errors
-echo $PROJECTDIR
-# =#
-
 #SBATCH --job-name="test_run"            # Job Name
 #SBATCH --ntasks=8
 #SBATCH --cpus-per-task=1                       # 1 CPU allocation per Task
@@ -14,8 +7,8 @@ echo $PROJECTDIR
 #SBATCH --time=1:00:00
 #SBATCH --partition=common
 #SBATCH -q common
-#SBATCH -e ${ERRDIR}/slurm-test_julia_%j.err
-#SBATCH -o ${OUTDIR}/slurm-test_julia_%j.out
+#SBATCH -e /pasteur/appa/homes/aquaresi/spiking/network_models/logs/errors/slurm-test_julia_%j.err
+#SBATCH -o /pasteur/appa/homes/aquaresi/spiking/network_models/logs/out/slurm-test_julia_%j.out
 #SBATCH --qos=fast
 
 #=
