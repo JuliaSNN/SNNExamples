@@ -13,8 +13,8 @@ using Distributions
 
 network = let
     # Number of neurons in the network
-    NE = 1000
-    NI = 1000 ÷ 4
+    NE = 2000
+    NI = NE ÷ 4
     NI1 = round(Int,NI * 0.35)
     NI2 = round(Int,NI * 0.65)
 
@@ -51,7 +51,7 @@ network = let
 
     # background noise
     stimuli = Dict(
-        :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=5.0kHz, cells=:ALL, μ=5.f0, name="noise"),
+        :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
         :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=2.0kHz, cells=:ALL, μ=1.f0, name="noise"),
         :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.5kHz, cells=:ALL, μ=1.5f0, name="noise")
     )
@@ -108,6 +108,8 @@ end
 model = merge_models(network, stim)
 
 # %%
+# Run the model
+# %%
 SNN.monitor(model.pop.E, [:fire, :v_d1,])
 #  :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
 # SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
@@ -118,18 +120,11 @@ duration = sequence_end(seq)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
 
-function get_subpopulations(stim)
-    names = Vector{String}()
-    pops = Vector{Int}[]
-    my_keys = sort(collect(keys(stim)))
-    for key in my_keys
-        push!(names, getfield(stim, key).name)
-        push!(pops, getfield(stim, key).cells)
-    end
-    return names, pops
-end
+# %%
+# Analyse the results
+# %%
 
-names, pops = get_subpopulations(stim.d1)
+names, pops = subpopulations(stim.d1)
 pr = SNN.raster(network.pop.E, (10s,15s), populations=pops, names=names)
 pr = SNN.raster(network.pop, (10s,15s))
 
@@ -137,9 +132,9 @@ pr = SNN.raster(network.pop, (10s,15s))
 pv=plot()
 cells = collect(intersect(Set(stim.d1.A.cells)))
 SNN.vecplot!(pv,model.pop.E, :v_d1, r=10.5s:15.0s, neurons=cells, dt=0.125, pop_average=true)
-myintervals = sign_intervals(:AB, sequence)
+myintervals = sign_intervals(:w_AB, sequence)
 vline!(myintervals, c=:red)
+plot!(title="Depolarization of :A with stimuli :w_AB")
+plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
+plot!(margin=5Plots.mm)
 ##
-SNN.average_firing_rate(model.pop.E)
-pr = SNN.raster([model.pop.E], (11s,15s), populations=[stim.cells for stim in values(stim.d2)])
-model.syn.I1_to_E.W
