@@ -11,7 +11,7 @@ function define_network(N, name)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 0mV, b=0, a=0), name="Exc_$name")
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -55mV, At = 1mV, b=0, a=0), name="Exc_$name")
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV), name="Inh_$name")
     # Define synaptic interactions between neurons and interneurons
@@ -24,7 +24,7 @@ function define_network(N, name)
         :hi,
         p = 0.2,
         μ = 1,
-        # param = SNN.iSTDPParameterRate(r = 4Hz),
+        param = SNN.iSTDPParameterRate(r = 4Hz, η=0.02),
     )
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
 
@@ -32,7 +32,6 @@ function define_network(N, name)
     pop = dict2ntuple(@strdict E I)
     syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
     # Return the network as a tuple
-    noise = ExcNoise(E, μ = 15.8f0)
     SNN.monitor([E, I], [:fire])
     (pop = pop, syn = syn)
 end
@@ -49,12 +48,12 @@ for i in eachindex(subnets)
         i == j && continue
         push!(
             syns,
-            Symbol("lateral_$(i)E_to_$(j)I") => SNN.SpikingSynapse(
+            Symbol("$(i)E_to_$(j)I_lateral") => SNN.SpikingSynapse(
                 subnets[i].pop.E,
                 subnets[j].pop.I,
                 :he,
                 p = 0.2,
-                μ = 10.25,
+                μ = 1.25,
             ),
         )
     end
@@ -71,11 +70,8 @@ time_keeper = SNN.Time()
 SNN.clear_records([network.pop...])
 train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
 
-## Create a model object with only the populations to run the analysis
-populations = network.pop
-
 # Plot the raster plot of the network
-SNN.raster([populations...], [12s, 15s])
+SNN.raster([network.pop...], [1s, 15s])
 ##
 
 # define the time interval for the analysis
@@ -83,6 +79,7 @@ interval = 0:20:SNN.get_time(time_keeper)
 
 # select only excitatory populations
 exc_populations = SNN.filter_populations(populations, :E)
+exc_populations.sub_1_E
 
 # get the spiketimes of the excitatory populations and the indices of each population
 spiketimes = SNN.spiketimes(exc_populations)
@@ -91,7 +88,7 @@ indices = SNN.population_indices(populations, :E)
 # calculate the firing rate of each excitatory population
 rates = map(eachindex(indices)) do i
     rates, intervals =
-        SNN.firing_rate(spiketimes, interval = interval, pop = indices[i], τ = 50)
+        SNN.firing_rate(exc_populations, interval = interval, pop = indices[i], τ = 50)
     mean_rate = mean(rates)
 end
 
