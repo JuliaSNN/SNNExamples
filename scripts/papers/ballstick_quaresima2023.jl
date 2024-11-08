@@ -89,40 +89,42 @@ end
 # # Quaresima et al. 2023
 # %%
 
-# Define the network
-I1_params = duarte2019.PV
-I2_params = duarte2019.SST
-E_params = quaresima2022
-@unpack connectivity, plasticity = quaresima2023
-network = ballstick_network(I1_params=I1_params, I2_params=I2_params, E_params=E_params, connectivity=connectivity, plasticity=plasticity)
-# Stimulus
-dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
-duration = Dict(:A=>50, :B=>50, :_=>200)
-config_lexicon = ( ph_duration=duration, dictionary=dictionary)
-config_sequence = (init_silence=1s, seq_length=200, silence=1,)
-lexicon = generate_lexicon(config_lexicon)
-stim, seq = step_input_sequence(network=network, lexicon=lexicon, config_sequence=config_sequence, seed=1234)
-model = merge_models(network, stim)
+function test_model()
+    # Define the network
+    I1_params = duarte2019.PV
+    I2_params = duarte2019.SST
+    E_params = quaresima2022
+    @unpack connectivity, plasticity = quaresima2023
+    network = ballstick_network(I1_params=I1_params, I2_params=I2_params, E_params=E_params, connectivity=connectivity, plasticity=plasticity)
+    # Stimulus
+    dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
+    duration = Dict(:A=>50, :B=>50, :_=>200)
+    config_lexicon = ( ph_duration=duration, dictionary=dictionary)
+    config_sequence = (init_silence=1s, seq_length=200, silence=1,)
+    lexicon = generate_lexicon(config_lexicon)
+    stim, seq = step_input_sequence(network=network, lexicon=lexicon, config_sequence=config_sequence, seed=1234)
+    model = merge_models(network, stim)
 
-# %%
-SNN.monitor(network.pop.E, [:fire, :v_d])
-SNN.monitor([network.pop...], [:fire])
-duration = sequence_end(seq)
-mytime = SNN.Time()
-SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
-##
-SNN.raster(model.pop, (10s,15s))
-names, pops = subpopulations(stim)
-stim
-pr = SNN.raster(network.pop.E, (10s,15s), populations=pops, names=names)
+    # %%
+    SNN.monitor(network.pop.E, [:fire, :v_d])
+    SNN.monitor([network.pop...], [:fire])
+    duration = sequence_end(seq)
+    mytime = SNN.Time()
+    SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
+    ##
+    SNN.raster(model.pop, (10s,15s))
+    names, pops = subpopulations(stim)
+    stim
+    pr = SNN.raster(network.pop.E, (10s,15s), populations=pops, names=names)
 
-## Target activation with stimuli
-pv=plot()
-cells = collect(intersect(Set(stim.AB.cells)))
-SNN.vecplot!(pv,model.pop.E, :v_d, r=5s:7.0s, neurons=cells, dt=0.125, pop_average=false)
-myintervals = sign_intervals(:AB, seq)
-vline!(myintervals, c=:red)
-plot!(title="Depolarization of :A with stimuli :w_AB")
-plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
-plot!(margin=5Plots.mm)
-plot(pv, pr, layout=(2,1), size=(800, 600))
+    ## Target activation with stimuli
+    pv=plot()
+    cells = collect(intersect(Set(stim.AB.cells)))
+    SNN.vecplot!(pv,model.pop.E, :v_d, r=5s:7.0s, neurons=cells, dt=0.125, pop_average=false)
+    myintervals = sign_intervals(:AB, seq)
+    vline!(myintervals, c=:red)
+    plot!(title="Depolarization of :A with stimuli :w_AB")
+    plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
+    plot!(margin=5Plots.mm)
+    plot(pv, pr, layout=(2,1), size=(800, 600))
+end
