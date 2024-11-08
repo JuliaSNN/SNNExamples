@@ -70,9 +70,9 @@ duration = Dict(:A=>50, :B=>50, :C=>50, :D=>50,  :_=>100)
 config_lexicon = ( ph_duration=duration, dictionary=dictionary)
 lexicon = generate_lexicon(config_lexicon)
 
+config_sequence = (init_silence=1s, seq_length=300, silence=1,)
 # Sequence input
 stim, sequence = let 
-    config_sequence = (init_silence=1s, seq_length=300, silence=1,)
     seq = generate_sequence(lexicon, config_sequence, 1234)
 
     function step_input(x, param::PSParam) 
@@ -126,18 +126,19 @@ SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
 # %%
 
 names, pops = subpopulations(stim.d1)
-pr = SNN.raster(network.pop.E, (10s,15s), populations=pops, names=names)
-pr = SNN.raster(network.pop, (10s,15s))
+pr = SNN.raster(network.pop.E, (5s,10s), populations=pops, names=names)
+# pr = SNN.raster(network.pop, (5s,10s))
 
 ## Target activation with stimuli
 pv=plot()
 cells = collect(intersect(Set(stim.d1.A.cells)))
-SNN.vecplot!(pv,model.pop.E, :v_d1, r=10.5s:15.0s, neurons=cells, dt=0.125, pop_average=true)
+SNN.vecplot!(pv,model.pop.E, :v_d1, r=5s:7.0s, neurons=cells, dt=0.125, pop_average=true)
 myintervals = sign_intervals(:w_AB, sequence)
 vline!(myintervals, c=:red)
 plot!(title="Depolarization of :A with stimuli :w_AB")
 plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
 plot!(margin=5Plots.mm)
 ##
+plot(pv, pr, layout=(2,1), size=(800, 600))
 
 network.pop.I2.param.τw
