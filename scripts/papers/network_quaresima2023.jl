@@ -1,4 +1,5 @@
 using DrWatson
+@quickactivate "network_models"
 using Revise
 using SpikingNeuralNetworks
 SNN.@load_units;
@@ -52,7 +53,7 @@ network = let
     # background noise
     stimuli = Dict(
         :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
-        :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=2.0kHz, cells=:ALL, μ=1.f0, name="noise"),
+        :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=1.8kHz, cells=:ALL, μ=1.f0, name="noise"),
         :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.5kHz, cells=:ALL, μ=1.5f0, name="noise")
     )
 
@@ -115,7 +116,7 @@ SNN.monitor(model.pop.E, [:fire, :v_d1,])
 # SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
 # SNN.monitor(model.pop.I2, [:fire, :v, :ge, :gi])
 SNN.monitor([network.pop...], [:fire])
-duration = sequence_end(seq)
+duration = sequence_end(sequence)
 # @profview 
 mytime = SNN.Time()
 SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
@@ -138,3 +139,5 @@ plot!(title="Depolarization of :A with stimuli :w_AB")
 plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
 plot!(margin=5Plots.mm)
 ##
+
+network.pop.I2.param.τw
