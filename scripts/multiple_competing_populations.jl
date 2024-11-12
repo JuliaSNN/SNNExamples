@@ -29,18 +29,18 @@ function define_network(N, name)
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
 
     # Store neurons and synapses into a dictionary
-    pop = dict2ntuple(@strdict E I)
-    syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
+    pop = SNN.@symdict E I
+    syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
+    noise = SNN.PoissonStimulus(E, :he, param=4.5kHz, cells=:ALL)
     # Return the network as a tuple
     SNN.monitor([E, I], [:fire])
-    (pop = pop, syn = syn)
+    SNN.merge_models(pop, syn, noise=noise, silent=true)
 end
 
 n_assemblies = 4
 ## Instantiate the network assemblies and local inhibitory populations
 subnets = Dict(Symbol("sub_$n") => define_network(400, n) for n = 1:n_assemblies)
 # Add noise to each assembly
-noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=4.5kHz, cells=:ALL) for i in eachindex(subnets))
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
 syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)
@@ -60,7 +60,7 @@ for i in eachindex(subnets)
 end
 
 ## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
-network = SNN.merge_models(noise, subnets, syns)
+network = SNN.merge_models(subnets, syns)
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()
