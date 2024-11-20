@@ -46,10 +46,13 @@ model = SNN.merge_models(network, noise=noise)
 simtime = SNN.Time()
 SNN.monitor([network.pop...], [:fire])
 
-train!(model=model, duration = 15000ms, time = simtime, dt = 0.125f0, pbar = true)
+train!(model=model, duration = 25000ms, time = simtime, dt = 0.125f0, pbar = true)
 ##
 
-
+plots = map(1:10) do i
+    histogram(autocorrelogram(spiketimes(model.pop.E)[i],400ms), bins=-400:20:400)
+end
+plot(plots..., layout = (2,5), size = (800, 400), legend = false)
 
 spiketimes = SNN.spiketimes(network.pop.E)
 SNN.raster([network.pop...], [1s, 2s])
