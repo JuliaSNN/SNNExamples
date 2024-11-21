@@ -52,8 +52,8 @@ network = let
     # background noise
     stimuli = Dict(
         :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
-        :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=1.8kHz, cells=:ALL, μ=1.f0, name="noise"),
-        :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.5kHz, cells=:ALL, μ=1.5f0, name="noise")
+        :noise_i1  => SNN.PoissonStimulus(I1, :ge, param=2kHz, cells=:ALL, μ=1.f0, name="noise"),
+        :noise_i2  => SNN.PoissonStimulus(I2, :ge, param=5kHz, cells=:ALL, μ=1.0f0, name="noise")
     )
 
     # Store neurons and synapses into a dictionary
@@ -69,10 +69,10 @@ duration = Dict(:A=>50, :B=>50, :C=>50, :D=>50,  :_=>100)
 config_lexicon = ( ph_duration=duration, dictionary=dictionary)
 lexicon = generate_lexicon(config_lexicon)
 
-config_sequence = (init_silence=1s, seq_length=300, silence=1,)
+config_sequence = (seq_length=50, silent_intervals=1, seed=1234)
 # Sequence input
 stim, sequence = let 
-    seq = generate_sequence(lexicon, config_sequence, 1234)
+    seq = generate_sequence(lexicon, word_phonemes_sequence; config_sequence...)
 
     function step_input(x, param::PSParam) 
         intervals::Vector{Vector{Float32}} = param.variables[:intervals]
@@ -114,21 +114,21 @@ SNN.monitor([network.pop...], [:fire])
 duration = sequence_end(sequence)
 # @profview 
 mytime = SNN.Time()
-SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
+SNN.train!(model=model, duration= 10s, pbar=true, dt=0.125, time=mytime)
 
 # %%
 # Analyse the results
 # %%
 
 names, pops = subpopulations(stim.d1)
-pr = SNN.raster(network.pop.E, (5s,10s), populations=pops, names=names)
-pr = SNN.raster(network.pop, (8s,10s))
+pr = SNN.raster(model.pop.E, (5s,10s), populations=pops, names=names)
+pr = SNN.raster(model.pop, (8s,10s))
 
 ## Target activation with stimuli
 pv=plot()
 cells = collect(intersect(Set(stim.d1.A.cells)))
-SNN.vecplot!(pv,model.pop.E, :v_d1, r=5s:7.0s, neurons=cells, dt=0.125, pop_average=true)
-myintervals = sign_intervals(:w_AB, sequence)
+SNN.vecplot!(pv,model.pop.E, :v_d1, r=3s:5s, neurons=cells, dt=0.125, pop_average=true)
+myintervals = sign_intervals(:A, sequence)
 vline!(myintervals, c=:red)
 plot!(title="Depolarization of :A with stimuli :w_AB")
 plot!(xlabel="Time (s)", ylabel="Membrane potential (mV)")
