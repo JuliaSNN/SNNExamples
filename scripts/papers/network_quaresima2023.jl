@@ -1,5 +1,4 @@
 using DrWatson
-@quickactivate "network_models"
 using Revise
 using SpikingNeuralNetworks
 SNN.@load_units;
@@ -54,7 +53,7 @@ network = let
     stimuli = Dict(
         :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
         :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=1.8kHz, cells=:ALL, μ=1.f0, name="noise"),
-        :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.5kHz, cells=:ALL, μ=1.5f0, name="noise")
+        :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.5kHz, cells=:ALL, μ=1.6f0, name="noise")
     )
 
     # Store neurons and synapses into a dictionary
@@ -78,9 +77,7 @@ stim, sequence = let
     function step_input(x, param::PSParam) 
         intervals::Vector{Vector{Float32}} = param.variables[:intervals]
         if time_in_interval(x, intervals)
-            my_interval = start_interval(x, intervals)
-            return 3kHz * 5kHz#*(1-exp(-(x-my_interval)/10))
-            # return 0kHz
+            return 5kHz #*(1-exp(-(x-my_interval)/10))
         else
             return 0kHz
         end
@@ -106,15 +103,13 @@ stim, sequence = let
     stim = (d1=stim_d1, d2=stim_d2)
     stim, seq
 end
+
 model = merge_models(network, stim)
 
 # %%
 # Run the model
 # %%
 SNN.monitor(model.pop.E, [:fire, :v_d1,])
-#  :v_s, :v_d1, :v_d2, :h_s, :h_d1, :h_d2, :g_d1, :g_d2])
-# SNN.monitor(model.pop.I1, [:fire, :v, :ge, :gi])
-# SNN.monitor(model.pop.I2, [:fire, :v, :ge, :gi])
 SNN.monitor([network.pop...], [:fire])
 duration = sequence_end(sequence)
 # @profview 
@@ -127,7 +122,7 @@ SNN.train!(model=model, duration= 15s, pbar=true, dt=0.125, time=mytime)
 
 names, pops = subpopulations(stim.d1)
 pr = SNN.raster(network.pop.E, (5s,10s), populations=pops, names=names)
-# pr = SNN.raster(network.pop, (5s,10s))
+pr = SNN.raster(network.pop, (8s,10s))
 
 ## Target activation with stimuli
 pv=plot()
@@ -141,4 +136,4 @@ plot!(margin=5Plots.mm)
 ##
 plot(pv, pr, layout=(2,1), size=(800, 600))
 
-network.pop.I2.param.τw
+histogram(network.syn.I2_to_E_d2.W)
