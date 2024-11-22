@@ -27,27 +27,27 @@ network = let
     I2 = SNN.IF(; N = NI2, param = I2_params, name="I2_sst")
     E = SNN.BallAndStick(250um; N = NE, soma_syn = soma_syn, dend_syn = dend_syn, NMDA = NMDA, param = param, name="Exc")
     # background noise
-    stimuli = Dict(
-        :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=2.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
-        :noise_d   => SNN.PoissonStimulus(E,  :he_d,  param=2.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
-        :noise_i1  => SNN.PoissonStimulus(I1, :ge,   param=1.5kHz, cells=:ALL, μ=1.f0,  name="noise_i1"),
-        :noise_i2  => SNN.PoissonStimulus(I2, :ge,   param=2.0kHz, cells=:ALL, μ=1.8f0, name="noise_i2")
+    noise = Dict(
+        # :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=1.0kHz, cells=:ALL, μ=0.f0, name="noise_s",),
+        :d   => SNN.PoissonStimulus(E,  :he_d,  param=2.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
+        :i1  => SNN.PoissonStimulus(I1, :ge,   param=1.5kHz, cells=:ALL, μ=1.f0,  name="noise_i1"),
+        :i2  => SNN.PoissonStimulus(I2, :ge,   param=2.0kHz, cells=:ALL, μ=1.8f0, name="noise_i2")
     )
-
-    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...)
-    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...)
-    I2_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IsIs...)
-    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
-    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.EIf...)
-    I2_to_E = SNN.SpikingSynapse(I2, E, :hi, :d; param = plasticity.iSTDP_potential, connectivity.EdIs...)
-    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.IfE...)
-    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.IsE...)
-    E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.EdE...)
+    syn= Dict(
+    :I1_to_I1 => SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...),
+    :I1_to_I2 => SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...),
+    :I2_to_I2 => SNN.SpikingSynapse(I1, I2, :gi; connectivity.IsIs...),
+    :I2_to_I1 => SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...),
+    :I1_to_E  => SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.EIf...),
+    :I2_to_E  => SNN.SpikingSynapse(I2, E, :hi, :d; param = plasticity.iSTDP_potential, connectivity.EdIs...),
+    :E_to_I1  => SNN.SpikingSynapse(E, I1, :ge; connectivity.IfE...),
+    :E_to_I2  => SNN.SpikingSynapse(E, I2, :ge; connectivity.IsE...),
+    :E_to_E   => SNN.SpikingSynapse(E, E, :he, :d ; connectivity.EdE...),
+    )
     pop = dict2ntuple(@strdict I1 I2 E)
-    syn = dict2ntuple(@strdict  I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 I1_to_E I2_to_E E_to_I1 E_to_I2 E_to_E)
 
     # Return the network as a model
-    merge_models(pop, stimuli, syn)
+    merge_models(pop, noise=noise, syn)
 end
  
 

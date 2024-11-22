@@ -39,9 +39,9 @@ network = let
     I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...)
     I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...)
     I2_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IsIs...)
+    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
     I2_to_E_d1 = SNN.CompartmentSynapse(I2, E, :d1, :hi; param = plasticity.iSTDP_potential, connectivity.EdIs...)
     I2_to_E_d2 = SNN.CompartmentSynapse(I2, E, :d2, :hi; param = plasticity.iSTDP_potential, connectivity.EdIs...)
-    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
 
     # Define normalization
     recurrent_norm = [
@@ -52,6 +52,7 @@ network = let
     # background noise
     stimuli = Dict(
         :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
+        :noise_d   => SNN.PoissonStimulus(E,  :he_d,  param=4.0kHz, cells=:ALL, μ=5.f0, name="noise"),
         :noise_i1  => SNN.PoissonStimulus(I1, :ge, param=2kHz, cells=:ALL, μ=1.f0, name="noise"),
         :noise_i2  => SNN.PoissonStimulus(I2, :ge, param=5kHz, cells=:ALL, μ=1.0f0, name="noise")
     )
