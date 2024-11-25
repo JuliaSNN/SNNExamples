@@ -57,36 +57,45 @@ end
 ## Target activation with stimuli
 
 mytime = SNN.Time()
-SNN.monitor([network.pop...], [:fire, :v_d, :v_s, :v, (:g_d, [10,20,30,40,50]), (:ge_s, [10,20,30,40,50]), (:gi_s, [10,20,30,40,50])])
+SNN.monitor([network.pop...], [:fire, :v_d, :v_s, :v, (:g_d, [10,20,30,40,50]), (:ge_s, [10,20,30,40,50]), (:gi_s, [10,20,30,40,50])], sr=200Hz)
 SNN.train!(model=network, duration= 10s, pbar=true, dt=0.125, time=mytime)
 T = get_time(mytime)
 Trange = 1s:10ms:T
 
 ##
-frE, interval = SNN.firing_rate(network.pop.E, interval = Trange)
-frI1, interval = SNN.firing_rate(network.pop.I1, interval = Trange)
-frI2, interval = SNN.firing_rate(network.pop.I2, interval = Trange)
-pr = plot(xlabel = "Time (ms)", ylabel = "Firing rate (Hz)")
-plot!(Trange, mean(frE), label = "E", c = :black)
-plot!(Trange, mean(frI1), label = "I1", c = :red)
-plot!( Trange,mean(frI2), label = "I2", c = :green)
-plot!(margin = 5Plots.mm, xlabel="")
-pv =SNN.vecplot(network.pop.E, :v_d, r = Trange, neurons = 1:500, dt = 0.125, pop_average = true, label="dendrite")
-SNN.vecplot!(pv, network.pop.E, :v_s, r = Trange, neurons = 1:500, dt = 0.125, pop_average = true, label="soma")
-plot!(ylims=:auto, margin = 5Plots.mm, ylabel = "Membrane potential (mV)", legend=true, xlabel="")
-dgplot = dendrite_gplot(network.pop.E, :d, r=Trange, dt=0.125, margin=5Plots.mm, xlabel="")
-sgplot = soma_gplot(network.pop.E, :s, r=Trange, dt=0.125, margin=5Plots.mm, xlabel="")
-rplot = raster(network.pop, Trange, size=(900,500), margin=5Plots.mm, xlabel="")
-layout = @layout  [ 
-            c{0.2h}
-            e{0.2h}
-            a{0.2h}
-            b{0.2h}
-            d{0.2h}]
-plot(pr, pv, rplot, dgplot, sgplot, layout=layout, size=(900, 1200), topmargn=0Plots.mm, bottommargin=0Plots.mm, bgcolorlegend=:transparent, fgcolorlegend=:transparent)
+
+# SNN.vecplot( network.pop.E, :, r = Trange, neurons = 1:100, pop_average=true, label="soma")
+
+    
+function plot_activity(network, Trange)
+    frE, interval = SNN.firing_rate(network.pop.E, interval = Trange)
+    frI1, interval = SNN.firing_rate(network.pop.I1, interval = Trange)
+    frI2, interval = SNN.firing_rate(network.pop.I2, interval = Trange)
+    pr = plot(xlabel = "Time (ms)", ylabel = "Firing rate (Hz)")
+    plot!(Trange, mean(frE), label = "E", c = :black)
+    plot!(Trange, mean(frI1), label = "I1", c = :red)
+    plot!( Trange,mean(frI2), label = "I2", c = :green)
+    plot!(margin = 5Plots.mm, xlabel="")
+    pv =SNN.vecplot(network.pop.E, :v_d, r = Trange,  pop_average = true, label="dendrite")
+    SNN.vecplot!(pv, network.pop.E, :v_s, r = Trange, pop_average = true, label="soma")
+    plot!(ylims=:auto, margin = 5Plots.mm, ylabel = "Membrane potential (mV)", legend=true, xlabel="")
+    dgplot = dendrite_gplot(network.pop.E, :d, r=Trange, dt=0.125, margin=5Plots.mm, xlabel="")
+    sgplot = soma_gplot(network.pop.E, :s, r=Trange, dt=0.125, margin=5Plots.mm, xlabel="")
+    rplot = SNN.raster(network.pop, Trange, size=(900,500), margin=5Plots.mm, xlabel="")
+    layout = @layout  [ 
+                c{0.2h}
+                e{0.2h}
+                a{0.2h}
+                b{0.2h}
+                d{0.2h}]
+    plot(pr, pv, rplot, dgplot, sgplot, layout=layout, size=(900, 1200), topmargn=0Plots.mm, bottommargin=0Plots.mm, bgcolorlegend=:transparent, fgcolorlegend=:transparent)
+end
+plot_activity(network, 1:10ms:10s)
 ##
-h_I1E = histogram(network.syn.I1_to_E.W, title = "Synaptic weights from I1 to E", bins=0:0.1:maximum(network.syn.I1_to_E.W)+5, xlabel="Synaptic weight", ylabel="Number of synapses", yticks=:none)
-h_I2E = histogram(network.syn.I2_to_E.W, title = "Synaptic weights from I2 to E", bins=0:0.1:maximum(network.syn.I2_to_E.W)+5, xlabel="Synaptic weight", ylabel="Number of synapses", yticks=:none)
+W = network.syn.I1_to_E.W
+h_I1E = histogram(W, bins=minimum(W):maximum(W)/200:maximum(W)+1, title = "Synaptic weights from I1 to E",  xlabel="Synaptic weight", ylabel="Number of synapses", yticks=:none, c=:black)
+W = network.syn.I2_to_E.W
+h_I2E = histogram(W, bins=minimum(W):maximum(W)/200:maximum(W)+1, title = "Synaptic weights from I2 to E", xlabel="Synaptic weight", ylabel="Number of synapses", yticks=:none, c=:black)
 sc_w = scatter(network.syn.I2_to_E.W, network.syn.I1_to_E.W,  xlabel="Synaptic weight from I2 to E", ylabel="Synaptic weight from I1 to E", alpha=0.01, c=:black)
 frE= SNN.average_firing_rate(network.pop.E, interval = Trange)
 sc_fr=histogram(frE, c=:black, label="E", xlabel="Firing rate (Hz)",bins=-0.5:0.2:12, ylabel="Number of neurons")
@@ -95,8 +104,4 @@ layout = @layout  [
             ]
 plot(h_I2E, h_I1E, sc_w, sc_fr, layout=layout, size=(800, 600), legend=false, margin=5Plots.mm)
 ## 
-h_EI1 = histogram(network.syn.E_to_I1.W, title = "Synaptic weights from E to I1", bins=0:0.1:maximum(network.syn.E_to_I1.W), xlabel="Synaptic weight", ylabel="Number of synapses")
-h_EI2 = histogram!(network.syn.E_to_I2.W, title = "Synaptic weights from E to I2", bins=0:0.2:maximum(network.syn.E_to_I2.W), xlabel="Synaptic weight", ylabel="Number of synapses")
-plot(h_EI1, h_EI2, layout=(2,1), size=(800, 600))
-##
 
