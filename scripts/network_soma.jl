@@ -4,6 +4,7 @@ using Revise
 using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
+using Statistics
 
 # Define the network
 network = let
@@ -45,23 +46,28 @@ model = SNN.merge_models(network, noise=noise)
 @info "Initializing network"
 simtime = SNN.Time()
 SNN.monitor([network.pop...], [:fire])
+SNN.monitor([network.pop...], [:v], sr=200Hz)
+SNN.monitor([network.pop...], [:ge], sr=100Hz)
 
 train!(model=model, duration = 25000ms, time = simtime, dt = 0.125f0, pbar = true)
 ##
-
 plots = map(1:10) do i
-    histogram(autocorrelogram(spiketimes(model.pop.E)[i],400ms), bins=-400:20:400)
+    st = spiketimes(model.pop.E)[i]
+    τ = 400ms
+    sr = 10ms
+    ac = SNN.autocorrelogram(st, τ=τ)
+    histogram(ac,bins=-τ:sr:τ)
 end
 plot(plots..., layout = (2,5), size = (800, 400), legend = false)
 
-spiketimes = SNN.spiketimes(network.pop.E)
-SNN.raster([network.pop...], [1s, 2s])
-# SNN.vecplot(network.pop.E, [:ge], neurons = 1:10, r = 800ms:4999ms)
+##
+SNN.raster(network.pop, [11s, 15s])
+SNN.vecplot(network.pop.E, :ge, neurons = 1, r = 800ms:24s)
+SNN.vecplot(network.pop.E, :v, neurons = 1:1, r=10s:0.125:15s)
 rates, intervals = SNN.firing_rate(network.pop.E, interval=0:10:15s, τ=20ms)
-# plot(rates[1:100,1:end]', legend=false)
-plot(intervals, mean(rates, dims = 1)[1, :], legend = false)
+plot(intervals, mean(rates,dims=1)[1,:], xlabel="Time [s]", ylabel="Firing rate [Hz]", legend=false)
 ##
 
-network.pop.E.records
+v, r = SNN.interpolated_record(network.pop.E, :v)
 
-## The simulation achieves > 1.0 iteration per second on my M1 Pro machine.
+r
