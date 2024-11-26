@@ -20,7 +20,7 @@ network = let
     I1_params = duarte2019.PV
     I2_params = duarte2019.SST
     @unpack connectivity, plasticity = quaresima2023
-    @unpack dends, NMDA, param, soma_syn, dend_syn = quaresima2022_nar(1.3)
+    @unpack dends, NMDA, param, soma_syn, dend_syn = quaresima2022
 
     # Define interneurons I1 and I2
     I1 = SNN.IF(; N = NI1, param = I1_params, name="I1_pv")
@@ -28,10 +28,10 @@ network = let
     E = SNN.BallAndStick(250um; N = NE, soma_syn = soma_syn, dend_syn = dend_syn, NMDA = NMDA, param = param, name="Exc")
     # background noise
     noise = Dict(
-        :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=5.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
-        :d   => SNN.PoissonStimulus(E,  :he_d,  param=4.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
+        # :noise_s   => SNN.PoissonStimulus(E,  :he_s,  param=1.0kHz, cells=:ALL, μ=0.f0, name="noise_s",),
+        :d   => SNN.PoissonStimulus(E,  :he_d,  param=2.0kHz, cells=:ALL, μ=1.f0, name="noise_s",),
         :i1  => SNN.PoissonStimulus(I1, :ge,   param=1.5kHz, cells=:ALL, μ=1.f0,  name="noise_i1"),
-        :i2  => SNN.PoissonStimulus(I2, :ge,   param=2kHz, cells=:ALL, μ=1.8f0, name="noise_i2")
+        :i2  => SNN.PoissonStimulus(I2, :ge,   param=2.0kHz, cells=:ALL, μ=1.8f0, name="noise_i2")
     )
     syn= Dict(
     :I1_to_I1 => SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...),
@@ -64,7 +64,6 @@ Trange = 1s:10ms:T
 
 ##
 plot_activity(network, 4s:2ms:10s)
-
 vecplot(network.pop.E, :v_s, neurons =1, r=0s:10s,label="soma")
 # raster(network.pop, Trange)
 plot_weights(network)
