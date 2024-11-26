@@ -148,9 +148,9 @@ SNN.monitor([model.pop...], [:v], sr=200Hz)
 SNN.sim!(model=model; duration = duration, pbar = true, dt = 0.125)
 SNN.raster(model.pop, [10s, 15s])
 
-Trange = 0:10:15s
+Trange = 5s:10:15s
 frE, interval, names_pop = SNN.firing_rate(model.pop, interval = Trange)
-plot(mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft)
+plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft)
 ##
 
 vecplot(model.pop.E23, :v, neurons =1, r=0s:15s,label="soma")
