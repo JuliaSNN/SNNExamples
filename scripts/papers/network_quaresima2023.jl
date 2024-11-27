@@ -88,6 +88,8 @@ stim, seq = SNNUtils.step_input_sequence(network = network,
 
 model = merge_models(network, stim)
 
+model_nostim = deepcopy(merge_models(network))
+
 # %%
 # Run the model
 # %%
