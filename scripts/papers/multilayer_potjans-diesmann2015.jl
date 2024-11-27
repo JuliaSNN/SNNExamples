@@ -137,7 +137,7 @@ function potjans_layer(scale)
         s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
-    return merge_models(neurons,connections, stimuli)
+    return merge_models(neurons, connections, stimuli)
 end
 
 
