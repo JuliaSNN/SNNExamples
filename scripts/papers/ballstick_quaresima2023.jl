@@ -8,12 +8,8 @@ using Statistics
 using Distributions
 
 ##
-function ballstick_network(;
-            I1_params, 
-            I2_params, 
-            E_params, 
-            connectivity,
-            plasticity)
+function run_network(params, name)
+    @unpack exc, pv, sst, plasticity, connectivity = params
     # Number of neurons in the network
     NE = 1000
     NI = NE ÷ 4
@@ -21,10 +17,10 @@ function ballstick_network(;
     NI2 = round(Int,NI * 0.65)
     # Import models parameters
     # Define interneurons I1 and I2
-    @unpack dends, NMDA, param, soma_syn, dend_syn = E_params
+    @unpack dends, NMDA, param, soma_syn, dend_syn = exc
     E = SNN.BallAndStickHet(; N = NE, soma_syn = soma_syn, dend_syn = dend_syn, NMDA = NMDA, param = param, name="Exc")
-    I1 = SNN.IF(; N = NI1, param = I1_params, name="I1_pv")
-    I2 = SNN.IF(; N = NI2, param = I2_params, name="I2_sst")
+    I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
+    I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
     E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.EdE..., param= plasticity.vstdp)
     E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.IfE...)
@@ -47,20 +43,13 @@ function ballstick_network(;
     pop = dict2ntuple(@strdict E I1 I2)
     syn = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E norm)
     # Return the network as a model
-    merge_models(pop, syn, stimuli)
+    merge_models(pop, syn, stimuli, name=name)
 end
 
 
-# %% [markdown]
-# # Quaresima et al. 2023
-# %%
-
 # Define the network
-I1_params = duarte2019.PV
-I2_params = duarte2019.SST
-E_params = quaresima2022
-@unpack connectivity, plasticity = quaresima2023
-network = ballstick_network(I1_params=I1_params, I2_params=I2_params, E_params=E_params, connectivity=connectivity, plasticity=plasticity)
+network = run_network(bursty_dendritic_network, "bursty_dendritic_network" )
+
 
 # Stimulus
 dictionary = Dict(:AB=>[:A, :B], :BA=>[:B, :A])
@@ -68,6 +57,7 @@ duration = Dict(:A=>50, :B=>50, :_=>50)
 config_lexicon = ( ph_duration=duration, dictionary=dictionary)
 config_sequence = (init_silence=1s, seq_length=100, silence=1,)
 lexicon = generate_lexicon(config_lexicon)
+
 stim, seq = SNNUtils.step_input_sequence(network = network, 
                                     targets= [:d],
                                     lexicon = lexicon, 
@@ -80,7 +70,6 @@ stim, seq = SNNUtils.step_input_sequence(network = network,
 # Merge network and stimuli in model
 model = merge_models(network, stim)
 
-# %%
 # SNN.monitor(network.pop.E, [:fire, :v_d, :v_s])p
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
