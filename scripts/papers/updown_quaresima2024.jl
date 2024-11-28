@@ -58,9 +58,12 @@ function run_model(;exc_params)
 end
 
 model_nmda = run_model(exc_params=quaresima2022)
+
 plot_activity(model_nmda, 8s:2ms:10s)
-vecplot(model_nmda.pop.E, :v_d, neurons =1, r=8s:10s,label="soma")
-vecplot(model_nmda.pop.E, :v_s, neurons =199, r=7s:0.4:10s,label="soma")
+vecplot(model_nmda.pop.E, :v_d, neurons =1, r=8s:0.1:10s,label="soma")
+vecplot(model_nmda.pop.E, :v_s, neurons =200:210, r=7s:1:10s,label="soma")
+
+raster(spiketimes(model_nmda.pop.E)[1:10], [8s,10s])
 ##
 model_nonmda = run_model(exc_params=quaresima2022_nar(0.2))
  
@@ -78,5 +81,6 @@ plot_activity(model_nonmda, 4s:2ms:10s)
 histogram(getvariable(model_nonmda.pop.E, :v_s)[:])
 vecplot(network.pop.E, :v_s, neurons =1, r=0s:10s,label="soma")
 
-histogram(getvariable(network.pop.E, :v_s)[:])
+histogram(mean(getvariable(model_nmda.pop.E, :v_s), dims=1)[:])
+# mean(getvariable(model_nmda.pop.E, :v_s), dims=2)[:]
 histogram(getvariable(network.pop.E, :v_s)[:])
