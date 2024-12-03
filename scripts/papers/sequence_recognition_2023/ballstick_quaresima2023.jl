@@ -11,12 +11,12 @@ using Dates
 
 include(projectdir("examples/parameters/dendritic_network.jl"))
 function get_network(;params, name, NE, STDP, kwargs...)
-    # @unpack exc, pv, sst, plasticity, connectivity=params
+    @unpack exc, pv, sst, plasticity, connectivity=params
     @unpack  noise_params, inh_ratio = params
-    exc = quaresima2022
-    pv = duarte2019.PV
-    sst = duarte2019.SST
-    @unpack connectivity, plasticity = quaresima2023
+    # exc = quaresima2022
+    # pv = duarte2019.PV
+    # sst = duarte2019.SST
+    # @unpack connectivity, plasticity = quaresima2023
     @unpack dends, NMDA, param, soma_syn, dend_syn = exc
     # Number of neurons in the network
     NI1 = round(Int,NE * inh_ratio.ni1)
@@ -67,7 +67,7 @@ model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path ->
 lexicon = let
     dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
     duration = getduration(dictionary, 50ms)
-    (ph_duration=duration, dictionary=dictionary)
+    config_lexicon = (ph_duration=duration, dictionary=dictionary)
     lexicon = generate_lexicon(config_lexicon)
 end
 
