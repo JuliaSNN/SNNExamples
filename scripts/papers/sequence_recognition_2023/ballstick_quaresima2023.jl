@@ -6,25 +6,25 @@ using SNNUtils
 using Plots
 using Statistics
 using Distributions
-
+using Dates
 ##
 
-include("../../parameters/dendritic_network.jl")
-function get_network(params, name)
-    # @unpack exc, pv, sst, plasticity, connectivity = params
+include(projectdir("examples/parameters/dendritic_network.jl"))
+function get_network(;params, name, NE, STDP, kwargs...)
+    # @unpack exc, pv, sst, plasticity, connectivity=params
+    @unpack  noise_params, inh_ratio = params
+    exc = quaresima2022
     pv = duarte2019.PV
     sst = duarte2019.SST
     @unpack connectivity, plasticity = quaresima2023
-    @unpack dends, NMDA, param, soma_syn, dend_syn = quaresima2022
+    @unpack dends, NMDA, param, soma_syn, dend_syn = exc
     # Number of neurons in the network
-    NE = 1200
-    NI = NE ÷ 4
-    NI1 = round(Int,NI * 0.35)
-    NI2 = round(Int,NI * 0.65)
+    NI1 = round(Int,NE * inh_ratio.ni1)
+    NI2 = round(Int,NE * inh_ratio.ni2)
     # Import models parameters
     # Define interneurons I1 and I2
     # @unpack dends, NMDA, param, soma_syn, dend_syn = exc
-    E = SNN.BallAndStickHet(; N = NE, soma_syn = soma_syn, dend_syn = dend_syn, NMDA = NMDA, param = param, name="Exc")
+    E = SNN.BallAndStickHet(; N = NE, soma_syn = soma_syn, dend_syn = dend_syn, NMDA = NMDA, param = param, name="ExcBallStick")
     I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
     I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
@@ -40,49 +40,57 @@ function get_network(params, name)
     # Define normalization
     norm = SNN.SynapseNormalization(NE, [E_to_E], param = SNN.MultiplicativeNorm(τ = 20ms))
     # background noise
+    @unpack exc_soma, exc_dend, inh1, inh2= noise_params
     stimuli = Dict(
-        :s   => SNN.PoissonStimulus(E,  :he_s,  param=4.0kHz, cells=:ALL, μ=1.f0, name="noise_d",),
-        :d   => SNN.PoissonStimulus(E,  :he_d,  param=2.0kHz, cells=:ALL, μ=1.f0, name="noise_d",),
-        :i1  => SNN.PoissonStimulus(I1, :ge,   param=1.5kHz, cells=:ALL, μ=1.f0,  name="noise_i1"),
-        :i2  => SNN.PoissonStimulus(I2, :ge,   param=2.0kHz, cells=:ALL, μ=1.8f0, name="noise_i2")
+        :s   => SNN.PoissonStimulus(E,  :he_s; exc_soma... ),
+        :d   => SNN.PoissonStimulus(E,  :he_d; exc_dend... ),
+        :i1  => SNN.PoissonStimulus(I1, :ge;   inh1...  ),
+        :i2  => SNN.PoissonStimulus(I2, :ge;   inh2...  )
     )
     # Store neurons and synapses into a dictionary
     pop = dict2ntuple(@strdict E I1 I2)
     syn = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E norm)
     # Return the network as a model
-    merge_models(pop, syn, stimuli, name=name)
+    if !STDP
+        syn.E_to_E.param.active[1] = false
+    end
+    merge_models(pop, syn, noise=stimuli, name=name)
 end
 
 
-# Define the network
-network = get_network(bursty_dendritic_network, "bursty_dendritic_network" )
-dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
-duration = getduration(dictionary, 50ms)
+## Define the network, stimuli and lexicon
 
-
-config_lexicon = ( ph_duration=duration, dictionary=dictionary)
-config_sequence = (init_silence=1s, repetition=150, silence=1,)
-lexicon = generate_lexicon(config_lexicon)
-stim, seq = SNNUtils.step_input_sequence(network = network, 
-                                    words=true,
-                                    targets= [:d],
-                                    lexicon = lexicon, 
-                                    peak_rate=8kHz, 
-                                    start_rate=8kHz, 
-                                    decay_rate=10ms,
-                                    p_post = 0.05f0;
-                                    config_sequence..., 
-                                    )
-
-
-
-##
-name = DrWatson.savename("associative_phase", model_config, "jld2")
+date = Dates.now()
+name = DrWatson.savename("associative_phase", date,  "jld2")
 model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path)
 
-# Merge network and stimuli in model
+lexicon = let
+    dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
+    duration = getduration(dictionary, 50ms)
+    (ph_duration=duration, dictionary=dictionary)
+    lexicon = generate_lexicon(config_lexicon)
+end
+
+exp_config = (init_silence=1s, 
+                    repetition=20, 
+                    silence=1, 
+                    peak_rate=8kHz, 
+                    start_rate=8kHz, 
+                    decay_rate=10ms,
+                    p_post = 0.08f0,
+                    NE = 1200,
+                    name =  "bursty_dendritic_network",
+                    params = bursty_dendritic_network,
+                    STDP = false,
+                    targets= [:d],
+                    words=true,
+                    )
+
+
+## Merge network and stimuli in model
+network = get_network(;exp_config...)
+stim, seq = SNNUtils.step_input_sequence(network = network, lexicon = lexicon; exp_config..., )
 model = merge_models(network, stim)
-model_config = (vd = -70mV, input_rate=8kHz)
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=10Hz)
@@ -93,6 +101,17 @@ SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
 DrWatson.save(model_path, @strdict model seq mytime lexicon config_sequence config_lexicon)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)
+##
+T = get_time(mytime)
+Trange = T-1s:1ms:T-100ms
+names, pops = filter_populations(model.stim) |> subpopulations
+pr1 = SNN.raster(model.pop.E, Trange, populations=pops, names=names)
+# pr2 = SNN.raster(model.pop, Trange)
+pr2 = plot_activity(model, Trange)
+layout = @layout [a{0.3h}; 
+                   b{0.7h}
+                   ]
+plot(pr1, pr2, layout = layout, size = (800, 1400))
 
 ## Recall phase
 name = DrWatson.savename("recall_phase", model_config, "jld2")
