@@ -9,14 +9,14 @@ using Statistics
 # Define the network
 network = let
     # Number of neurons in the network
-    N = 1000
+    N = 2000
     # Create dendrites for each neuron
     E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV))
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
     E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 1.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
+    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5, param = SNN.vSTDPParameter())
     I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 4.0)
     I_to_E = SNN.SpikingSynapse(
         I,
@@ -40,16 +40,15 @@ end
 noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, cells=:ALL)
 
 # Combine all
-model = SNN.merge_models(network, noise=noise)
+model_soma = SNN.merge_models(network, noise=noise)
 
 #
 @info "Initializing network"
 simtime = SNN.Time()
 SNN.monitor([network.pop...], [:fire])
 SNN.monitor([network.pop...], [:v], sr=200Hz)
-SNN.monitor([network.pop...], [:ge], sr=100Hz)
 
-train!(model=model, duration = 25000ms, time = simtime, dt = 0.125f0, pbar = true)
+train!(model=model_soma, duration = 2500ms, time = simtime, dt = 0.125f0, pbar = true)
 ##
 plots = map(1:10) do i
     st = spiketimes(model.pop.E)[i]
