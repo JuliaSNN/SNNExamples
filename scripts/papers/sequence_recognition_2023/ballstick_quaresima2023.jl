@@ -13,7 +13,7 @@ include(projectdir("examples/parameters/dendritic_network.jl"))
 function get_network(;params, name, NE, STDP, kwargs...)
     @unpack exc, pv, sst, plasticity, connectivity=params
     @unpack  noise_params, inh_ratio = params
-    # exc = quaresima2022
+    exc = quaresima2022
     # pv = duarte2019.PV
     # sst = duarte2019.SST
     # @unpack connectivity, plasticity = quaresima2023
@@ -65,26 +65,30 @@ name = DrWatson.savename("associative_phase", date,  "jld2")
 model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path)
 
 lexicon = let
-    dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
+    # dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
+    dictionary = getdictionary(["AB", "CD"])
     duration = getduration(dictionary, 50ms)
     config_lexicon = (ph_duration=duration, dictionary=dictionary)
     lexicon = generate_lexicon(config_lexicon)
 end
 
-exp_config = (init_silence=1s, 
-                    repetition=20, 
+exp_config = (## Sequence parameters
+                    init_silence=1s, 
+                    repetition=10, 
                     silence=1, 
                     peak_rate=8kHz, 
                     start_rate=8kHz, 
                     decay_rate=10ms,
+                    proj_strength=20pA,
                     p_post = 0.08f0,
+                    targets= [:d],
+                    words=true,
+                    ## Network parameters
                     NE = 1200,
                     name =  "bursty_dendritic_network",
                     params = bursty_dendritic_network,
                     STDP = false,
-                    targets= [:d],
-                    words=true,
-                    )
+        )
 
 
 ## Merge network and stimuli in model
@@ -98,7 +102,7 @@ duration = sequence_end(seq)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
 
-DrWatson.save(model_path, @strdict model seq mytime lexicon config_sequence config_lexicon)
+DrWatson.save(model_path, @strdict model seq mytime lexicon exp_config lexicon)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)
 ##

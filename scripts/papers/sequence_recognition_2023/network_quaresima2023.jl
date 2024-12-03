@@ -84,6 +84,7 @@ stim, seq = SNNUtils.step_input_sequence(network = network,
                                     peak_rate=4kHz, 
                                     start_rate=4kHz, 
                                     decay_rate=10ms,
+                                    words=true,
                                     p_post = 0.2f0)
 
 model = merge_models(network, stim)

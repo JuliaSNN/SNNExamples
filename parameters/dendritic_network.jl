@@ -10,7 +10,7 @@ bursty_dendritic_network = let
         )
     MilesGabaDend =  GABAergic(
             Receptor(E_rev = -70.0, τr = 4.8, τd = 29.0, g0 = 0.27), # E_rev = -75.0, g0 = 0.126
-            Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.006), # τd = 100.0
+            Receptor(E_rev = -90.0, τr = 30, τd = 100.0, g0 = 0.006), # τd = 100.0
         )
     MilesGabaSoma =  GABAergic(Receptor(E_rev = -70.0, τr = 0.1, τd = 15.0, g0 = 0.38), Receptor()) 
     exc = (
@@ -20,6 +20,7 @@ bursty_dendritic_network = let
             k = -0.077,  # NMDA voltage dependency parameter
             mg = 1.0f0,  # NMDA voltage dependency parameter
         ),
+            # After spike timescales and membrane
         param= AdExSoma(
             C = 281pF,  # membrane capacitance
             gl = 40nS,  # leak conductance
@@ -38,7 +39,7 @@ bursty_dendritic_network = let
             τabs = 2ms,  # absolute refractory period
         ),
         dend_syn = Synapse(EyalGluDend, MilesGabaDend), # defines glutamaterbic and gabaergic receptors in the dendrites
-        soma_syn=  Synapse(EyalGluDend, MilesGabaDend)  # connect EyalGluDend to MilesGabaDend
+        soma_syn=  Synapse(DuarteGluSoma, MilesGabaSoma)  # connect EyalGluDend to MilesGabaDend
     )
     PV = SNN.IFParameterGsyn(
         τm = 104.52pF / 9.75nS,
@@ -100,10 +101,12 @@ bursty_dendritic_network = let
     )
 
     noise_params = let
-        exc_soma = (param=2.0kHz,  μ=1.f0,  cells=:ALL, name="noise_exc_soma")
+        exc_soma = (param=4.0kHz,  μ=2.8f0,  cells=:ALL, name="noise_exc_soma")
         exc_dend = (param=0.0kHz,  μ=1.f0,  cells=:ALL, name="noise_exc_dend")
-        inh1 = (param=2kHz,  μ=1.f0,  cells=:ALL,     name="noise_inh1")
-        inh2 = (param=2.5kHz,  μ=1.8f0, cells=:ALL,     name="noise_inh2")
+        inh1 = (param=2.5kHz,  μ=2.8f0,  cells=:ALL,     name="noise_inh1")
+        # inh1 = (param=0kHz,  μ=1.f0,  cells=:ALL,     name="noise_inh1")
+        inh2 = (param=4.5kHz,  μ=2.8f0, cells=:ALL,     name="noise_inh2")
+        # inh2 = (param=0kHz,  μ=1.8f0, cells=:ALL,     name="noise_inh2")
         (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2)
     end
 
