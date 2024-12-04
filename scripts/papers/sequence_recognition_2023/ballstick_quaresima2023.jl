@@ -60,21 +60,19 @@ end
 
 ## Define the network, stimuli and lexicon
 
-date = Dates.now()
-name = DrWatson.savename("associative_phase", date,  "jld2")
-model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path)
+path = datadir("sequence_recognition", "overlap_lexicon")
 
 lexicon = let
-    # dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
-    dictionary = getdictionary(["AB", "CD"])
+    dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
+    # dictionary = getdictionary(["AB", "CD"])
     duration = getduration(dictionary, 50ms)
     config_lexicon = (ph_duration=duration, dictionary=dictionary)
     lexicon = generate_lexicon(config_lexicon)
 end
 
-exp_config = (## Sequence parameters
+exp_config = (      # Sequence parameters
                     init_silence=1s, 
-                    repetition=10, 
+                    repetition=200, 
                     silence=1, 
                     peak_rate=8kHz, 
                     start_rate=8kHz, 
@@ -83,12 +81,19 @@ exp_config = (## Sequence parameters
                     p_post = 0.08f0,
                     targets= [:d],
                     words=true,
-                    ## Network parameters
+                    # Network parameters
                     NE = 1200,
                     name =  "bursty_dendritic_network",
                     params = bursty_dendritic_network,
-                    STDP = false,
+                    STDP = true,
         )
+
+model_info = (repetition=exp_config.repetition, 
+            peak_rate=exp_config.peak_rate,
+            proj_strength=exp_config.proj_strength,
+            p_post = exp_config.p_post
+            )
+
 
 
 ## Merge network and stimuli in model
@@ -98,14 +103,12 @@ model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=10Hz)
-duration = sequence_end(seq)
 mytime = SNN.Time()
-SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
+SNN.train!(model=model, duration= sequence_end(seq), pbar=true, dt=0.125, time=mytime)
 
-DrWatson.save(model_path, @strdict model seq mytime lexicon exp_config lexicon)
-filesize(model_path) |> Base.format_bytes
-basename(model_path)
+savemodel(path=path, name="associative_phase", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
 ##
+
 T = get_time(mytime)
 Trange = T-1s:1ms:T-100ms
 names, pops = filter_populations(model.stim) |> subpopulations
@@ -117,14 +120,15 @@ layout = @layout [a{0.3h};
                    ]
 plot(pr1, pr2, layout = layout, size = (800, 1400))
 
-## Recall phase
-name = DrWatson.savename("recall_phase", model_config, "jld2")
-model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path)
 
-@unpack model, seq, mytime, lexicon = copy_model(model_path)
-seq = randomize_sequence!(;seq=seq, model=model, target=:d, words=false, config_sequence...)
-config_sequence = (init_silence=1s, repetition=150, silence=1,)
-model.syn.E_to_E.param.active[1]=false
+## Recall phase
+@unpack model, seq, mytime, lexicon, config = load_model(path, "associative_phase", model_info)
+
+
+recall_config = (;config..., STDP=false, words=false,)
+seq = randomize_sequence!(;seq=seq, model=model, recall_config...)
+model.syn.E_to_E.param.active[1] = recall_config.STDP
+
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=10Hz)
@@ -132,6 +136,7 @@ duration = sequence_end(seq)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
 
-DrWatson.save(model_path, @strdict model seq mytime lexicon config_sequence config_lexicon)
+data = @strdict seq mytime lexicon recall_config
+save_model(path=path, name="recall_phase", model =model)#, data...)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)
