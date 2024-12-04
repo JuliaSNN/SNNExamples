@@ -7,10 +7,17 @@ using Plots
 using Statistics
 using Distributions
 
-# #
-model_config = (vd = -70mV, input_rate=8kHz)
-name = DrWatson.savename("recall_phase", model_config, "jld2")
+model_info = (repetition=200, 
+            peak_rate=8.0,
+            proj_strength=20.0,
+            p_post = 0.08
+            )
+path = datadir("sequence_recognition", "overlap_lexicon")
+
+load_model(path, "recall_phase", model_info)
 model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path) 
+
+@unpack model, seq, mytime, lexicon = copy_model(model_path)
 @unpack model, seq, mytime, lexicon = load_model(model_path)
 ##
 T = get_time(mytime)
@@ -27,14 +34,14 @@ plot(pr1, pr2, layout = (2, 1), size = (800, 800))
 
 ##
 using LaTeXStrings
-word = :GOD
+word = :GOLDEN
 myintervals = sign_intervals(word, seq)
 membrane, r_v = SNN.interpolated_record(model.pop.E, :v_s)
-# membrane, r_v =  firing_rate(model.pop.E, τ=20ms)
+membrane, r_v =  firing_rate(model.pop.E, τ=20ms)
 Trange = -500ms:1ms:diff(myintervals[1])[1]+500ms
 activity = zeros(length(seq.symbols.words),size(Trange,1))
 for w in eachindex(seq.symbols.words)
-    cells = getcells(stim, seq.symbols.words[w], :d)
+    cells = getcells(model.stim, seq.symbols.words[w], :d)
     n = 0
     for myinterval in myintervals
         _range = myinterval[1]-500ms:1ms:myinterval[2]+500ms
@@ -68,7 +75,7 @@ plot!(Trange, activity[word_id,:], c=:black, label=string(word), lw=5, )
 
 # ##
 # %%
-
+@unpack stim = model
 histogram(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.L_d.cells][:], alpha=0.5, bins=1:0.5:45, label="L->POLL")
 histogram!(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.P_d.cells][:], alpha=0.5, bins=1:0.5:45, label="P->POLL")
 plot!(title = "Synaptic weights from L and P to POLL")
@@ -76,9 +83,9 @@ plot!(title = "Synaptic weights from L and P to POLL")
 # average_weight(stim.AB_d.cells, model.stim.AB_d.cells, model.syn.E_to_E)
 
 ##
+names, pops = filter_populations(model.stim) |> subpopulations
 connections = zeros(length(pops), length(pops))
 indices = Int64[]
-names, pops = filter_populations(model.stim) |> subpopulations
 for pre in eachindex(pops)
     for post in eachindex(pops)
         pre_pop = pops[pre]
