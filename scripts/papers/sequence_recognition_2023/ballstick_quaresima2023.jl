@@ -136,7 +136,8 @@ duration = sequence_end(seq)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
 
-data = @strdict seq mytime lexicon recall_config
-save_model(path=path, name="recall_phase", model =model)#, data...)
+data = (@strdict seq mytime lexicon recall_config) |> dict2ntuple
+path = datadir("sequence_recognition", "overlap_lexicon")
+save_model(path=path, name="recall_phase", model =model, info=recall_config; data...)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)
