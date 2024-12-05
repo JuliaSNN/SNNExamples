@@ -29,7 +29,7 @@ function get_intervals(model, interval=[-50ms, 100ms])
     return offsets, ys, N
 end
 
-function train(Xs, ys)
+function train(Xs, ys, name)
     Xs = Xs .+ 1e-1
     Xtrain = Xs[:, 1:2:end]
     Xtest  = Xs[:, 2:2:end]
@@ -42,7 +42,7 @@ function train(Xs, ys)
     classifier = svmtrain(Xtrain, ytrain)
     # Test model on the other half of the data.
     ŷ, decision_values = svmpredict(classifier, Xtest);
-    @printf "Accuracy: %.2f%%\n" mean(ŷ .== ytest) * 100
+    @printf "%s Accuracy: %.2f%%\n" name mean(ŷ .== ytest) * 100
 end
 
 offsets, ys, N = get_intervals(model)
@@ -62,8 +62,8 @@ Threads.@threads for i in eachindex(offsets)
     M[:,i] = mean(membrane[:, range], dims=2)[:,1]
 end
 
-train(M, ys)
-train(Xs, ys)
+train(M, ys, "Membrane potential")
+train(Xs, ys, "Firing rate")
 
 
 average_activity = zeros(length(seq.symbols.words), N)
