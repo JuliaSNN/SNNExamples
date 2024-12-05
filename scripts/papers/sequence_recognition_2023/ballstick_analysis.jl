@@ -6,16 +6,17 @@ using SNNUtils
 using Plots
 using Statistics
 using Distributions
+using YAML
 
 model_info = (repetition=200, 
             peak_rate=8.0,
             proj_strength=20.0,
             p_post = 0.08
             )
-path = datadir("sequence_recognition", "overlap_lexicon")
 
+model_path = datadir("sequence_recognition", "overlap_lexicon")
 load_model(path, "recall_phase", model_info)
-model_path = datadir("sequence_recognition", "overlap_lexicon", name) |> path -> (mkpath(dirname(path)); path) 
+
 
 @unpack model, seq, mytime, lexicon = copy_model(model_path)
 @unpack model, seq, mytime, lexicon = load_model(model_path)
@@ -37,7 +38,7 @@ using LaTeXStrings
 word = :GOLDEN
 myintervals = sign_intervals(word, seq)
 membrane, r_v = SNN.interpolated_record(model.pop.E, :v_s)
-membrane, r_v =  firing_rate(model.pop.E, τ=20ms)
+# membrane, r_v =  firing_rate(model.pop.E, τ=20ms)
 Trange = -500ms:1ms:diff(myintervals[1])[1]+500ms
 activity = zeros(length(seq.symbols.words),size(Trange,1))
 for w in eachindex(seq.symbols.words)

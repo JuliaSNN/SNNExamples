@@ -4,9 +4,10 @@ using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
 using Plots
-using Statistics
 using Distributions
+using Statistics
 using Dates
+using YAML
 ##
 
 include(projectdir("examples/parameters/dendritic_network.jl"))
@@ -60,7 +61,8 @@ end
 
 ## Define the network, stimuli and lexicon
 
-path = datadir("sequence_recognition", "overlap_lexicon")
+root = YAML.load_file("conf.yml")["paths"]["zeus"]
+path = joinpath(root, "sequence_recognition", "overlap")
 
 lexicon = let
     dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
@@ -102,26 +104,12 @@ stim, seq = SNNUtils.step_input_sequence(network = network, lexicon = lexicon; e
 model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
-SNN.monitor([model.syn...], [ :W], sr=10Hz)
+SNN.monitor([model.syn...], [ :W], sr=1Hz)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= sequence_end(seq), pbar=true, dt=0.125, time=mytime)
 
-savemodel(path=path, name="associative_phase", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
+save_model(path=path, name="associative_phase", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
 ##
-
-T = get_time(mytime)
-Trange = T-1s:1ms:T-100ms
-names, pops = filter_populations(model.stim) |> subpopulations
-pr1 = SNN.raster(model.pop.E, Trange, populations=pops, names=names)
-# pr2 = SNN.raster(model.pop, Trange)
-pr2 = plot_activity(model, Trange)
-layout = @layout [a{0.3h}; 
-                   b{0.7h}
-                   ]
-plot(pr1, pr2, layout = layout, size = (800, 1400))
-
-
-## Recall phase
 @unpack model, seq, mytime, lexicon, config = load_model(path, "associative_phase", model_info)
 
 
@@ -131,7 +119,6 @@ model.syn.E_to_E.param.active[1] = recall_config.STDP
 
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
-SNN.monitor([model.syn...], [ :W], sr=10Hz)
 duration = sequence_end(seq)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)

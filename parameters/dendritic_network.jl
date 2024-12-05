@@ -102,11 +102,9 @@ bursty_dendritic_network = let
 
     noise_params = let
         exc_soma = (param=4.0kHz,  μ=2.8f0,  cells=:ALL, name="noise_exc_soma")
-        exc_dend = (param=0.0kHz,  μ=1.f0,  cells=:ALL, name="noise_exc_dend")
+        exc_dend = (param=0.0kHz,  μ=0.f0,  cells=:ALL, name="noise_exc_dend")
         inh1 = (param=2.5kHz,  μ=2.8f0,  cells=:ALL,     name="noise_inh1")
-        # inh1 = (param=0kHz,  μ=1.f0,  cells=:ALL,     name="noise_inh1")
-        inh2 = (param=4.5kHz,  μ=2.8f0, cells=:ALL,     name="noise_inh2")
-        # inh2 = (param=0kHz,  μ=1.8f0, cells=:ALL,     name="noise_inh2")
+        inh2 = (param=2.5kHz,  μ=2.8f0, cells=:ALL,     name="noise_inh2")
         (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2)
     end
 
