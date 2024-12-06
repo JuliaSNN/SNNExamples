@@ -15,7 +15,7 @@ using Distributions
 
 
 """
-Model parameters from original 2015 paper.
+Model parameters pasted here from original 2015 paper.
 
 https://pmc.ncbi.nlm.nih.gov/articles/PMC3920768/
 
