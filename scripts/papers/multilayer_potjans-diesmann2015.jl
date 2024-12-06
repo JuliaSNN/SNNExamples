@@ -32,7 +32,8 @@ External inputs, kext (reference) 	1600 	1500 	2100 	1900 	2000 	1900 	2900 	210
 External inputs, kext (layer independent) 	2000 	1850 	2000 	1850 	2000 	1850 	2000 	1850 	n/a 	
 Background rate, νbg 	8 Hz
 Connectivity
-						from 				
+		
+        from (columns are presynaptic, rows are post synaptic) 				
 		L2/3e 	L2/3i 	L4e 	L4i 	L5e 	L5i 	L6e 	L6i 	Th
 to 	L2/3e 	0.101 	0.169 	0.044 	0.082 	0.032 	0.0 	0.008 	0.0 	0.0
 	L2/3i 	0.135 	0.137 	0.032 	0.052 	0.075 	0.0 	0.004 	0.0 	0.0
@@ -108,7 +109,7 @@ function potjans_neurons(scale=1.0)
     neurons = Dict{Symbol, SNN.AbstractPopulation}()
     for (k, v) in ccu
         if occursin("E", String(k))
-	    # PD model only consists of IF neurons.
+	        # PD model only consists of LIF neurons.
             neurons[k] = IF(N = v, param=LKD2014SingleExp.PV, name=string(k))
         else
             neurons[k] = IF(N = v, param=LKD2014SingleExp.PV, name=string(k))
@@ -124,22 +125,30 @@ function potjans_conn(Ne)
     # adding static synaptic weight parameters 
     # based on PSPs that are more accurate to PD based on the PyNN
     # model
+    # Descrepency between PyNN model and original paper
+    # original paper
+    # w ± δw 	87.8 ± 8.8 pA 	Excitatory synaptic strengths
+    # PyNN model:             syn_weight_dist = Normal(0.15, 0.1)
+
+    # g 	–4 	Relative inhibitory synaptic strength
+    #
+    # 
     function j_from_name(pre, post)
         if occursin("E", String(pre)) && occursin("E", String(post))
-            syn_weight_dist = Normal(0.15, 0.1)
+            syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
             
             return rand(syn_weight_dist)
         elseif occursin("I", String(pre)) && occursin("E", String(post))
             syn_weight_dist = Normal(0.15, 0.1)
-            return -4.0*rand(syn_weight_dist)
+            return -4.0#*rand(syn_weight_dist)
 
         elseif occursin("E", String(pre)) && occursin("I", String(post))
-            syn_weight_dist = Normal(0.15, 0.1)
+            syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
             
             return rand(syn_weight_dist)
         elseif occursin("I", String(pre)) && occursin("I", String(post))
             syn_weight_dist = Normal(0.15, 0.1)
-            return -4.0*rand(syn_weight_dist)
+            return -4.0#*rand(syn_weight_dist)
         else 
             throw(ArgumentError("Invalid pre-post combination: $pre-$post"))
         end
@@ -237,9 +246,11 @@ function potjans_layer(scale)
     ##
     # Added synaptic delays from distribution informed by PyNN/PD model
     ##
-    syn_weight_dist = Normal(0.15, 0.1)
-    delay_dist_exc = Normal(1.5, 0.5)
-    delay_dist_inh = Normal( 0.75, 0.5)
+    # de ± δde 	1.5 ± 0.75 ms 	Excitatory synaptic transmission delays
+    # di ± δdi 	0.8 ± 0.4 ms 	Inhibitory synaptic transmission delays 
+ 
+    delay_dist_exc = Normal(1.5, 0.75) # Unit is ms
+    delay_dist_inh = Normal(0.8, 0.4) # Unit is ms
 
     ## Create the synaptic connections based on the connection probabilities and synaptic weights assigned to each pre-post pair
     connections = Dict()
