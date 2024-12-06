@@ -262,6 +262,8 @@ function potjans_layer(scale)
     end
 
     ## Create the Poisson stimulus for each population
+    ## The order of these rates needs to be carefully checked as I have changed the order of populations from the 
+    # PyNN model to conveniently group excitatory and inhibitory connections. 
     full_mean_rates = [0.971, 2.868, 4.746, 5.396, 8.142, 9.078, 0.991, 7.523]
     stimuli = Dict()
     for (ind,pop) in enumerate(exc_pop)
