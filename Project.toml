@@ -6,7 +6,6 @@ SpikingNeuralNetworks = "9d8b7fda-1049-58bc-9481-071a9f369938"
 
 [compat]
 Distributions = "0.25.112"
-Graphs = "1.12.0"
 Interpolations = "0.15.1"
 MetaGraphs = "0.8.0"
 Requires = "0.5, 1"
