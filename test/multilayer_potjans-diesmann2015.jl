@@ -1,4 +1,3 @@
-using Revise
 using DrWatson
 using SpikingNeuralNetworks
 SNN.@load_units
@@ -12,7 +11,7 @@ using SpikingNeuralNetworks
 using SNNUtils
 using JLD2
 using Distributions
-
+using Test
 
 """
 Model parameters pasted here from original 2015 paper.
@@ -228,12 +227,11 @@ to 	L2/3e 	0.101 	0.169 	0.044 	0.082 	0.032 	0.0 	0.008 	0.0 	0.0
         0.0364  0.001  0.0034 0.0005 0.0277 0.008   0.0658 0.144 0.0196
     ]
 
-
     conn_j = zeros(Float32, size(conn_probs))
     for pre in eachindex(pre_layer_names)
         for post in eachindex(post_layer_names)
             
-            conn_j[post, pre ] = j_from_name(pre_layer_names[pre], post_layer_names[post])     
+            conn_j[post, pre] = j_from_name(pre_layer_names[pre], post_layer_names[post])     
 
         end
     end
