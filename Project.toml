@@ -2,7 +2,6 @@ name = "SNNExamples"
 uuid = "276b8b60-e50f-4651-bb99-b251f196bd69"
 
 [deps]
-SpikingNeuralNetworks = "9d8b7fda-1049-58bc-9481-071a9f369938"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
@@ -14,6 +13,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 MLJ = "add582a8-e3ab-11e8-2d5e-e98b27df1bc7"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SpikingNeuralNetworks = { url = "https://github.com/JuliaSNN/SpikingNeuralNetworks.jl" }
 
 [targets]
 test = ["Test"]

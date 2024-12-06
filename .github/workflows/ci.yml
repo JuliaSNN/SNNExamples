@@ -21,8 +21,12 @@ jobs:
         with:
           version: '1.9' # Adjust to your preferred Julia version
 
-      - name: Install dependencies
-        run: julia --project=@. -e 'using Pkg; Pkg.instantiate()'
+      - name: Install Dependencies
+        run: julia --project=. -e '
+          using Pkg;
+          Pkg.add(PackageSpec(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl"));
+          Pkg.instantiate()
+        '
 
       - name: Run tests
         run: julia --project=@. -e 'using Pkg; Pkg.test()'
