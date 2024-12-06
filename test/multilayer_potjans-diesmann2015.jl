@@ -1,11 +1,11 @@
 using DrWatson
 using SpikingNeuralNetworks
-SNN.@load_units
+SpikingNeuralNetworks.@load_units
 import SpikingNeuralNetworks: AdExParameter, IFParameter
 using Statistics, Random
 using Plots
-using SparseArrays
-using ProgressMeter
+#using SparseArrays
+#using ProgressMeter
 using Plots
 using SpikingNeuralNetworks
 using SNNUtils
