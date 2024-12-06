@@ -48,7 +48,7 @@ model_info = (repetition=exp_config.repetition,
             )
 
 ## Merge network and stimuli in model
-network = dendritic_network(;exp_config...)
+network = ballstick_network(;exp_config...)
 stim, seq = SNNUtils.step_input_sequence(network = network, lexicon = lexicon; exp_config..., )
 model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
