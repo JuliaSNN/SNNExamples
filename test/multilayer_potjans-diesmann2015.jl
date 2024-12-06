@@ -288,16 +288,23 @@ function potjans_layer(scale)
     #full_mean_rates = [0.971, 2.868, 4.746, 5.396, 8.142, 9.078, 0.991, 7.523]
     stimuli = Dict()
     for (ind,pop) in enumerate(exc_pop)
-        νe = 8Hz 
+        νe = 8Hz # background stimulation
         #full_mean_rates[ind]kHz
         post = neurons[pop]
+        ##
+        # TODO replace all, with something that better matches the number of poisson spike generator sources and targets from the Potjan's model.
+        ##
         s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
     for (ind,pop) in enumerate(inh_pop)
-        νe = 8Hz 
+        νe = 8Hz # background stimulation
         #full_mean_rates[ind]kHz
         post = neurons[pop]
+        ##
+        # TODO replace all, with something that better matches the number of poisson spike generator sources and targets from the Potjan's model.
+        ##
+
         s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
