@@ -4,14 +4,6 @@ name = "SNNExamples"
 SpikingNeuralNetworks = "9d8b7fda-1049-58bc-9481-071a9f369938"
 
 
-[compat]
-Distributions = "0.25.112"
-Interpolations = "0.15.1"
-MetaGraphs = "0.8.0"
-Requires = "0.5, 1"
-UnPack = "1"
-julia = "1"
-
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
