@@ -3,7 +3,7 @@ using Test
 using DrWatson
 using Revise
 using SpikingNeuralNetworks
-SNN.@load_units;
+SpikingNeuralNetworks.@load_units;
 using SNNUtils
 using Plots
 using Statistics
