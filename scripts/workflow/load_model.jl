@@ -34,34 +34,34 @@ network = let
 end
 
 # Create background for the network simulation
-noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, cells=:ALL)
-noise2 = SNN.PoissonStimulus(network.pop[:E], :gi, param=3kHz, cells=:ALL)
-old_model = SNN.merge_models(network, noise=noise, noise2=noise2)
-
-pointer(old_model.pop.E.name)
+noise  = PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, cells=:ALL)
+noise2 = PoissonStimulus(network.pop[:E], :gi, param=3kHz, cells=:ALL)
+old_model = merge_models(network, noise=noise, noise2=noise2)
 
 ## Save the model. Important to `merge_model` before saving to maintain shared memory pointers.
-path = datadir("examples") |> mkpath
-DrWatson.save(joinpath(path,"network_nospikes.jld2"), "model", old_model)
+model_path = save_model(path=path, name="blank_network", model=old_model)
 
 ## Load the model, run the simulation and store the results
-path = datadir("examples") |> mkpath
-model = DrWatson.load(joinpath(path,"network_nospikes.jld2"), "model")
+model = DrWatson.load(model_path)["model"]
 simtime = SNN.Time()
 SNN.monitor([model.pop...], [:fire])
 train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
-DrWatson.save(joinpath(path,"network_with_spikes.jld2"), "model", model)
+model_path = save_model(path=path, name="network_with_spikes", model=model)
 
 ## Load the model and plot the results
-new_model = DrWatson.load(joinpath(path,"network_with_spikes.jld2"), "model")
+new_model =load_model(model_path).model
 spiketimes = SNN.spiketimes(model.pop)
-p1 = SNN.raster([new_model.pop...], [1s, 2s], title="Strong inhibitory noise")
+p1 = SNN.raster(new_model.pop, [1s, 2s], title="Strong inhibitory noise")
 
 ## Remove a stimulus, run the simulation, and plot the results
 nogi_model = remove_element(new_model, :noise2)
 SNN.monitor([nogi_model.pop...], [:fire])
 train!(model=nogi_model, duration = 5000ms, dt = 0.125f0, pbar = true)
-p2 = SNN.raster([nogi_model.pop...], [1s, 2s], title="No inhibitory noise")
+p2 = SNN.raster(nogi_model.pop, [1s, 2s], title="No inhibitory noise")
 plot(p1,p2, layout=(2,1), size=(800,800))
-
 pointer(new_model.pop.E.name)
+
+## Save the model:
+model_path = joinpath(path,"network_with_spikes_test.jld2")
+save_model(path = path, model=new_model; simtime, name="example_network")
+

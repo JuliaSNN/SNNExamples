@@ -27,8 +27,8 @@ MongilloParam = (
 )
 
 pop = (
-    E = IFCurrent(N=8000, param=MongilloParam.Exc),
-    I = IFCurrent(N=2000, param=MongilloParam.Inh)
+    E = IFCurrent(N=4000, param=MongilloParam.Exc),
+    I = IFCurrent(N=1000, param=MongilloParam.Inh)
 )
 syn = (
     EE = SpikingSynapse(pop.E, pop.E, :ge, p=0.2, μ=0.10, 
@@ -56,6 +56,6 @@ SNN.vecplot(pop.E,:v, r=1:0.01:0.4s, dt=0.125, neurons=1:1)
 SNN.vecplot(syn.EE, :u, r=1:0.01:1s, dt=0.125, neurons=1:1)
 SNN.vecplot(syn.EE, :x, r=1:0.01:1s, dt=0.125, neurons=1:1)
 
-SNN.raster([pop.E, pop.I], [0.95, 1.0] .* 1s)
+SNN.raster(pop, [0.95, 1.0] .* 1s)
 
 mean(length.(SNN.spiketimes(pop.E)))
