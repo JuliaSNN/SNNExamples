@@ -19,4 +19,3 @@ test = ["Test"]
 [compat]
 SpikingNeuralNetworks = "0.1.0"
 MLJ = "0.20.7"
-Reexport = "1.2.2"
