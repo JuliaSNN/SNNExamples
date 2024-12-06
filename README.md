@@ -1,3 +1,3 @@
 # SNNExamples
-![](https://github.com/russelljjarvis/SNNExamples/actions/workflows/main.yml/badge.svg)
+![CI](https://github.com/russelljjarvis/SNNExamples/actions/workflows/ci.yml/badge.svg)
 Collection of examples from the JuliaSNN organization
