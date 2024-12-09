@@ -1,4 +1,5 @@
 using DrWatson
+quickactivate("../../")
 using Revise
 using SpikingNeuralNetworks
 SNN.@load_units;
@@ -24,14 +25,14 @@ end
 
 exp_config = (      # Sequence parameters
                     init_silence=1s, 
-                    repetition=200, 
+                    repetition=50, 
                     silent_intervals=1, 
                     peak_rate=8kHz, 
                     start_rate=8kHz, 
                     decay_rate=10ms,
                     proj_strength=20pA,
                     p_post = 0.05f0,
-                    targets= [:d],
+                    targets= [:d1, :d2],
                     words=true,
                     # Network parameters
                     NE = 1200,
@@ -48,18 +49,18 @@ model_info = (repetition=exp_config.repetition,
             )
 
 ## Merge network and stimuli in model
-network = ballstick_network(;exp_config...)
+network = tripod_network(;exp_config...)
 stim, seq = SNNUtils.step_input_sequence(network = network, lexicon = lexicon; exp_config..., )
 model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
-SNN.monitor([model.pop...], [ :v_d, :v_s], sr=200Hz)
+SNN.monitor([model.pop...], [ :v_d1, :v_d2, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=1Hz)
 mytime = SNN.Time()
 SNN.train!(model=model, duration= sequence_end(seq), pbar=true, dt=0.125, time=mytime)
 
-save_model(path=path, name="associative", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
+model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
 ##
-@unpack model, seq, mytime, lexicon, config = load_model(path, "associative", model_info)
+@unpack model, seq, mytime, lexicon, config = load_model(model_path)
 recall_config = (;config..., STDP=false, words=false,)
 seq = randomize_sequence!(;seq=seq, model=model, recall_config...)
 model.syn.E_to_E.param.active[1] = recall_config.STDP
@@ -71,6 +72,6 @@ SNN.train!(model=model, duration= duration, pbar=true, dt=0.125, time=mytime)
 
 data = (@strdict seq mytime lexicon recall_config) |> dict2ntuple
 path = datadir("sequence_recognition", "overlap_lexicon")
-save_model(path=path, name="recall", model =model, info=recall_config; data...)
+save_model(path=path, name="Tripod-recall", model =model, info=recall_config; data...)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)

@@ -5,27 +5,45 @@ SNN.@load_units;
 using SNNUtils
 using Plots
 using Statistics
-using Distributions
 using YAML
-
+##
 model_info = (repetition=200, 
             peak_rate=8.0,
             proj_strength=20.0,
             p_post = 0.08
             )
-path = datadir("sequence_recognition", "overlap_lexicon")
+
+root = YAML.load_file("conf.yml")["paths"]["zeus"]
+path = joinpath(root, "sequence_recognition", "overlap")
 data = load_data(path, "recall_phase", model_info)
 @unpack model, seq, mytime, lexicon = data
 
+offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
+@unpack N = model.pop.E
+##
+
+## Compute the confusion matrix of the most active population in the interval [0ms, 100ms]
+confusion_matrix = score_activity(model, seq, [0ms, 100ms])
+heatmap(confusion_matrix, c=:amp, clims=(0,1), xlabel="True", ylabel="Predicted", ticks=(1:length(seq.symbols.words), seq.symbols.words), size=(500,500), xrotation = 45)
+
+## Compute the spike count features and the membrane potential features and use them to train a SVM classifier
+S = spikecount_features(model.pop.E, offsets)
+M = sym_features(:v_s, model.pop.E, offsets)
+(SVCtrain(S, ys; seed=123, p=0.1) - 0.1) / 0.9
 
 ## Plot the activity of the network, and the word and phoneme raster plots
 T = get_time(mytime)
-Trange = T-1s:1ms:T-100ms
+Trange = T-0.5s:1ms:T-100ms
 names, pops = filter_populations(model.stim) |> subpopulations
 pr1 = SNN.raster(model.pop.E, Trange, populations=pops, names=names)
 pr2 = SNN.raster(model.pop, Trange)
 plot(pr1, pr2, layout = (2, 1), size = (800, 800), margin = 5Plots.mm)
-##
+plot_activity(model, Trange)
+
+## Raster plot the activity of the cells in certain population
+pop = model.stim.LOP_d.cells
+vecplot(model.pop.E, :v_d, r=Trange, neurons=pop, pop_average=true, ribbon=false)
+raster(spiketimes(model.pop.E, interval=Trange)[pop], Trange)
 
 ## Plot the firing rate of a single population
 cells = model.stim.POLL_d.cells
@@ -35,7 +53,7 @@ plot!(xlims=(1000,2500))
 
 
 ## Plot the average activity of the network
-function plot_average_activity(sym, word, model, seq, before=500ms, after=500ms)
+function plot_average_activity(sym, word, model, seq; before=100ms, after=300ms, zscore=true)
     membrane, r_v = SNN.interpolated_record(model.pop.E, sym)
     myintervals = sign_intervals(word, seq)
     Trange = -before:1ms:diff(myintervals[1])[1]+after
@@ -46,9 +64,10 @@ function plot_average_activity(sym, word, model, seq, before=500ms, after=500ms)
         std_fr = std(membrane[cells, :])
         n = 0
         for myinterval in myintervals
-            _range = myinterval[1]-500ms:1ms:myinterval[2]+500ms
+            _range = myinterval[1]-before:1ms:myinterval[2]+after
             _range[end] > r_v[end] && continue
-            activity[w, :] += (mean(membrane[cells, _range], dims=1)[1,:] .- ave_fr)./std_fr
+            v = mean(membrane[cells, _range], dims=1)[1,:]
+            activity[w, :] += zscore ? (v .- ave_fr)./std_fr : v
             n+=1
         end
         activity[w, :] ./= n
@@ -59,14 +78,18 @@ function plot_average_activity(sym, word, model, seq, before=500ms, after=500ms)
     plot!(Trange, activity[word_id,:], c=:black, label=string(word), lw=5, )
 end
 
-plot_average_activity(:fire, :GOLDEN, model, seq)
-plot_average_activity(:v_s, :GOLDEN, model, seq)
+plot_average_activity(:v_s, :POLLEN, model, seq, zscore=false)
 
-## Plot the synaptic weights from L and P to POLL
-@unpack stim = model
-histogram(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.L_d.cells][:], alpha=0.5, bins=1:0.5:45, label="L->POLL")
-histogram!(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.P_d.cells][:], alpha=0.5, bins=1:0.5:45, label="P->POLL")
-plot!(title = "Synaptic weights from L and P to POLL")
+## Plot the average activity of the network for all words
+using ThreadTools
+plots_fire = tmap(seq.symbols.words) do word
+    plot_average_activity(:v_s, word, model, seq, before=100ms,)
+end
+plots_mem = tmap(seq.symbols.words) do word
+    plot_average_activity(:v_s, word, model, seq, before=100ms)
+end
+plot(plots_fire..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false)
+plot(plots_mem..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false)
 
 ##  Plot the average synaptic weight between populations§
 names, pops = filter_populations(model.stim) |> subpopulations
@@ -86,6 +109,14 @@ using LaTeXStrings
 heatmap(ticks=(1:length(names),names), connections, c=:amp, xlabel="Pre-synaptic population", ylabel="Post-synaptic population", title="Average synaptic weight "*L"(w_0)", size=(500,400), xrotation=45)
 vline!([10.5], c=:black, ls=:dash, label="")
 hline!([10.5], c=:black, ls=:dash, label="")
+
+
+## Plot the synaptic weights from L and P to POLL
+@unpack stim = model
+histogram(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.L_d.cells][:], alpha=0.5, bins=1:0.5:45, label="L->POLL")
+histogram!(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.P_d.cells][:], alpha=0.5, bins=1:0.5:45, label="P->POLL")
+plot!(title = "Synaptic weights from L and P to POLL")
+
 
 
 ## Plot the learning curve of the network
