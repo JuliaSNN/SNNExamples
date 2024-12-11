@@ -204,7 +204,6 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     @unpack exc_soma, exc_dend, inh1, inh2= noise_params
     stimuli = Dict(
         :s   => SNN.PoissonStimulus(E,  :he_s; exc_soma... ),
-        :d   => SNN.PoissonStimulus(E,  :he_d1; exc_dend... ),
         :i1  => SNN.PoissonStimulus(I1, :ge;   inh1...  ),
         :i2  => SNN.PoissonStimulus(I2, :ge;   inh2...  )
     )
