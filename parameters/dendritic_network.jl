@@ -212,7 +212,8 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     syn = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E1 I2_to_E2 I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E1 E_to_E2 norm1 norm2 )
     # Return the network as a model
     if !STDP
-        syn.E_to_E.param.active[1] = false
+        syn.E_to_E1.param.active[1] = false
+        syn.E_to_E2.param.active[1] = false
     end
     merge_models(pop, syn, noise=stimuli, name=name)
 end

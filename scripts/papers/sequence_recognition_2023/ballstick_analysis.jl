@@ -7,15 +7,17 @@ using Plots
 using Statistics
 using YAML
 ##
-model_info = (repetition=200, 
+model_info = (repetition=50, 
             peak_rate=8.0,
             proj_strength=20.0,
-            p_post = 0.08
+            p_post = 0.05,
+            UUID = "nNBR"
             )
 
 root = YAML.load_file("conf.yml")["paths"]["zeus"]
 path = joinpath(root, "sequence_recognition", "overlap")
-data = load_data(path, "recall_phase", model_info)
+data = load_data(path, "Tripod-associative", model_info)
+data = load_data("data/sequence_recognition/overlap_lexicon/associative_phase-p_post=0.08-peak_rate=8.0-proj_strength=20.0-repetition=200.data.jld2")
 @unpack model, seq, mytime, lexicon = data
 
 offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])

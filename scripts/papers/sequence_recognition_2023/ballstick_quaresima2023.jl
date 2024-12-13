@@ -24,7 +24,7 @@ end
 
 exp_config = (      # Sequence parameters
                     init_silence=1s, 
-                    repetition=200, 
+                    repetition=2, 
                     silent_intervals=1, 
                     peak_rate=8kHz, 
                     start_rate=8kHz, 
