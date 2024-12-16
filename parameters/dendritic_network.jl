@@ -3,16 +3,16 @@ using Distributions
 ## Synapses Tripod neuron
 bursty_dendritic_network = let 
     EyalGluDend = Glutamatergic(
-                Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73), # τr = 0.25
+                Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73),
                 ReceptorVoltage(E_rev = 0.0, τr = 8, τd = 35.0, g0 = 1.31, nmda = 1.0f0),
             )
     DuarteGluSoma =  Glutamatergic(
-            Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73), # τr = 0.25
+            Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73), 
             ReceptorVoltage(E_rev = 0.0, nmda = 0.0f0),
         )
     MilesGabaDend =  GABAergic(
-            Receptor(E_rev = -70.0, τr = 4.8, τd = 29.0, g0 = 0.27), # E_rev = -75.0, g0 = 0.126
-            Receptor(E_rev = -90.0, τr = 30, τd = 100.0, g0 = 0.006), # τd = 100.0
+            Receptor(E_rev = -70.0, τr = 4.8, τd = 29.0, g0 = 0.27), 
+            Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.006), # τd = 100.0
         )
     MilesGabaSoma =  GABAergic(Receptor(E_rev = -70.0, τr = 0.1, τd = 15.0, g0 = 0.38), Receptor()) 
     exc = (
@@ -48,13 +48,13 @@ bursty_dendritic_network = let
         El = -64.33mV,
         Vt = -38.97mV,
         Vr = -57.47mV,
-        τabs = 0.5ms, # CHANGED 0.42ms
+        τabs = 0.5ms, 
         τre = 0.18ms,
         τde = 0.70ms,
-        τri = 0.19ms, # CHANGED 0.2ms
+        τri = 0.19ms,
         τdi = 2.50ms,
-        gsyn_e = 1.04nS, # ADDED 
-        gsyn_i = 0.84nS, # ADDED 
+        gsyn_e = 1.04nS,
+        gsyn_i = 0.84nS, 
     )
 
     SST = SNN.IFParameterGsyn(
@@ -67,8 +67,8 @@ bursty_dendritic_network = let
         τde = 1.80ms,
         τri = 0.19ms,
         τdi = 5.00ms,
-        gsyn_e = 0.56nS, # 0.8nS,
-        gsyn_i = 0.59nS, # 0.7nS,
+        gsyn_e = 0.56nS, 
+        gsyn_i = 0.59nS, 
         a = 4nS,
         b = 80.5pA,       #(pA) 'sra' current increment
         τw = 144ms,        #(s) adaptation time constant (~Ca-activated K current inactivation)
