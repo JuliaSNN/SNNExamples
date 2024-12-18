@@ -3,7 +3,7 @@ using SpikingNeuralNetworks
 SNN.@load_units
 import SpikingNeuralNetworks: AdExParameter
 using Statistics, Random
-
+##
 
 ν = 4.5 * 1000Hz
 N = 1000
@@ -53,8 +53,6 @@ C = 300SNN.pF
 
 
 #
-Input_E = SNN.Poisson(; N = N, param = SNN.PoissonParameter(; rate = νe))
-Input_I = SNN.Poisson(; N = N, param = SNN.PoissonParameter(; rate = νi))
 E = SNN.AdEx(; N = 4000, param = LKD_AdEx_exc)
 I = SNN.AdEx(; N = 1000, param = LKD_AdEx_inh)
 
@@ -62,19 +60,16 @@ EE = SNN.SpikingSynapse(E, E, :ge; μ = μEE, p = 0.2)
 EI = SNN.SpikingSynapse(E, I, :ge; μ = μEI, p = 0.2)
 IE = SNN.SpikingSynapse(I, E, :gi; μ = μIE, p = 0.2)
 II = SNN.SpikingSynapse(I, I, :gi; μ = μII, p = 0.2)
-ProjE = SNN.SpikingSynapse(Input_E, E, :ge; μ = μ_in, p = p_in)
-ProjI = SNN.SpikingSynapse(Input_I, I, :ge; μ = μ_in, p = p_in)
 
-#3
-P = [E, I, Input_E, Input_I]
-C = [EE, EI, IE, II, ProjE, ProjI]
-# C = [Proj]
+Input_E = SNN.PoissonStimulus(E, :ge, param = νe, cells=:ALL)
+Input_I = SNN.PoissonStimulus(I, :ge, param = νi, cells=:ALL)
+
 ##
+model =  merge_models(SNN.@symdict E I Input_E Input_I EE EI IE II )
+SNN.monitor(model.pop, [:fire])
 
-SNN.monitor([E, I], [:fire])
 SNN.sim!(P, C; duration = 15second)
-bar(sum(hcat(E.records[:fire]...) ./ 15, dims = 2)[:, 1])
-SNN.raster([E, I], [4.3s, 5s])
+SNN.raster(P, [4.3s, 5s])
 SNN.monitor([E, I], [:ge, :gi, :v])
 SNN.sim!(P, C; duration = 1second)
 
