@@ -16,8 +16,9 @@ model_info = (repetition=50,
 
 root = YAML.load_file("conf.yml")["paths"]["zeus"]
 path = joinpath(root, "sequence_recognition", "overlap")
-data = load_data(path, "Tripod-associative", model_info)
-data = load_data("data/sequence_recognition/overlap_lexicon/associative_phase-p_post=0.08-peak_rate=8.0-proj_strength=20.0-repetition=200.data.jld2")
+# data = load_data(path, "Tripod-associative", model_info)
+path= "/Users/cocconat/Documents/Research/projects/network_models/data/sequence_recognition/overlap/associative-UUID=a25b-p_post=0.05-peak_rate=8.0-proj_strength=20.0-repetition=40.data.jld2"
+data = load_data(path)
 @unpack model, seq, mytime, lexicon = data
 
 offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
@@ -25,8 +26,8 @@ offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
 ##
 
 ## Compute the confusion matrix of the most active population in the interval [0ms, 100ms]
-confusion_matrix = score_activity(model, seq, [0ms, 100ms])
-heatmap(confusion_matrix, c=:amp, clims=(0,1), xlabel="True", ylabel="Predicted", ticks=(1:length(seq.symbols.words), seq.symbols.words), size=(500,500), xrotation = 45)
+_confusion_matrix = score_activity(model, seq, [0ms, 100ms])
+heatmap(_confusion_matrix, c=:amp, clims=(0,1), xlabel="True", ylabel="Predicted", ticks=(1:length(seq.symbols.words), seq.symbols.words), size=(500,500), xrotation = 45)
 
 ## Compute the spike count features and the membrane potential features and use them to train a SVM classifier
 S = spikecount_features(model.pop.E, offsets)
@@ -55,40 +56,18 @@ plot!(xlims=(1000,2500))
 
 
 ## Plot the average activity of the network
-function plot_average_activity(sym, word, model, seq; before=100ms, after=300ms, zscore=true)
-    membrane, r_v = SNN.interpolated_record(model.pop.E, sym)
-    myintervals = sign_intervals(word, seq)
-    Trange = -before:1ms:diff(myintervals[1])[1]+after
-    activity = zeros(length(seq.symbols.words),size(Trange,1))
-    for w in eachindex(seq.symbols.words)
-        cells = getcells(model.stim, seq.symbols.words[w], :d)
-        ave_fr = mean(membrane[cells, :])
-        std_fr = std(membrane[cells, :])
-        n = 0
-        for myinterval in myintervals
-            _range = myinterval[1]-before:1ms:myinterval[2]+after
-            _range[end] > r_v[end] && continue
-            v = mean(membrane[cells, _range], dims=1)[1,:]
-            activity[w, :] += zscore ? (v .- ave_fr)./std_fr : v
-            n+=1
-        end
-        activity[w, :] ./= n
-    end
-    plot(Trange, activity[:,:]', label=hcat(string.(seq.symbols.words)...), xlabel="Time (ms)", ylabel="Membrane potential (mV)", title="")
-    vline!([0, diff(myintervals[1])[1]], c=:black, ls=:dash, label="")
-    word_id = findfirst(seq.symbols.words .== word)
-    plot!(Trange, activity[word_id,:], c=:black, label=string(word), lw=5, )
-end
 
-plot_average_activity(:v_s, :POLLEN, model, seq, zscore=false)
+plot_average_word_activity(:fire, :POLLEN, model, seq, zscore=false, target=:d)
+plot_average_word_activity(:v_s, :POLLEN, model, seq, zscore=false, target=:d)
+plot_average_word_activity(:fire, :POLLEN, model, seq, zscore=false, target=:d)
 
 ## Plot the average activity of the network for all words
 using ThreadTools
 plots_fire = tmap(seq.symbols.words) do word
-    plot_average_activity(:v_s, word, model, seq, before=100ms,)
+    plot_average_word_activity(:fire, word, model, seq, before=100ms, target = :d, )
 end
 plots_mem = tmap(seq.symbols.words) do word
-    plot_average_activity(:v_s, word, model, seq, before=100ms)
+    plot_average_word_activity(:v_s, word, model, seq, before=100ms, target = :d, )
 end
 plot(plots_fire..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false)
 plot(plots_mem..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false)
@@ -96,14 +75,14 @@ plot(plots_mem..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false
 ##  Plot the average synaptic weight between populations§
 names, pops = filter_populations(model.stim) |> subpopulations
 connections = zeros(length(pops), length(pops))
-indices = Int64[]
+w_indices = Int64[]
 for pre in eachindex(pops)
     for post in eachindex(pops)
         pre_pop = pops[pre]
         post_pop = pops[post]
         # update_weight!(pre_pop, post_pop, model.syn.E_to_E)
         connections[post, pre] = (average_weight(pre_pop, post_pop, model.syn.E_to_E) - mean(model.syn.E_to_E.W))./mean(model.syn.E_to_E.W)
-        append!(indices , weights_indices(pre_pop, post_pop, model.syn.E_to_E))
+        append!(w_indices , weights_indices(pre_pop, post_pop, model.syn.E_to_E))
     end
 end
 plasticity!(model.syn.norm, model.syn.norm.param)
