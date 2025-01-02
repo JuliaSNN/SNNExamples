@@ -11,13 +11,13 @@ using LaTeXStrings
 
 ##
 include("../../parameters/Mongillo_WM2008.jl")
-model, assemblies = Mongillo2008()
+model, assemblies = Mongillo2008(n_assemblies=2)
 
 peak_rate = 2kHz
 stim_parameters = Dict(:decay=>1ms, :peak=>peak_rate, :start=>peak_rate)
 # intervals =[[3s, 3s+0.3s],
-            # [5.5s, 5.8s ]]
-intervals= [[-1,-1]]
+#             [5.5s, 5.8s ]]
+intervals= [[-1,-1],[-1,-1]]
 stim_assembly = Dict( assembly.name=>begin
                             variables = merge(stim_parameters, 
                                     Dict(:intervals=>[intervals[assembly.id]]))
@@ -35,8 +35,7 @@ w_rec = [assemblies[1].indices..., indices(model.syn.EE, 81:160, 81:160)...]
 SNN.monitor(model.syn.EE, [(:ρ, w_rec ), (:W, w_rec )], sr=20Hz)
 
 ## Training
-
-simtime = SNN.train!(model=model,duration=3.3s, dt=0.125, pbar=true)
+simtime = SNN.train!(model=model,duration=1.3s, dt=0.125, pbar=true)
 
 root = datadir("working_memory", "Mongillo2008") |> x-> (mkpath(dirname(x)); x)
 path = SNN.save_model(path= root, model= model, name="8000_cells_oneitem_nostim", assemblies=assemblies, simtime=simtime)
@@ -46,8 +45,9 @@ stp_plot(model, interval, assemblies)
 ##
 @unpack model, simtime, assemblies =  SNN.load_data(path)
 simtime = SNN.train!(model=model,duration=0.5s, dt=0.125, pbar=true, time=simtime)
-μee_assembly = 0.48 * 8000/model.pop.E.N  #*2.5
+μee_assembly = 0.48 * 8000/model.pop.E.N  *2.5
 update_weights!(model.syn.EE, assemblies[1].cells, assemblies[1].cells, μee_assembly)
+update_weights!(model.syn.EE, assemblies[2].cells, assemblies[2].cells, μee_assembly)
 
 using ProgressBars
 input = 0.08pA

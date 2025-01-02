@@ -14,7 +14,10 @@ using YAML
 root = YAML.load_file(projectdir("conf.yml"))["paths"]["zeus"]
 path = joinpath(root, "sequence_recognition", "overlap")
 
-include(projectdir("examples/parameters/dendritic_network.jl"))
+params_file = projectdir("examples/parameters/dendritic_network.jl")
+include(params_file)
+
+
 lexicon = let
     dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
     duration = getduration(dictionary, 50ms)
@@ -46,6 +49,11 @@ model_info = (repetition=exp_config.repetition,
             p_post = exp_config.p_post,
             UUID = randstring(4)
             )
+
+save_parameters(path=path, name="parameters", info=model_info, 
+                parameters = bursty_dendritic_network,
+                file_path = params_file, force=true)   
+
 
 ## Merge network and stimuli in model
 network = ballstick_network(;exp_config...)
