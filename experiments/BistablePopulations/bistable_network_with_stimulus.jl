@@ -100,9 +100,8 @@ train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt 
 
 
 # Plot the raster plot of the network
-SNN.raster([network.pop...], [4s, 15s])
+SNN.raster(network.pop, [4s, 15s])
 ##
-
 network.syn.sub_2_I_to_E.W
 # define the time interval for the analysis
 

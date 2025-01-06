@@ -5,9 +5,10 @@ SNN.@load_units;
 using SNNUtils
 using Plots
 using Statistics
+##
 
 # Define each of the network recurrent assemblies
-function define_network(N, name)
+function define_network(N, name, istdp)
     # Number of neurons in the network
     N = N
     # Create dendrites for each neuron
@@ -15,16 +16,17 @@ function define_network(N, name)
     # Define interneurons 
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV), name="Inh_$name")
     # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 1.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :hi, p = 0.2, μ = 1.0)
+    E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 1.0, name="E_to_I_$name")
+    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 0.5, name="E_to_E_$name")
+    I_to_I = SNN.SpikingSynapse(I, I, :hi, p = 0.2, μ = 1.0, name="I_to_I_$name")
     I_to_E = SNN.SpikingSynapse(
         I,
         E,
         :hi,
         p = 0.2,
-        μ = 1,
-        param = SNN.iSTDPParameterRate(r = 4Hz, η=0.02),
+        μ = 25,
+        param = istdp,
+        name="I_to_E_$name",
     )
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
 
@@ -34,14 +36,21 @@ function define_network(N, name)
     noise = SNN.PoissonStimulus(E, :he, param=4.5kHz, cells=:ALL)
     # Return the network as a tuple
     SNN.monitor([E, I], [:fire])
+    SNN.monitor(I_to_E, [:W], sr=10Hz)
     SNN.merge_models(pop, syn, noise=noise, silent=true)
 end
 
 n_assemblies = 4
+istdp = SNN.iSTDPParameterTime(τy = 20ms, η = 0.5) 
+# istdp = STDPParameter(A_pre =5e-1, 
+#                            A_post=5e-1,
+#                            τpre  =25ms,
+#                            τpost =25ms)
 ## Instantiate the network assemblies and local inhibitory populations
-subnets = Dict(Symbol("sub_$n") => define_network(400, n) for n = 1:n_assemblies)
+subnets = Dict(Symbol("sub_$n") => define_network(400, n, istdp) for n = 1:n_assemblies)
 # Add noise to each assembly
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
+
 syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)
     for j in eachindex(subnets)
@@ -53,46 +62,57 @@ for i in eachindex(subnets)
                 subnets[j].pop.I,
                 :he,
                 p = 0.2,
-                μ = 1.25,
+                μ = 15.25,
             ),
         )
     end
 end
 
+
+
 ## Merge the models and run the simulation, the merge_models function will return a model object (syn=..., pop=...); the function has strong type checking, see the documentation.
 network = SNN.merge_models(subnets, syns)
+trig_param1 = PoissonStimulusInterval(fill(8.5kHz, 400), [[8s, 9s]])
+trig_param2 = PoissonStimulusInterval(fill(8.5kHz, 400), [[12s, 13s]])
+trigger = Dict{Symbol,Any}(
+    :first => SNN.PoissonStimulus(network.pop.sub_1_E, :he, param=trig_param1, cells=:ALL, name="First stim"),
+    :second => SNN.PoissonStimulus(network.pop.sub_2_E, :he, param=trig_param2, cells=:ALL, name="Second stim")
+)
+network = SNN.merge_models(network, trigger=trigger)
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
-time_keeper = SNN.Time()
-train!(model = network, duration = 5000ms, time = time_keeper, pbar = true, dt = 0.125)
-
-time_keeper = SNN.Time()
-SNN.clear_records([network.pop...])
-train!(model = network, duration = 15000ms, time = time_keeper, pbar = true, dt = 0.125)
+# train!(model = network, duration = 5000ms, pbar = true, dt = 0.125)
+SNN.clear_records(network.pop)
+SNN.clear_records(network.syn)
+train!(model = network, duration = 15000ms, pbar = true, dt = 0.125)
 
 # Plot the raster plot of the network
-SNN.raster([network.pop...], [1s, 15s])
+SNN.raster(network.pop, [0s, 15s], every=5)
+##
+
+i_to_e = SNN.filter_items(network.syn, condition=p->occursin("I_to_E", p.name))
+w_i = map(eachindex(i_to_e)) do i
+    w, r_t = record(i_to_e[i], :W, interpolate=true)
+    mean(w, dims=1)[1,:]
+end |> collect
+
+_, r_t= record(i_to_e[1], :W, interpolate=true)
+plot(r_t./1000, w_i, xlabel="Time (s)", ylabel="Synaptic weight", legend=:topleft, title="Synaptic weight of I to E synapse")
+
 ##
 
 # define the time interval for the analysis
-interval = 0:20:SNN.get_time(time_keeper)
-
+interval = 2s:20ms:SNN.get_time(time_keeper)
 # select only excitatory populations
-exc_populations = SNN.filter_populations(populations, :E)
-exc_populations.sub_1_E
-
 # get the spiketimes of the excitatory populations and the indices of each population
-spiketimes = SNN.spiketimes(exc_populations)
-indices = SNN.population_indices(populations, :E)
-
+exc_populations = SNN.filter_items(network.pop, condition=p->occursin("Exc", p.name))
+exc_spiketimes = SNN.spiketimes(network.pop)
+# exc_indices = SNN.population_indices(exc_populations)
 # calculate the firing rate of each excitatory population
-rates = map(eachindex(indices)) do i
-    rates, intervals =
-        SNN.firing_rate(exc_populations, interval = interval, pop = indices[i], τ = 50)
-    mean_rate = mean(rates)
-end
+rates, intervals = SNN.firing_rate(exc_populations, interval = interval,  τ = 50, interpolate=false)
+rates = mean.(rates)
 
-## Plot the firing rate of each assembly and the correlation matrix
+# Plot the firing rate of each assembly and the correlation matrix
 p1 = plot()
 for i in eachindex(rates)
     plot!(
@@ -101,11 +121,14 @@ for i in eachindex(rates)
         label = "Assembly $i",
         xlabel = "Time (ms)",
         ylabel = "Firing rate (Hz)",
-        xlims = (10_000, 15_000),
+        xlims = (2_000, 15_000),
         legend = :topleft,
     )
 end
 plot!()
+
+
+##
 
 cor_mat = zeros(length(rates), length(rates))
 for i in eachindex(rates)
