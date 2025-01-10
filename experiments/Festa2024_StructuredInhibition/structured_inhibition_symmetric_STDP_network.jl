@@ -22,12 +22,13 @@ network_param =(
         wii = 0.3,
         )
 network = create_network(;stdp, network_param, neuron_param ) = let
-    # Number of neurons in the network
+    # Network parameters
     @unpack Ne, Ni, pee, pei, pie, pii, wee, wei, wii, wie= network_param
-    # Create dendrites for each neuron
     E = SNN.IF(N = Ne, param = neuron_param, name="Excitatory")
     I1 = SNN.IF(N = Ni, param = neuron_param, name="Inh1")
-    # Define interneurons 
+    pop = dict2ntuple(@strdict E I1)
+
+    # Synapses
     synapses = Dict{Symbol,Any}(
         :E_to_E => SNN.SpikingSynapse(E, E, :ge, p = pee, μ = wee, name = "E_to_E"),
         :E_to_I1 => SNN.SpikingSynapse(E, I1, :ge, p = pei, μ = wei, name = "E_to_I1"),
@@ -35,7 +36,7 @@ network = create_network(;stdp, network_param, neuron_param ) = let
         :I1_to_E => SNN.SpikingSynapse(I1, E, :gi, p = pie, μ = wie, param = stdp, name = "I1_to_E"),
     ) |> dict2ntuple
 
-    pop = dict2ntuple(@strdict E I1)
+    # Stimuli
     stim = Dict{Symbol,Any}(
         :stim_e => SNN.PoissonStimulus(E, :ge, param=50Hz*50, μ=1f0, cells=:ALL),
         :stim_i => SNN.PoissonStimulus(I1, :ge, param=50Hz*40, μ=0.2f0, cells=:ALL),
@@ -83,7 +84,6 @@ monitor(model.pop, [:fire])
 monitor(model.syn, [:W],  sr=1Hz)
 monitor(model.pop, [:gi], sr=20Hz)
 monitor(model.pop, [:ge], sr=20Hz)
-monitor(model.pop, [:v],  sr=20Hz)
 sim!(model=model, duration = 50s, time = simtime, pbar = true)
 ##
 tic = time()
