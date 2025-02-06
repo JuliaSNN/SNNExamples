@@ -28,7 +28,7 @@ offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
 ##
 
 ## Compute the confusion matrix of the most active population in the interval [0ms, 100ms]
-_confusion_matrix = score_activity(model, seq, [0ms, 100ms], target=:d1)
+_confusion_matrix = score_activity(model, seq, [0ms, 100ms], targets=[:d1, :d2])
 heatmap(_confusion_matrix, c=:amp, clims=(0,1), xlabel="True", ylabel="Predicted", ticks=(1:length(seq.symbols.words), seq.symbols.words), size=(500,500), xrotation = 45)
 
 ## Compute the spike count features and the membrane potential features and use them to train a SVM classifier
