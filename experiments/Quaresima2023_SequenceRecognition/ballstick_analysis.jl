@@ -5,7 +5,9 @@ SNN.@load_units;
 using SNNUtils
 using Plots
 using Statistics
+using LaTeXStrings
 using YAML
+using MLJ
 ##
 model_info = (repetition=50, 
             peak_rate=8.0,
@@ -18,7 +20,7 @@ root = YAML.load_file("conf.yml")["paths"]["zeus"]
 path = joinpath(root, "sequence_recognition", "overlap")
 # data = load_data(path, "Tripod-associative", model_info)
 path= "/Users/cocconat/Documents/Research/projects/network_models/data/sequence_recognition/overlap/associative-UUID=a25b-p_post=0.05-peak_rate=8.0-proj_strength=20.0-repetition=40.data.jld2"
-data = load_data(path)
+data = load_data(model_path)
 @unpack model, seq, mytime, lexicon = data
 
 offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
@@ -26,7 +28,7 @@ offsets, ys = all_intervals(:words, seq, interval=[0ms, 100ms])
 ##
 
 ## Compute the confusion matrix of the most active population in the interval [0ms, 100ms]
-_confusion_matrix = score_activity(model, seq, [0ms, 100ms])
+_confusion_matrix = score_activity(model, seq, [0ms, 100ms], target=:d1)
 heatmap(_confusion_matrix, c=:amp, clims=(0,1), xlabel="True", ylabel="Predicted", ticks=(1:length(seq.symbols.words), seq.symbols.words), size=(500,500), xrotation = 45)
 
 ## Compute the spike count features and the membrane potential features and use them to train a SVM classifier
@@ -37,7 +39,7 @@ M = sym_features(:v_s, model.pop.E, offsets)
 ## Plot the activity of the network, and the word and phoneme raster plots
 T = get_time(mytime)
 Trange = T-0.5s:1ms:T-100ms
-names, pops = filter_populations(model.stim) |> subpopulations
+names, pops = filter_items(model.stim) |> subpopulations
 pr1 = SNN.raster(model.pop.E, Trange, populations=pops, names=names)
 pr2 = SNN.raster(model.pop, Trange)
 plot(pr1, pr2, layout = (2, 1), size = (800, 800), margin = 5Plots.mm)
@@ -73,7 +75,7 @@ plot(plots_fire..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=fals
 plot(plots_mem..., layout=(5,2), size=(800,1300), margin=5Plots.mm, legend=false)
 
 ##  Plot the average synaptic weight between populations§
-names, pops = filter_populations(model.stim) |> subpopulations
+names, pops = filter_items(model.stim) |> subpopulations
 connections = zeros(length(pops), length(pops))
 w_indices = Int64[]
 for pre in eachindex(pops)
@@ -81,13 +83,14 @@ for pre in eachindex(pops)
         pre_pop = pops[pre]
         post_pop = pops[post]
         # update_weight!(pre_pop, post_pop, model.syn.E_to_E)
-        connections[post, pre] = (average_weight(pre_pop, post_pop, model.syn.E_to_E) - mean(model.syn.E_to_E.W))./mean(model.syn.E_to_E.W)
-        append!(w_indices , weights_indices(pre_pop, post_pop, model.syn.E_to_E))
+        connections[post, pre] = 0.5*((average_weight(pre_pop, post_pop, model.syn.E_to_E1) - mean(model.syn.E_to_E1.W))./mean(model.syn.E_to_E1.W) +(average_weight(pre_pop, post_pop, model.syn.E_to_E2) - mean(model.syn.E_to_E2.W))./mean(model.syn.E_to_E2.W))*100
+        append!(w_indices , weights_indices(pre_pop, post_pop, model.syn.E_to_E1))
     end
 end
-plasticity!(model.syn.norm, model.syn.norm.param)
-using LaTeXStrings
-heatmap(ticks=(1:length(names),names), connections, c=:amp, xlabel="Pre-synaptic population", ylabel="Post-synaptic population", title="Average synaptic weight "*L"(w_0)", size=(500,400), xrotation=45)
+plasticity!(model.syn.norm1, model.syn.norm1.param)
+connections 
+heatmap(ticks=(1:length(names),names), connections, c=:bluesreds, xlabel="Pre-synaptic population", ylabel="Post-synaptic population", title="Average synaptic weight "*L"(w_0)", clims=(-maximum(connections),maximum(connections)), size=(500,400), xrotation=45)
+
 vline!([10.5], c=:black, ls=:dash, label="")
 hline!([10.5], c=:black, ls=:dash, label="")
 
