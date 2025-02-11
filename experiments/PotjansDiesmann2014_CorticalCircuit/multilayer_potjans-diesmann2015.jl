@@ -296,12 +296,13 @@ SNN.raster(model.pop, [10s, 15s])
 
 Trange = 5s:10:15s
 frE, interval, names_pop = SNN.firing_rate(model.pop, interval = Trange)
-plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft)
+display(plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft))
 ##
 
-vecplot(model.pop.E23, :v, neurons =1, r=0s:15s,label="soma")
-layer_names, conn_probs, conn_j = potjans_conn(4000)
-pj = heatmap(conn_j, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:bluesreds,  title="Synaptic weights", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500), clims=(-maximum(abs.(conn_j)), maximum(abs.(conn_j))))
-pprob=heatmap(conn_probs, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:viridis,  title="Connection probability", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500))
-plot(pprob, pj, layout=(1,2), size=(1000,500), margin=5Plots.mm)
+display(vecplot(model.pop.E23, :v, neurons =1, r=0s:15s,label="soma"))
+
+#layer_names, conn_probs, conn_j = potjans_conn(4000)
+#pj = heatmap(conn_j, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:bluesreds,  title="Synaptic weights", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500), clims=(-maximum(abs.(conn_j)), maximum(abs.(conn_j))))
+#pprob=heatmap(conn_probs, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:viridis,  title="Connection probability", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500))
+#plot(pprob, pj, layout=(1,2), size=(1000,500), margin=5Plots.mm)
 ##
