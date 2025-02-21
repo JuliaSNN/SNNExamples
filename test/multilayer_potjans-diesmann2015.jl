@@ -258,7 +258,7 @@ pre_synapses = [pre for pre in pre_synapses if length(pre) != 0]
 post_synapses = [post for post in post_synapses if length(post) != 0]
 pre_process_for_sankey(pre_layer_names,post_layer_names,conn_map_pre_density)
 include("sankey_only.jl")
-sankey_applied(;from_jld=true)
+sankey_applied(true)
 p = SNNPlots.doparallelCoords(pre_synapses,post_synapses)
 Plots.plot(p)
 savefig("parallelCoordinatesPlot.png")
