@@ -1,32 +1,63 @@
-name: CI - Julia
+name: CI
 
 on:
   push:
     branches:
       - main
   pull_request:
-    branches:
-      - main
+
+permissions:
+  actions: write
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Check out the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Step 2: Set up Julia
       - name: Set up Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@latest
         with:
-          version: '1.9' # Adjust to your preferred Julia version
+          version: '1.9' # Specify the Julia version you need
 
+      # Step 3: Set up cache for dependencies
+      - name: Setup cache
+        uses: julia-actions/cache@v2
+
+      # Step 4: Install dependencies (registered and unregistered)
       - name: Install Dependencies
-        run: julia --project=. -e 'using Pkg;Pkg.add(PackageSpec(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl"));Pkg.instantiate()'
+        run: |
+          julia -e '
+            import Pkg;
+            # Add unregistered dependency from GitHub
+            Pkg.develop(Pkg.PackageSpec(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl"));
+            # Install all dependencies listed in Project.toml
+            Pkg.update();
+            Pkg.resolve();
+            Pkg.instantiate();  
+          '
 
+      # Step 5: Run tests
+      # Step 5: Run tests with force_latest_compatible_version=true
       - name: Run tests
-        run: julia --project=@. -e 'using Pkg; Pkg.test()'
-
+        run: |
+          julia -e '
+            import Pkg;
+            # Add unregistered dependency from GitHub
+            Pkg.develop(Pkg.PackageSpec(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl"));
+            # Install all dependencies listed in Project.toml
+            Pkg.update();
+            Pkg.resolve();
+            Pkg.instantiate();
+            Pkg.activate(".");
+            Pkg.test()
+          '
+      # Step 6: Upload test results on failure
       - name: Upload test results
         if: failure()
         uses: actions/upload-artifact@v3

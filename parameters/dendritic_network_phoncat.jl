@@ -1,18 +1,22 @@
 using Distributions
 
 ## Synapses Tripod neuron
-bursty_dendritic_network = let 
-    EyalGluDend = Glutamatergic(
-                Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73),
-                ReceptorVoltage(E_rev = 0.0, τr = 8, τd = 35.0, g0 = 1.31, nmda = 1.0f0),
-            )
+bursty_dendritic_network2 = let
     DuarteGluSoma =  Glutamatergic(
-            Receptor(E_rev = 0.0, τr = 0.26, τd = 2.0, g0 = 0.73), 
-            ReceptorVoltage(E_rev = 0.0, nmda = 0.0f0),
+            Receptor(E_rev = 0.0mV, τr = 0.26ms, τd = 2.0ms, g0 = 0.73nS), # AMPA
+            Receptor(), # NMDA
+        )
+    MilesGabaSoma =  GABAergic(
+            Receptor(E_rev = -70.0mV, τr = 0.1ms, τd = 15.0ms, g0 = 0.38nS), # GABAa
+            Receptor() # GABAb
+        )
+    EyalGluDend = Glutamatergic(
+            Receptor(E_rev = 0.0mV, τr = 0.26ms, τd = 2.0ms, g0 = 0.73nS), # AMPA
+            Receptor(E_rev = 0.0mV, τr = 8ms, τd = 35.0ms, g0 = 1.31, nmda = 1.0f0),
         )
     MilesGabaDend =  GABAergic(
-            Receptor(E_rev = -70.0, τr = 4.8, τd = 29.0, g0 = 0.27), 
-            Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.006), # τd = 100.0
+            Receptor(E_rev = -70.0mV, τr = 4.8ms, τd = 29.0ms, g0 = 0.27nS), # GABAa
+            Receptor(E_rev = -90.0mV, τr = 30ms, τd = 400.0ms, g0 = 0.006nS), # GABAb
         )
     exc = (
         dends = [(150um, 400um), (150um, 400um)],  # dendritic lengths
@@ -26,66 +30,71 @@ bursty_dendritic_network = let
             C = 281pF,  # membrane capacitance
             gl = 40nS,  # leak conductance
             R = nS / 40nS * SNN.GΩ,  # membrane resistance
-            τm = 281pF / 40nS,  # membrane time constant
-            Er = -70.6mV,  # reset potential
-            Vr = -55.6mV,  # resting potential
-            Vt = -50.4mV,  # threshold potential
+            τm = 281pF / 40nS, # * ms,  # membrane time constant
+            Er = -70.6mV,  # resting potential
+            Vr = -55mV, # reset potential # Vr = -70.6mV,
+            Vt = -50mV,  # threshold potential # Vt = -50.4mV
             ΔT = 2mV,  # slope factor
             τw = 144ms,  # adaptation time constant
             a = 4nS,  # subthreshold adaptation conductance
-            b = 10.5pA,  # spike-triggered adaptation current
-            AP_membrane = 2.0f0mV,  # action potential membrane potential
+            b = 80.5pA,  # spike-triggered adaptation current
+            AP_membrane = 20.0f0mV,  # action potential membrane potential
             BAP = 1.0f0mV,  # burst afterpotential
             up = 1ms,  # refractory period
             τabs = 2ms,  # absolute refractory period
         ),
-        dend_syn = Synapse(EyalGluDend, MilesGabaDend), # defines glutamaterbic and gabaergic receptors in the dendrites
-        soma_syn=  Synapse(DuarteGluSoma, MilesGabaSoma)  # connect EyalGluDend to MilesGabaDend
+        soma_syn=  Synapse(DuarteGluSoma, MilesGabaSoma),  # connect EyalGluDend to MilesGabaDend
+        dend_syn = Synapse(EyalGluDend, MilesGabaDend) # defines glutamaterbic and gabaergic receptors in the dendrites
     )
     PV = SNN.IFParameterGsyn(
-        τm = 104.52pF / 9.75nS,
+        τm = 104.52pF / 9.75nS, #) * ms
         El = -64.33mV,
         Vt = -38.97mV,
         Vr = -57.47mV,
-        τabs = 0.5ms, 
+        E_i = -75mV,
+        E_e = 0mV,
+        τabs = 0.5ms,
         τre = 0.18ms,
         τde = 0.70ms,
         τri = 0.19ms,
         τdi = 2.50ms,
         gsyn_e = 1.04nS,
-        gsyn_i = 0.84nS, 
+        gsyn_i = 0.84nS,
     )
 
     SST = SNN.IFParameterGsyn(
-        τm = 102.86pF / 4.61nS,
+        τm = 102.86pF / 4.61nS, #) * ms,
         El = -61mV,
         Vt = -34.4mV,
         Vr = -47.11mV,
+        E_i = -75mV,
+        E_e = 0mV,
         τabs = 1.3ms,
         τre = 0.18ms,
         τde = 1.80ms,
         τri = 0.19ms,
         τdi = 5.00ms,
-        gsyn_e = 0.56nS, 
-        gsyn_i = 0.59nS, 
+        gsyn_e = 0.56nS,
+        gsyn_i = 0.59nS,
         a = 4nS,
         b = 80.5pA,       #(pA) 'sra' current increment
         τw = 144ms,        #(s) adaptation time constant (~Ca-activated K current inactivation)
     )
     plasticity = (
-        iSTDP_rate = SNN.iSTDPParameterRate(η = 0.2, τy = 10ms, r=10Hz, Wmax = 200.0pF, Wmin = 2.78pF),
-        iSTDP_potential =SNN.iSTDPParameterPotential(η = 0.2, v0 = -70mV, τy = 20ms, Wmax = 200.0pF, Wmin = 2.78pF),
+        iSTDP_rate = SNN.iSTDPParameterRate(η = 0.2, τy = 20ms, r=10Hz, Wmax = 243.0pF, Wmin = 2.78pF),
+        iSTDP_potential =SNN.iSTDPParameterPotential(η = 0.2, v0 = -70mV, τy = 5ms, Wmax = 243.0pF, Wmin = 2.78pF),
+        # iSTDP_antihebbian = SNN.STDPAntiHebbianAsymmetric(τpre=5ms, τpost=5ms, A_post = 10e-1pA / mV, A_pre =  10e-1pA / (mV * mV), Wmax=15.0pF),
         vstdp = SNN.vSTDPParameter(
-                A_LTD = 4.0f-4,  #ltd strength
-                A_LTP = 14.0f-4, #ltp strength
-                θ_LTD = -40.0,  #ltd voltage threshold # set higher
-                θ_LTP = -20.0,  #ltp voltage threshold
-                τu = 15.0,  #timescale for u variable
-                τv = 45.0,  #timescale for v variable
-                τx = 20.0,  #timescale for x variable
-                Wmin = 2.78,  #minimum ee strength
-                Wmax = 81.4,   #maximum ee strength
-            )
+            A_LTD = 4.0f-4,  #ltd strength # CHANGED from 4.0f-5
+            A_LTP = 1.4f-3, #ltp strength # CHANGED from 1.4f-4
+            θ_LTD = -40.0mV,  #ltd voltage threshold # set higher
+            θ_LTP = -20.0mV,  #ltp voltage threshold
+            τu = 15.0ms,  #timescale for u variable
+            τv = 45.0ms,  #timescale for v variable
+            τx = 20.0ms,  #timescale for x variable
+            Wmin = 2.78pF,  #minimum ee strength
+            Wmax = 41.4pF,   #maximum ee strength
+        )
     )
     connectivity = (
         EdE = (p = 0.2,  μ = 10.78, dist = Normal, σ = 1),
@@ -99,22 +108,26 @@ bursty_dendritic_network = let
         EdIs = (p = 0.2, μ = log(15.8), dist = LogNormal, σ = 0.),
         IfIs = (p = 0.2, μ = log(1.47), dist = LogNormal, σ = 0.),
         IsIs = (p = 0.2, μ = log(16.2), dist = LogNormal, σ = 0.),
+
+        EIig = (p = 0.2, μ = log(10.0), dist = LogNormal, σ = 0.), # ADDED
+        EIic = (p = 0.2, μ = log(6.0), dist = LogNormal, σ = 0.), # ADDED
     )
 
     noise_params = let
-        exc_soma = (param=4.0kHz,  μ=2.8f0,  cells=:ALL, name="noise_exc_soma")
-        exc_dend = (param=0.0kHz,  μ=0.f0,  cells=:ALL, name="noise_exc_dend")
-        inh1 = (param=2.5kHz,  μ=2.8f0,  cells=:ALL,     name="noise_inh1")
-        inh2 = (param=3.5kHz,  μ=2.8f0, cells=:ALL,     name="noise_inh2")
-        (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2)
+        exc_soma = (param=4.5kHz,  μ=2.78f0pF,  N=500, cells=:ALL, name="noise_exc_soma")
+        exc_dend = (param=0.0kHz,  μ=0.f0,  N=500, cells=:ALL, name="noise_exc_dend")
+        inh1 = (param=2.25kHz,  μ=2.78f0pF,  N=500, cells=:ALL,     name="noise_inh1")
+        inh2 = (param=2.25kHz,  μ=2.78f0pF, N=500, cells=:ALL,     name="noise_inh2")
+        inhib = (param=2.25kHz,  μ=2.78f0pF, N=500, cells=:ALL,     name="noise_inhib")
+        (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2, inhib=inhib)
     end
 
     inh_ratio = (
-                    ni1 = 0.35 *1/4,
-                    ni2 = 0.65 *    1/4,    
+                    ni1 = 0.35 * 1/4,
+                    ni2 = 0.65 * 1/4,
         )
 
-    (exc=exc, pv=PV, sst=SST, plasticity,connectivity, noise_params, inh_ratio)
+    (exc=exc, pv=PV, sst=SST, plasticity, connectivity, noise_params, inh_ratio)
 end
 
 function ballstick_network(;params, name, NE, STDP, kwargs...)
