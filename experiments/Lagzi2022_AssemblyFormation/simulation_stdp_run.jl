@@ -3,7 +3,6 @@ using SpikingNeuralNetworks
 using DrWatson
 SNN.@load_units;
 using SNNUtils
-using Plots
 using Statistics
 using Random
 using StatsBase
@@ -15,7 +14,7 @@ include("parameters.jl")
 # Instantiate a  Symmetric STDP model with these parameters:
 
 
-path = datadir("Lagzi2022_AssemblyFormation")
+path = datadir("Lagzi2022_AssemblyFormation", "baseline_model")
 Threads.@threads for t in eachindex(τs)
     for r in eachindex(stim_rates)
         stim_rate = stim_rates[r]
