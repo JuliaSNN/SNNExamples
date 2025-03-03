@@ -9,8 +9,8 @@ using StatsBase
 using Distributions
 using LaTeXStrings
 
-##
-include("../../parameters/Mongillo_WM2008.jl")
+
+include("../../parameters/mongillo_WM2008.jl")
 model, assemblies = Mongillo2008(n_assemblies=2)
 
 peak_rate = 2kHz
