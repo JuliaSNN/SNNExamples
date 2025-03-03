@@ -18,7 +18,7 @@ function test_sound_response(model, sound_stim;
                 !isa(syn.param, no_STDPParameter) &&  monitor(syn,[:W], sr=5Hz)
         end
 
-        sound_stim = SpikeTimeStimulus(getfield(model.pop,target_pop), :ge, param=SpikeTimeParameter(sound_stim))
+        sound_stim = SpikeTimeStimulus(getfield(model.pop,target_pop), :he, param=SpikeTimeParameter(sound_stim))
         shift_spikes!(sound_stim, delay)
 
         TTL = []

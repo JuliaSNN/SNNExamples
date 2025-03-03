@@ -15,69 +15,147 @@ using Logging
 # Instantiate a  Symmetric STDP model with these parameters:
 include("parameters.jl")
 include("protocol.jl")
+include("plots.jl")
 
-ResponsePath = datadir("Lagzi2022_AssemblyFormation", "mixed_inh", "SoundResponseExp2")
-@assert isdir(ResponsePath)
+# ResponsePath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", "SoundResponseExp5_LowInput")
+# @assert isdir(ResponsePath)
 
-recordings_noplast = []
-recordings_plast = []
-# Threads.@threads 
-for t in eachindex(NSSTs)
-        @unpack stim_τ, stim_rate = config
-        info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t])
 
-        exp_config = (delay=1s, repetitions=40, warmup=20s, target_pop =:E1 , input_strength=200)
+function test_experiment(ResponsePath)
+        recordings = []
+        models = []
+        for t in eachindex(NSSTs)
+                @unpack stim_τ, stim_rate = config
+                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t])
+                exp_config = (delay=1s, repetitions=40, warmup=20s, target_pop =:E1 , input_strength=200)
+                # # Set model info
+                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=false)
+                rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
+                if !isfile(rec_name) 
+                        info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=true)
+                        rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
+                end
 
-        # # Set model info
-        info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=false,)
-        # isfile(save_name(path=path, name="SoundResponse", info=info))
-        # data =load_data(path, "SoundResponse", info)
-        # @unpack model, TTL, sim_interval = data
-        # rec_interval = 0:3s
-        # recordings = record_sound_response(model; TTL, sim_interval, rec_interval)
-        rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
-        # save(rec_name, @strdict recordings=recordings info=info rec_interval=rec_interval)
-        push!(recordings_noplast, (load(rec_name) |> dict2ntuple))
-
-        info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=true,)
-        # isfile(save_name(path=path, name="SoundResponse", info=info))
-        # data =load_data(path, "SoundResponse", info)
-        # @unpack model, TTL, sim_interval = data
-        # rec_interval = 0:3s
-        # recordings = record_sound_response(model; TTL, sim_interval, rec_interval)
-        rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
-        # save(rec_name, @strdict recordings=recordings info=info rec_interval=rec_interval)
-        push!(recordings_plast, (load(rec_name) |> dict2ntuple))
+                push!(recordings, (load(rec_name) |> dict2ntuple))
+                model = load_model(ResponsePath, "SoundResponse", info)
+                push!(models, model)
+        end
+        (plot=response_plot(recordings, [model.model for model in models]), recordings=recordings, models=models)
 end
 
+experiments = [
+        "SoundResponseExp1_HetEE",
+        "SoundResponseExp2_SameEE",
+        # "SoundResponseExp3_LowNoise",
+        "SoundResponseExp4_LowInput",
+        "SoundResponseExp5_LowInput",
+        "SoundResponseExp6_STP",
+        "SoundResponseExp7_highEE",
+        "SoundResponseExp9_NMDA",
+]
+plots = map(experiments) do exp
+        ExpPath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", exp)
+        p = plot()
+        try
+                p= test_experiment(ExpPath).plot
+        catch e
+                p=plot()
+        end
+        plot!(p, title=exp, legend=false)
+end
+plot(plots..., layout=(1, length(plots)), size=(length(plots)*400, 1400))
+##
+data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[3]) |> x->test_experiment(x).plot
+
+data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[5]) |> x->test_experiment(x).models
+
+info = (τ= 100ms, rate=0.5, signal=:off, NSST=50)
+ExpPath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
+load_data(ExpPath,  )
+raster(data[1].model.pop, 100s:105s)
+data[1].exp_config
+plot()
+
+data = load_model("/pasteur/appa/homes/aquaresi/spiking/network_models/data/zeus/Lagzi2022_AssemblyFormation/mixed_inh/HighNoise/Model_sst-NSST=10-rate=0.5-τ=100.0.model.jld2")
+
+data.config |> dump|> print
+# write config to file:
+for path in ["HighNoise", "Noise_0.8", "DoubleSizeNetwork"]
+        path = datadir("zeus","Lagzi2022_AssemblyFormation", "mixed_inh", path)
+        data = load_model(path)
+        open(path, "w") do io
+                println(io, "config = ", data.config)
+        end
+end
+
+# Write the configuration to a file
+# Helper function to write a single value to the file
+
+    # Helper function to write the entire configuration to the file
+
+# response
+# plot(EEs..., layout=(size(EEs)..., 1), size=(800, 1400))
+# ##
+# plot()
+# for recordings in recordings_noplast
+#     plot(recordings.recordings[:,:,1])
+# end
+# plot!()
+
+
+# size(recordings_noplast[1].recordings)
+
+# plots=map(recordings_noplast) do recs
+#         @unpack recordings, info, rec_interval = recs
+#         plot(rec_interval,mean(recordings[:,:,1], dims=2)[:,1], label="E1")
+#         plot!(rec_interval,mean(recordings[:,:,2], dims=2)[:,1], label="E2")
+#         plot!(rec_interval,mean(recordings[:,:,3], dims=2)[:,1], label="PV")
+#         plot!(rec_interval,mean(recordings[:,:,4], dims=2)[:,1], label="SST1")
+# end
+# plot(plots..., layout=(size(plots)..., 1), size=(800, 1400))
+##
+
+## Compare  the SST1_to_E1 synaptic weights of the models 
+
+# @unpack model, TTL, sim_interval = models[2]
+# rec_interval = 0:3s
+# frs, r, names  = firing_rate(model.pop, interval=0:5:3s, τ=20ms)
+# recordings = record_sound_response(model; TTL, sim_interval, rec_interval)
 
 
 # ##
-for recordings in recordings_noplast
-    plot(recordings.recordings[:,:,1])
-end
+# sound_stim = deepcopy(SNN.sample_inputs(200, sound, interval))
+# model = models[end-5]
+# model.pop.SST1.N
+# model.stim.inh_noise.param.rate .=0.5
+# exp_config = (delay=1s, repetitions=1, warmup=10s, inter_trial_interval=5s, target_pop =:E1 )
+# stimulus_TTL, sim_interval = test_sound_response(model, sound_stim, plasticity=false; exp_config...)
+# raster(model.pop, 0.1s:4s)
+# recordings = record_sound_response(model, sim_interval, exp_config.rec_interval)
+# frs, r, names = firing_rate(model.pop; interval=0:10:15s, τ=10ms)
+# # rec_name = joinpath(path, savename("SoundResponseRecordings", info, ".jld2"))
+# # save(rec_name, @strdict recordings=recordings info=info rec_interval=exp_config.rec_interval)
+# # recs = load(rec_name)["recordings"]
+
+# ##
+
+# plot(rec_interval,mean(recordings[:,:,1], dims=2)[:,1], label="E1")
+# plot!(rec_interval,mean(recordings[:,:,2], dims=2)[:,1], label="E2")
+# plot!(rec_interval,mean(recordings[:,:,3], dims=2)[:,1], label="PV")
+# plot!(rec_interval,mean(recordings[:,:,4], dims=2)[:,1], label="SST1")
+# ##
+
+# # stimulus_TTL
+# ##
+# # T = get_time(mytime)
+# #     shift_spikes!(stim, 1s) 
+# #     sim!(model=model, duration=3s, time=mytime)
 
 
-plots=map(recordings_noplast) do recs
-        @unpack recordings, info, rec_interval = recs
-        plot(rec_interval,mean(recordings[:,:,1], dims=2)[:,1], label="E1")
-        plot!(rec_interval,mean(recordings[:,:,2], dims=2)[:,1], label="E2")
-        plot!(rec_interval,mean(recordings[:,:,3], dims=2)[:,1], label="PV")
-        plot!(rec_interval,mean(recordings[:,:,4], dims=2)[:,1], label="SST1")
-end
-plot(plots..., layout=(size(plots)..., 1), size=(800, 1400))
-##
-
-color = palette(:roma, length(recordings_noplast))
-plot()
-for n in eachindex(recordings_noplast)
-        @unpack recordings, info, rec_interval = recordings_noplast[n]
-        plot!(rec_interval,mean(recordings[:,:,1], dims=2)[:,1], label="E1", c=color[n], )
-
-end
-plot!(xlims=(0.3s, 1.9s))
-vline!([1s, 1.5s])
-
+# # W, r = record(model.syn.PV_to_E1, :W) 
+# # W =mean(W, dims=1)[1,:]
+# # plot(r, W)
+# # #   |> plot
 
 ##
 

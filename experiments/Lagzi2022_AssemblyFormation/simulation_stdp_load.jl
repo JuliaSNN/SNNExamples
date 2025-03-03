@@ -23,7 +23,7 @@ Threads.@threads for t in eachindex(τs)
         stim_rate = stim_rates[r]
         stim_τ = τs[t]
         info = (τ= stim_τ, rate=stim_rate, signal=:off)
-        !isfile(save_name(path=path, name="Model_sst", info=info)) && continue
+        !isfile(get_path(path=path, name="Model_sst", info=info)) && continue
         model = load_model(path, "Model_sst", info).model
         #recurrent
         WW[1,1,r,t] = mean(model.syn.E1_to_E1.W)

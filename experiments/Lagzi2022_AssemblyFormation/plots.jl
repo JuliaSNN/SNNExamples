@@ -106,3 +106,28 @@ function learning_plot(model)
     fig
     ##
 end
+
+function response_plot(recs, models)
+    EEs = [mean(model.syn.SST1_to_E1.W)*model.pop.SST1.N for model in models]
+    color = palette(:roma, length(recs))
+    responses = []
+    p2 = plot()
+    p3 = plot()
+    for n in eachindex(recs)
+            @unpack recordings, info, rec_interval = recs[n]
+            fr = mean(recordings[:,:,1], dims=2)[:,1]
+            fr0 = fr
+            fr = fr .- mean(fr[1:1000])
+            plot!(p2,rec_interval,fr, label=NSSTs[n], c=color[n], )
+            plot!(p3,rec_interval,fr0, label=NSSTs[n], c=color[n], )
+            push!(responses,mean(fr[1500:1800,:,1]))
+
+    end
+    p1 = scatter(EEs, responses, label="E1", xlabel="SST1_to_E1", ylabel="E1 response", legend=:topleft)
+    plot!(p2, xlims=(0.3s, 1.9s), legendtitle="NSST (%)", size=(800, 800), xlabel="Time (s)", ylabel="ΔFiring rate (Hz)", margin=5Plots.mm, )
+    plot!(p3, legendtitle="NSST (%)", size=(800, 800), xlabel="Time (s)", ylabel="Firing rate (Hz)", margin=5Plots.mm)
+    vline!(p2,[1s, 1.5s], label="", ls=:dash, lc=:black, ylims=(-4, 20))
+    vline!(p3,[1s, 1.5s], label="", ls=:dash, lc=:black, ylims=(-4, 35))
+    plot(p1,p2,p3, layout=(3,1), size=(800, 800), margin=5Plots.mm, bottommargin=10Plots.mm)
+end
+

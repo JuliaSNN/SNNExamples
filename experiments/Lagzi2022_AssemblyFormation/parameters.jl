@@ -20,12 +20,15 @@ ext_rate = 2kHz # external input rate
 η_pv = 1e-2 # pv learning rate
 
 # Network configuration
+stim_τ = 100ms
+stim_rate = 0.5
+
 config = 
 (
     NE = 400,
     NI = 200,
     NSST = 60,
-    adex_param = AdExParameter(a=0, b=0),
+    adex_param = AdExParameter(a=0, b=0, Vr=-55),
     pv_param = IFParameter(El=-55mV),
     sst_param = IFParameter(El=-55mV),
     stim_τ = 100ms,
@@ -35,7 +38,14 @@ config =
     EE = (p = 0.1, μ = μ),
     II = (p = 0.4, μ = JInh*μ),
     IE = (p = 0.4, μ = JInh*μ),
-    E_noise = 0.7*ext_rate,
+    E_noise = 0.5ext_rate,
+    I_noise = 0.6*ext_rate,
+    signal_param = Dict(:X => 2.0f0,
+        :σ => 0.4kHz,
+        :dt => 0.125f0,
+        :θ => 1/stim_τ,
+        :μ => stim_rate*ext_rate
+        ),
     stdp_exc = STDPParameter(
         A_pre = η_exc,
         A_post =  -λ* η_exc,
@@ -53,7 +63,29 @@ config =
         A_post =  η_pv,
         τpost = 20ms,
         τpre = 20ms,
-    )
+    ),
+    duration = 500s
+)
+
+
+experiments = Dict(
+    "NMDA"  => (; config...,
+        adex_param = AdExSynapseParameter(a=0, b=0),
+        E_noise = 0.5ext_rate,
+        name = "NMDA",
+        factor = 1
+
+    ),
+    "doublesize" => (; config...,
+            NE = 400*2,
+            NI = 200*2,
+            name = "doublesize",
+            factor = 2
+    ),
+    "baseline" => (; config...,
+        name = "baseline",
+        factor = 1
+    ),
 )
 
 # @unpack stdp_exc, stdp_sst, stdp_pv = config
