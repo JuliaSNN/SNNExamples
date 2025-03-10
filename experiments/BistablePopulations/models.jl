@@ -2,7 +2,6 @@
 function attractor_model(config;)
     function get_subnet(name, config)
         N = config.N
-        @unpack istdp, N = config
         # Create dendrites for each neuron
         E = SNN.AdExNeuron(N = N, param = config.adex, name="Exc_$name")
         # Define interneurons 
@@ -15,7 +14,8 @@ function attractor_model(config;)
             I,
             E,
             :hi;
-            config.I_to_E...,
+            config.I_to_E..., 
+            param = config.istdp,
             name="I_to_E_$name",
         )
         norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
@@ -59,18 +59,19 @@ end
 
 function test_istdp(config) 
     model = attractor_model(config)
-    train!(model = model, duration = 20_000ms, pbar = true, dt = 0.125)
+    mytime = train!(model = model, duration = config.warmup, pbar = true, dt = 0.125)
     clear_records(model)
-    for interval in config.intervals
-        model = add_stimulus(model, :sub_1_E, interval)
+    mytime = Time()
+    for (pop, interval) in config.intervals
+        model = add_stimulus(model, pop, interval)
     end
-    train!(model = model, duration = config.duration, pbar = true, dt = 0.125)
+    train!(model = model, duration = config.duration, pbar = true, dt = 0.125, time = mytime)
     return model
 end
 
 #
-function iSTDP_activity(network, istdp, config; interval= 1s:20ms:10s)
-    i_to_e = SNN.filter_items(network.syn, condition=p->occursin("I_to_E", p.name))
+function iSTDP_activity(model, istdp, config; interval= 1s:20ms:10s)
+    i_to_e = SNN.filter_items(model.syn, condition=p->occursin("I_to_E", p.name))
     w_i = map(eachindex(i_to_e)) do i
         w, r_t = record(i_to_e[i], :W, interpolate=true)
         mean(w, dims=1)[1,:]
@@ -80,20 +81,19 @@ function iSTDP_activity(network, istdp, config; interval= 1s:20ms:10s)
     p1 = plot(r_t./1000, w_i, xlabel="Time (s)", ylabel="Synaptic weight", legend=:topleft, title="I to E synapse", labels=["pop 1" "pop 2" "pop 3" "pop 4"], lw=4)
 
 
-    Epop = SNN.filter_items(network.pop, condition=p->occursin("E", p.name))
-    # rates, interval = SNN.firing_rate(Epop, interval=interval, mean_pop=true)
-    # fr, r, names = firing_rate(model.pop, interval = 1s:10ms:13s, τ=20ms, pop_average=true)
-    # plot(r, fr, xlabel = "Time (ms)", ylabel = "Firing rate (Hz)")
+    Epop = SNN.filter_items(model.pop, condition=p->occursin("E", p.name))
     fr, r, names = firing_rate(model.pop, interval = 0s:10ms:10s, τ=50ms, pop_average=true)
     c = [:blue :blue :red :red]
     ls = [:solid :dash :solid :dash]
-    # plot(r./1000, fr, xlabel = "Time (ms)", ylabel = "Firing rate (Hz)", label=hcat(names...), color=c, linestyle=ls)
-    # return rates, interval
-    p2 = plot(r./1000, fr, xlabel="Time (s)", ylabel="Firing rate (Hz)", legend=:topleft, title="Firing rate of the exc. pop", lw=4, labels= hcat(names...))#, yscale=:log10, ylims=(0.1,50))
-    vline!(config.intervals./1000, color=:black, linestyle=:dash, label="")
-    p3 = SNN.stdp_kernel(istdp, fill=false)
-    p4 = SNN.raster(network.pop, interval, every=3)
-    return plot(p3, p1, p4, p2, layout=(2,2), size=(800,800), margin=5Plots.mm)
+    p2 = plot(r./1000, fr[[1,3]], xlabel="Time (s)", ylabel="Firing rate (Hz)", legend=:topleft, title="Firing rate of the exc. pop", lw=4, labels= hcat(names[[1,3]]...))#, yscale=:log10, ylims=(0.1,50))
+    vline!([x[2] for x in config.intervals]./1000, color=:black, linestyle=:dash, label="")
+    p3 = plot(r./1000, fr[[2,4]], xlabel="Time (s)", ylabel="Firing rate (Hz)", legend=:topleft, title="Firing rate of the inh. pop", lw=4, labels= hcat(names[[2,4]]...))#, yscale=:log10, ylims=(0.1,50))
+    vline!([x[2] for x in config.intervals]./1000, color=:black, linestyle=:dash, label="")
+    # p3 = SNN.stdp_kernel(istdp, fill=false)
+    p4 = SNN.raster(model.pop, interval, every=5)
+
+    # layout = @layout [ grid(3,1), grid(2,1) ]
+    return plot(p1, p2, p4, p3, layout=(2,2), size=(800,800), margin=5Plots.mm)
     # plot(p4, p2, layout=(2,1), size=(800,800), margin=5Plots.mm)
     # return p1, p2, p3, p4
 end

@@ -1,6 +1,7 @@
 using Revise
-using SpikingNeuralNetworks
 using DrWatson
+"/home/user/spiking/network_models" |> quickactivate
+using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
 using Plots
@@ -10,9 +11,7 @@ using Random
 
 
 ##
-attractor = 5
-Alearn= 1e-3
-Ebase = 0.02
+include("models.jl")
 
 synapse_nmda = let
     SomaGlu = Glutamatergic(
@@ -20,71 +19,86 @@ synapse_nmda = let
         ReceptorVoltage(E_rev = 0.0, τr = 1ms, τd = 100.0, g0 = 0.15, nmda = 1.0f0),
     )
     SomaGABA = GABAergic(
-        Receptor(E_rev = -70.0, τr = 0.5, τd = 2.0, g0 = 2.),
-        Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.06), # τd = 100.0
+        Receptor(E_rev = -70.0, τr = 0.5, τd = 10.0, g0 = 2.),
+        Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.006), # τd = 100.0
     )
     SomaNMDA = NMDAVoltageDependency()
     SomaSynapse = Synapse(SomaGlu, SomaGABA)
 end
 synapse_ampa = let
     SomaGlu = Glutamatergic(
-        Receptor(E_rev = 0.0, τr = 1ms, τd = 6.0ms, g0 = 2.),
-        ReceptorVoltage( nmda = 0.0f0),
+        Receptor(E_rev = 0.0, τr = 1ms, τd = 6.0ms, g0 = 0.7),
+        ReceptorVoltage(E_rev = 0.0, τr = 1ms, τd = 100.0, g0 = 0.0, nmda = 0.0f0),
     )
     SomaGABA = GABAergic(
-        Receptor(E_rev = -70.0, τr = 0.5, τd = 2.0, g0 = 2.),
-        Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.06), # τd = 100.0
+        Receptor(E_rev = -70.0, τr = 0.5, τd = 10.0, g0 = 2.),
+        Receptor(E_rev = -90.0, τr = 30, τd = 400.0, g0 = 0.006), # τd = 100.0
     )
     SomaNMDA = NMDAVoltageDependency()
     SomaSynapse = Synapse(SomaGlu, SomaGABA)
 end
 ##
+attractor = 5
+Alearn= 4e-3
+Ebase = 0.1
+C = 200pF
+gl = 10nS
+R = 1/gl
+τm = C/gl
+##
+
 config = (
-            intervals = [[3s, 4s], [6s, 7s]],
+            intervals = [(:sub_1_E, [3s, 4s])],
             E_to_I = (p = 0.2, μ = 1.0),
             E_to_E = (p = 0.2, μ = attractor * Ebase), # was 0.5
-            I_to_I = (p = 0.2, μ = 1.0),
-            I_to_E = (p = 0.2, μ = 20, param = istdp),
+            I_to_I = (p = 1.0, μ = 0.3),
+            I_to_E = (p = 1.0, μ = 2.0),
             lateral_EI = (p = 0.2, μ = 2.5),
             lateral_EE = (p = 0.2, μ = Ebase),
-            N= 400,
+            N= 500,
             n_assemblies =2,
             duration = 10s,
             # adex = SNN.AdExSynapseParameter(synapse_nmda; Vr = -55mV, At = 1mV, a=0, b=0, ),
             # path = mkpath(plotsdir("iSTDP_NMDA_lateralExc")),
-            adex = SNN.AdExSynapseParameter(synapse_ampa; Vr = -55mV, At = 1mV, a=0, b=0, ),
+            adex = SNN.AdExParameter(; R = 1/gl, τm = τm,  Vr = -55mV, At = 1mV, a=0, b=0, ),
             path = mkpath(plotsdir("iSTDP_lateralExc")),
             noise = 2.5kHz,
-            ext_stim = 0.5kHz,
+            ext_stim = 0.8kHz,
+            warmup = 30s
         )
 istdps = (
     istdp_rate = SNN.iSTDPParameterRate(τy = 20ms, η = Alearn*1e3, r=5Hz) ,
     istdp_time = SNN.iSTDPParameterTime(τy = 20ms, η = Alearn*1e3) ,
-    Symmetrical= AntiSymmetricSTDP(   A_x = Alearn*1e3,
-                                A_y  = Alearn*1e3,
-                                αpre = 0,#-0.5f0Alearn,
-                                αpost = 0.5f0Alearn,
-                                τ_x = 15ms,
-                                τ_y = 60ms,
+    Hebbian= AntiSymmetricSTDP( A_x = Alearn*1e3,
+                                A_y  = 0.7Alearn*1e3,
+                                # αpre = -0.7f0,
+                                # αpost = 0.2,
+                                τ_x = 60ms,
+                                τ_y = 30ms,
                                 Wmax = 200
                             ),
-    antiHebbian= AntiSymmetricSTDP(   A_x = -Alearn*1e3,
-                                A_y  = -Alearn*1e3,
-                                αpre = 0f0,
-                                αpost = 0.05Alearn,
-                                τ_x = 15ms,
-                                τ_y = 60ms,
+    antiHebbian= AntiSymmetricSTDP(A_x = -Alearn*1e3,
+                                A_y  = -0.7Alearn*1e3,
+                                # αpre = -0.7f0,
+                                # αpost = 0.2,
+                                τ_x = 60ms,
+                                τ_y = 30ms,
                                 Wmax = 200
                             ),
-    Hebbian = SymmetricSTDP( A_x = 1e3*Alearn,
-                                A_y = 1e3*Alearn,
-                                αpre = -0.5Alearn,
-                                αpost = 0.0Alearn,
+    Symmetric = SymmetricSTDP( A_x = Alearn*1e3,
+                                A_y = Alearn*1e3,
+                                αpre = -0.5,
+                                αpost = 0.0,
                                 τ_x = 30ms,
                                 τ_y = 600ms,
                                 Wmax = 200
                             )
 )
+istdp = istdps[:Hebbian]
+config = (config..., istdp = istdp)
+model = test_istdp(config)
+p = iSTDP_activity(model, istdp, config)
+plot!(p, size=(800, 600))
 ##
 
 models = Dict()
@@ -100,16 +114,14 @@ for name in keys(istdps)
 end
 
 ##
-istdp = istdps[:istdp_rate]
-config = (config..., istdp = istdp)
-p = iSTDP_activity(model, istdp, config)
-model = test_istdp(config)
-models[:istdp_rate] = model
-raster(models[:istdp_rate].pop, 0s:10s)
-models[:istdp_rate].syn.sub_1_I_to_E.W
-W, r = record(models[:istdp_rate].syn.sub_1_I_to_E, :W, interpolate=true)
-plot(r, mean(W, dims=1)[1,:], xlabel = "Time (ms)", ylabel = "Synaptic weight", legend = false)
+# model.pop.sub_1_E.param.syn |> dump
+# models[:istdp_rate] = model
+# raster(models[:istdp_rate].pop, 0s:10s)
+# models[:istdp_rate].syn.sub_1_I_to_E.W
+# W, r = record(models[:istdp_rate].syn.sub_1_I_to_E, :W, interpolate=true)
+# plot(r, mean(W, dims=1)[1,:], xlabel = "Time (ms)", ylabel = "Synaptic weight", legend = false)
 
+# SNN.stdp_kernel(istdps.Hebbian, fill=false)
 ##
 
 ##
