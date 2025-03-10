@@ -22,7 +22,7 @@ bursty_dendritic_network = let
             mg = 1.0f0,  # NMDA voltage dependency parameter
         ),
             # After spike timescales and membrane
-        param= AdExSoma(
+        param= AdExMultiCompartmentParameter(
             C = 281pF,  # membrane capacitance
             gl = 40nS,  # leak conductance
             R = nS / 40nS * SNN.GΩ,  # membrane resistance
