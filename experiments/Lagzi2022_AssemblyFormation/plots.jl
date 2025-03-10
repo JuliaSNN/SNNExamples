@@ -108,7 +108,7 @@ function learning_plot(model)
 end
 
 function response_plot(recs, models)
-    EEs = [mean(model.syn.SST1_to_E1.W)*model.pop.SST1.N for model in models]
+    EEs = [mean(model.syn.SST1_to_E1.W)*model.pop.SST1.N/(model.pop.SST1.N + model.pop.PV.N) for model in models]
     color = palette(:roma, length(recs))
     responses = []
     p2 = plot()
