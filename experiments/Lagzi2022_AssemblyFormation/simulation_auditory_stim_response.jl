@@ -17,9 +17,12 @@ include("protocol.jl")
 
 experiment_name = length(ARGS) > 0 ? ARG[1] : experiment_name = "Test"
 
-experiment_names = keys(experiments_configs) |> collect
-Threads.@threads for n in eachindex(experiment_names)
-        experiment_name = experiment_names[n]
+sl = Threads.SpinLock()
+
+experiments_names = keys(experiments_configs) |> collect
+models = Dict{String,Any}()
+for n in eachindex(experiments_names)
+        experiment_name = experiments_names[n]
         @info "Running experiment: $experiment_name"
         exp_config = experiments_configs[experiment_name]
         Threads.@threads for t in eachindex(exp_config.NSSTs)
@@ -32,7 +35,29 @@ Threads.@threads for n in eachindex(experiment_names)
                 @assert isdir(load_path)
                 path_response = joinpath(root, exp_config.name) |> mkpath
 
+                name = get_path(;path=load_path, name="Model_sst", info=info)
                 data = load_model(load_path, "Model_sst", info)
+                push!(models, name=>data)
+        end
+end
+
+Threads.@threads for n in eachindex(experiments_names)
+        experiment_name = experiments_names[n]
+        @info "Running experiment: $experiment_name"
+        exp_config = experiments_configs[experiment_name]
+        Threads.@threads for t in eachindex(exp_config.NSSTs)
+                NSST = exp_config.NSSTs[t]
+                @unpack stim_τ, stim_rate = config
+                info = (τ = stim_τ, rate = stim_rate, NSST = NSSTs[t], signal = :off)
+
+                # Update the model parameters as in the config
+                load_path = joinpath(root, exp_config.load_path) 
+                @assert isdir(load_path)
+                path_response = joinpath(root, exp_config.name) |> mkpath
+
+                name = get_path(;path=load_path, name="Model_sst", info=info)
+                data = deepcopy(models[name])
+
                 model = data.model
                 network_config = data.config
                 base_model = update_model_parameters!(model, exp_config)
@@ -51,35 +76,34 @@ Threads.@threads for n in eachindex(experiment_names)
                         )
                         @info "Running experiment with $(info)"
                         model, TTL, sim_interval = nothing, nothing, nothing
-                        if exp_config.force ||
-                        !isfile(get_path(path = path_response, name = "SoundResponse", info = info))
-                        # Test sound response without train and save model
-                        #------------------------------------------------------------------------------
-                        @info "Model not found, running experiment with $(info)"
-                        model = deepcopy(base_model)
-                        clear_records(model)
-                        TTL, sim_interval = test_sound_response(
-                                model,
-                                sound_stim,
-                                plasticity = info.train;
-                                exp_config...,
-                        )
-                        save_model(;
-                                path = path_response,
-                                model = model,
-                                name = "SoundResponse",
-                                info = info,
-                                sound = sound_stim,
-                                TTL = TTL,
-                                sim_interval = sim_interval,
-                                rec_interval = rec_interval,
-                                config = exp_config,
-                                network_config = network_config,
-                        )
+                        if exp_config.force ||  !isfile(get_path(path = path_response, name = "SoundResponse", info = info))
+                                # Test sound response without train and save model
+                                #------------------------------------------------------------------------------
+                                @info "Model not found, running experiment with $(info)"
+                                model = deepcopy(base_model)
+                                clear_records(model)
+                                TTL, sim_interval = test_sound_response(
+                                        model,
+                                        sound_stim,
+                                        plasticity = info.train;
+                                        exp_config...,
+                                )
+                                save_model(;
+                                        path = path_response,
+                                        model = model,
+                                        name = "SoundResponse",
+                                        info = info,
+                                        sound = sound_stim,
+                                        TTL = TTL,
+                                        sim_interval = sim_interval,
+                                        rec_interval = rec_interval,
+                                        config = exp_config,
+                                        network_config = network_config,
+                                )
                         else
-                        @info "Model found, loading $(info)"
-                        @unpack model, TTL, sim_interval =
-                                load_data(; path = path_response, name = "SoundResponse", info)
+                                @info "Model found, loading $(info)"
+                                @unpack model, TTL, sim_interval =
+                                        load_data(; path = path_response, name = "SoundResponse", info)
                         end
                         # Record sound response and save recordings
                         recordings = record_sound_response(model; TTL, sim_interval, rec_interval)
