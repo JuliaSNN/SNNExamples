@@ -17,6 +17,10 @@ include("parameters.jl")
 include("protocol.jl")
 include("plots.jl")
 
+root = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
+@assert isdir(root)
+include(joinpath(root, "experiments_config.jl"))
+
 # ResponsePath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", "SoundResponseExp5_LowInput")
 # @assert isdir(ResponsePath)
 
@@ -29,7 +33,7 @@ function test_experiment(ResponsePath)
                 info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t])
                 exp_config = (delay=1s, repetitions=40, warmup=20s, target_pop =:E1 , input_strength=200)
                 # # Set model info
-                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=false)
+                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], train=false)
                 rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
                 if !isfile(rec_name) 
                         info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=true)
@@ -43,50 +47,43 @@ function test_experiment(ResponsePath)
         (plot=response_plot(recordings, [model.model for model in models]), recordings=recordings, models=models)
 end
 
-experiments = [
-        "SoundResponseExp1_HetEE",
-        "SoundResponseExp2_SameEE",
-        # "SoundResponseExp3_LowNoise",
-        "SoundResponseExp4_LowInput",
-        "SoundResponseExp5_LowInput",
-        "SoundResponseExp6_STP",
-        "SoundResponseExp7_highEE",
-        "SoundResponseExp9_NMDA",
-]
-plots = map(experiments) do exp
-        ExpPath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", exp)
-        p = plot()
-        try
-                p= test_experiment(ExpPath).plot
-        catch e
-                p=plot()
-        end
+experiments_names
+plots = map(experiments_names) do exp
+        ExpPath = joinpath(root, exp) 
+        # isfile(joinpath(ExpPath, "SoundResponseRecordings_NSST=0_plasticity=true_rate=0.5_signal=off_τ=100.0.jld2")) && return
+        @info "Running experiment: $exp"
+        p= test_experiment(ExpPath).plot
         plot!(p, title=exp, legend=false)
 end
-plot(plots..., layout=(1, length(plots)), size=(length(plots)*400, 1400))
-##
-data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[3]) |> x->test_experiment(x).plot
+plots = filter(x->x!=nothing, plots)
+p = plot(plots..., layout=(1, length(plots)), size=(length(plots)*400, 1400))
+savefig(p, plotsdir("SoundResponsePlots.pdf"))
 
-data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[5]) |> x->test_experiment(x).models
 
-info = (τ= 100ms, rate=0.5, signal=:off, NSST=50)
-ExpPath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
-load_data(ExpPath,  )
-raster(data[1].model.pop, 100s:105s)
-data[1].exp_config
-plot()
 
-data = load_model("/pasteur/appa/homes/aquaresi/spiking/network_models/data/zeus/Lagzi2022_AssemblyFormation/mixed_inh/HighNoise/Model_sst-NSST=10-rate=0.5-τ=100.0.model.jld2")
+# ##
+# data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[3]) |> x->test_experiment(x).plot
 
-data.config |> dump|> print
-# write config to file:
-for path in ["HighNoise", "Noise_0.8", "DoubleSizeNetwork"]
-        path = datadir("zeus","Lagzi2022_AssemblyFormation", "mixed_inh", path)
-        data = load_model(path)
-        open(path, "w") do io
-                println(io, "config = ", data.config)
-        end
-end
+# data = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", experiments[5]) |> x->test_experiment(x).models
+
+# info = (τ= 100ms, rate=0.5, signal=:off, NSST=50)
+# ExpPath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
+# load_data(ExpPath,  )
+# raster(data[1].model.pop, 100s:105s)
+# data[1].exp_config
+# plot()
+
+# data = load_model("/pasteur/appa/homes/aquaresi/spiking/network_models/data/zeus/Lagzi2022_AssemblyFormation/mixed_inh/HighNoise/Model_sst-NSST=10-rate=0.5-τ=100.0.model.jld2")
+
+# data.config |> dump|> print
+# # write config to file:
+# for path in ["HighNoise", "Noise_0.8", "DoubleSizeNetwork"]
+#         path = datadir("zeus","Lagzi2022_AssemblyFormation", "mixed_inh", path)
+#         data = load_model(path)
+#         open(path, "w") do io
+#                 println(io, "config = ", data.config)
+#         end
+# end
 
 # Write the configuration to a file
 # Helper function to write a single value to the file
