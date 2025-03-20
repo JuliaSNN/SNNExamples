@@ -9,74 +9,78 @@ using Statistics
 # %%
 # Instantiate a  Symmetric STDP model with these parameters:
 
+
 root = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
 @assert isdir(root)
-include(joinpath(root, "experiments_config.jl"))
+include("experiments_config.jl")
 include("parameters.jl")
 include("protocol.jl")
 
-experiment_name = length(ARGS) > 0 ? ARG[1] : experiment_name = "Test"
+# experiment_name = length(ARGS) > 0 ? ARG[1] : experiment_name = "Test"
 
-sl = Threads.SpinLock()
-
-experiments_names = keys(experiments_configs) |> collect
 models = Dict{String,Any}()
-for n in eachindex(experiments_names)
-        experiment_name = experiments_names[n]
-        @info "Running experiment: $experiment_name"
-        exp_config = experiments_configs[experiment_name]
+for n in eachindex(running_exps)
+        exp_config = getfield(response_experiments, running_exps[n])
+        @info "Running experiment: $(exp_config.name)"
         Threads.@threads for t in eachindex(exp_config.NSSTs)
-                NSST = exp_config.NSSTs[t]
-                @unpack stim_τ, stim_rate = config
-                info = (τ = stim_τ, rate = stim_rate, NSST = NSSTs[t], signal = :off)
+                for syn in [:ampa, :nmda]
+                        NSST = exp_config.NSSTs[t]
+                        @unpack stim_τ, stim_rate = config
+                        info = (τ = stim_τ, 
+                                rate = stim_rate, 
+                                NSST = NSSTs[t], 
+                                syn = syn,
+                                signal = :off)
 
-                # Update the model parameters as in the config
-                load_path = joinpath(root, exp_config.load_path) 
-                @assert isdir(load_path)
-                path_response = joinpath(root, exp_config.name) |> mkpath
+                        # Update the model parameters as in the config
+                        load_path = joinpath(root, exp_config.load_path) 
+                        @assert isdir(load_path)
+                        path_response = joinpath(root, exp_config.name) |> mkpath
 
-                name = get_path(;path=load_path, name="Model_sst", info=info)
-                data = load_model(load_path, "Model_sst", info)
-                push!(models, name=>data)
+                        name = get_path(;path=load_path, name="Model_sst", info=info)
+                        data = load_model(load_path, "Model_sst", info)
+                        push!(models, name=>data)
+                end
         end
 end
 
-Threads.@threads for n in eachindex(experiments_names)
-        experiment_name = experiments_names[n]
-        @info "Running experiment: $experiment_name"
-        exp_config = experiments_configs[experiment_name]
+Threads.@threads for n in eachindex(running_exps)
+        exp_config = getfield(response_experiments, running_exps[n])
+        @info "Running experiment: $(exp_config.name)"
         Threads.@threads for t in eachindex(exp_config.NSSTs)
-                NSST = exp_config.NSSTs[t]
-                @unpack stim_τ, stim_rate = config
-                info = (τ = stim_τ, rate = stim_rate, NSST = NSSTs[t], signal = :off)
-
-                # Update the model parameters as in the config
-                load_path = joinpath(root, exp_config.load_path) 
-                @assert isdir(load_path)
-                path_response = joinpath(root, exp_config.name) |> mkpath
-
-                name = get_path(;path=load_path, name="Model_sst", info=info)
-                data = deepcopy(models[name])
-
-                model = data.model
-                network_config = data.config
-                base_model = update_model_parameters!(model, exp_config)
-
-                sound_stim = deepcopy(SNN.sample_inputs(exp_config.input_strength, sound, interval))
-                @unpack rec_interval = exp_config
-
-                # Set model info
-                for train in exp_config.train
+                for syn in [:ampa, :nmda]
+                        NSST = exp_config.NSSTs[t]
+                        @unpack stim_τ, stim_rate = config
                         info = (
-                        τ = stim_τ,
-                        rate = stim_rate,
-                        signal = :off,
-                        NSST = NSSTs[t],
-                        train = train,
+                                τ = stim_τ, 
+                                rate = stim_rate, 
+                                NSST = NSSTs[t], 
+                                syn = syn,
+                                signal = :off
+                                )
+
+                        # Update the model parameters as in the config
+                        load_path = joinpath(root, exp_config.load_path) 
+                        @assert isdir(load_path)
+                        path_response = joinpath(root, exp_config.name) |> mkpath
+
+                        name = get_path(;path=load_path, name="Model_sst", info=info)
+                        data = deepcopy(models[name])
+
+                        model = data.model
+                        network_config = data.config
+                        base_model = update_model_parameters!(model; exp_config, config=network_config)
+
+                        sound_stim = deepcopy(SNN.sample_inputs(exp_config.input_strength, sound, interval))
+                        @unpack rec_interval = exp_config
+
+                        # Set model info
+                        info = (;info...,
+                                train = exp_config.train,
                         )
                         @info "Running experiment with $(info)"
                         model, TTL, sim_interval = nothing, nothing, nothing
-                        if exp_config.force ||  !isfile(get_path(path = path_response, name = "SoundResponse", info = info))
+                        if exp_config.force || !isfile(get_path(path = path_response, name = "SoundResponse", info = info))
                                 # Test sound response without train and save model
                                 #------------------------------------------------------------------------------
                                 @info "Model not found, running experiment with $(info)"
@@ -84,8 +88,7 @@ Threads.@threads for n in eachindex(experiments_names)
                                 clear_records(model)
                                 TTL, sim_interval = test_sound_response(
                                         model,
-                                        sound_stim,
-                                        plasticity = info.train;
+                                        sound_stim;
                                         exp_config...,
                                 )
                                 save_model(;
@@ -107,8 +110,8 @@ Threads.@threads for n in eachindex(experiments_names)
                         end
                         # Record sound response and save recordings
                         recordings = record_sound_response(model; TTL, sim_interval, rec_interval)
-                        rec_name =
-                        joinpath(path_response, savename("SoundResponseRecordings", info, "jld2"))
+                        rec_name = joinpath(path_response, "recordings", savename("SoundResponseRecordings", info, "jld2"))
+                        dirname(rec_name) |> mkpath
                         save(
                         rec_name,
                         @strdict recordings = recordings info = info rec_interval = rec_interval

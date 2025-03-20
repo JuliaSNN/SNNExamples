@@ -1,6 +1,6 @@
 
 function test_sound_response(model, sound_stim;
-        plasticity = false,
+        train = false,
         inter_trial_interval=5s, 
         delay=1s, 
         repetitions=3,
@@ -9,7 +9,7 @@ function test_sound_response(model, sound_stim;
         kwargs...
         )
         @info "Running sound response test with:
-        plasticity: $(plasticity), delay: $delay, repetitions: $repetitions, warmup: $warmup"
+        plasticity: $(train), delay: $delay, repetitions: $repetitions, warmup: $warmup"
 
         sim!(model=model, duration=warmup)
         # Monitor firing rates and synaptic weights
@@ -26,8 +26,8 @@ function test_sound_response(model, sound_stim;
         for i in 1:repetitions
                 T = get_time(mytime)
                 push!(TTL, sound_stim.param.spiketimes[1])
-                plasticity && train!(sound_stim, model=model, duration=inter_trial_interval, time=mytime)
-                !plasticity && sim!(sound_stim, model=model, duration=inter_trial_interval, time=mytime)
+                train && train!(sound_stim, model=model, duration=inter_trial_interval, time=mytime)
+                !train && sim!(sound_stim, model=model, duration=inter_trial_interval, time=mytime)
                 shift_spikes!(sound_stim, inter_trial_interval)
         end
         return TTL, [0, get_time(mytime)]

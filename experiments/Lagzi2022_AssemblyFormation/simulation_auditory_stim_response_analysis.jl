@@ -1,6 +1,6 @@
 using Revise
-using SpikingNeuralNetworks
 using DrWatson
+using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
 using Statistics
@@ -16,48 +16,46 @@ using Logging
 include("parameters.jl")
 include("protocol.jl")
 include("plots.jl")
+include("experiments_config.jl")
 
 root = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh")
 @assert isdir(root)
-include(joinpath(root, "experiments_config.jl"))
 
 # ResponsePath = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", "SoundResponseExp5_LowInput")
 # @assert isdir(ResponsePath)
 
+SYNAPSE = :nmda
+TRAIN = false
 
-function test_experiment(ResponsePath)
+function test_experiment(ResponsePath, SYNAPSE=:nmda, TRAIN=false)
         recordings = []
         models = []
         for t in eachindex(NSSTs)
-                @unpack stim_τ, stim_rate = config
-                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t])
-                exp_config = (delay=1s, repetitions=40, warmup=20s, target_pop =:E1 , input_strength=200)
-                # # Set model info
-                info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], train=false)
-                rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
-                if !isfile(rec_name) 
-                        info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t], plasticity=true)
+                try
+                        @unpack stim_τ, stim_rate = config
+                        # # Set model info
+                        info = (τ= stim_τ, rate=stim_rate, train=TRAIN, signal=:off, NSST=NSSTs[t], syn=SYNAPSE)
+                        exp_config = (delay=1s, repetitions=40, warmup=20s, target_pop =:E1 , input_strength=200)
                         rec_name = joinpath(ResponsePath, savename("SoundResponseRecordings", info, "jld2"))
+                        model = load_model(ResponsePath, "SoundResponse", info)
+                        rec_name = joinpath(ResponsePath, "recordings", savename("SoundResponseRecordings", info, "jld2"))
+                        push!(recordings, (load(rec_name) |> dict2ntuple))
+                        push!(models, model)
+                catch   
                 end
-
-                push!(recordings, (load(rec_name) |> dict2ntuple))
-                model = load_model(ResponsePath, "SoundResponse", info)
-                push!(models, model)
         end
         (plot=response_plot(recordings, [model.model for model in models]), recordings=recordings, models=models)
 end
 
-experiments_names
-plots = map(experiments_names) do exp
-        ExpPath = joinpath(root, exp) 
-        # isfile(joinpath(ExpPath, "SoundResponseRecordings_NSST=0_plasticity=true_rate=0.5_signal=off_τ=100.0.jld2")) && return
+plots = map(response_experiments_names) do exp
+        ExpPath = joinpath(root, getfield(response_experiments,exp).name) 
         @info "Running experiment: $exp"
-        p= test_experiment(ExpPath).plot
+        p= test_experiment(ExpPath, SYNAPSE, TRAIN).plot
         plot!(p, title=exp, legend=false)
 end
 plots = filter(x->x!=nothing, plots)
 p = plot(plots..., layout=(1, length(plots)), size=(length(plots)*400, 1400))
-savefig(p, plotsdir("SoundResponsePlots.pdf"))
+savefig(p, plotsdir("SoundResponsePlots_$SYNAPSE.pdf"))
 
 
 

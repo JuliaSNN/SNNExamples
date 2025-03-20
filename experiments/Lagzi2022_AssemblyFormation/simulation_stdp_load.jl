@@ -14,12 +14,14 @@ using Logging
 # %%
 # Instantiate a  Symmetric STDP model with these parameters:
 include("parameters.jl")
+include("plots.jl")
 
 WW = zeros(2, 4, length(stim_rates), length(τs))
 frs  = Matrix{Any}(undef, length(stim_rates), length(τs))
-path = datadir("Lagzi2022_AssemblyFormation", "mixed_inh")
+path = datadir("zeus", "Lagzi2022_AssemblyFormation", "mixed_inh", "baseline")
 Threads.@threads for t in eachindex(τs)
     for r in eachindex(stim_rates)
+        for s in []
         stim_rate = stim_rates[r]
         stim_τ = τs[t]
         info = (τ= stim_τ, rate=stim_rate, signal=:off)

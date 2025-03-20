@@ -1,14 +1,7 @@
 using Plots
 using SpikingNeuralNetworks
 
-function learning_plot(model)
-    @info "Loading model with τ=$(τs[t]) and rate=$(stim_rates[r])"
-    stim_rate = stim_rates[r]
-    stim_τ = τs[t]
-    info = (τ= stim_τ, rate=stim_rate)
-    plot_path = plotsdir("Lagzi2022_AssemblyFormation", savename(info)) |> mkpath
-    model = load_data(path, "Model_sst", info).model
-
+function learning_plot(plot_path::String, model, config)
     # %%
     W1,r = record(model.syn.E1_to_E1, :W)
     W2,r = record(model.syn.E1_to_E2, :W)
@@ -19,23 +12,30 @@ function learning_plot(model)
     p2 = histogram(model.syn.E1_to_E1.W, bins=0.1:0.01:2.0, c=:darkblue, alpha=0.5, label="E1 to E1")
     histogram!(model.syn.E1_to_E2.W, bins=0.1:0.01:2.0, c=:darkred, alpha=0.5, label="E1 to E2")
     fig = plot(p1, p2, layout=(2,1), size=(800, 600), margin=5Plots.mm)
-    savefig(fig, joinpath(plot_path, "exc_weight.svg"))
+    savefig(fig, joinpath(plot_path, "exc_weight.pdf"))
     fig
     ##
 
     # %%
     lags, corr11 = compute_covariance_density(merge_spiketimes(spiketimes(model.pop.E1)),merge_spiketimes(spiketimes(model.pop.E1)))
     lags, corr12 = compute_covariance_density(merge_spiketimes(spiketimes(model.pop.E1)),merge_spiketimes(spiketimes(model.pop.E2)))
-    plot(lags, corr11, xlabel="Time lag (ms)", ylabel="Correlation", title="Cross-correlogram", size=(800, 300), margin=5Plots.mm)
+    p = plot(lags, corr11, xlabel="Time lag (ms)", ylabel="Correlation", title="Cross-correlogram", size=(800, 300), margin=5Plots.mm)
     plot!(lags, corr12, xlabel="Time lag (ms)", ylabel="Correlation", title="Cross-correlogram", size=(800, 300), margin=5Plots.mm)
+    savefig(p, joinpath(plot_path, "E-E_cross_correlation.pdf"))
+    # lags, corr11 = compute_covariance_density(merge_spiketimes(spiketimes(model.pop.E1)),merge_spiketimes(spiketimes(model.pop.SST1)))
+    # lags, corr12 = compute_covariance_density(merge_spiketimes(spiketimes(model.pop.E1)),merge_spiketimes(spiketimes(model.pop.SST2)))
+    # p = plot(lags, corr11, xlabel="Time lag (ms)", ylabel="Correlation", title="Cross-correlogram", size=(800, 300), margin=5Plots.mm)
+    # plot!(lags, corr12, xlabel="Time lag (ms)", ylabel="Correlation", title="Cross-correlogram", size=(800, 300), margin=5Plots.mm)
+    # savefig(p, joinpath(plot_path, "E-SST_cross_correlation.pdf"))
 
     # %%
-    fig = raster(model.pop, 195s:205s, every=5, size=(800, 500), margin=5Plots.mm, link=:x, legend=:none,yrotation=0)
-    savefig(fig,joinpath(plot_path, "raster_long.svg"))
-    fig = raster(model.pop, 202:205s, every=5, size=(800, 500), margin=5Plots.mm, link=:x, legend=:none,yrotation=0)
-    savefig(fig,joinpath(plot_path, "raster_short.svg"))
+    for t in 50s:50s:500s
+        fig = raster(model.pop, t:(t+5s), every=5, size=(800, 500), margin=5Plots.mm, link=:x, legend=:none,yrotation=0)
+        savefig(fig,joinpath(plot_path, "raster_long_$(t).pdf"))
+        fig = raster(model.pop, t:(t+1s), every=5, size=(800, 500), margin=5Plots.mm, link=:x, legend=:none,yrotation=0)
+        savefig(fig,joinpath(plot_path, "raster_short_$(t).pdf"))
+    end
     ##
-
     plot()
     for (n, k) in enumerate(keys(model.syn))
         syn = model.syn[k]
@@ -45,7 +45,7 @@ function learning_plot(model)
         bar!([string(k)], [W], size=(800, 300), margin=5Plots.mm, link=:x, legend=:none)
     end
     fig = plot!(xlabel="Synapse", ylabel="Weight", title="Synaptic weights", xrotation=45, bottommargin=10Plots.mm, size=(800, 300), margin=5Plots.mm)
-    savefig(fig, joinpath(plot_path, "synaptic_weights.svg"))
+    savefig(fig, joinpath(plot_path, "synaptic_weights.pdf"))
     fig
     ##
 
@@ -54,7 +54,7 @@ function learning_plot(model)
 
 
     # %%
-    frs, r, names = firing_rate(model.pop, interval = 0s:50ms:500s, interpolate=false, mean_pop=true, τ=50ms)
+    frs, r, names = firing_rate(model.pop, interval = 0s:50ms:500s, pop_average=true, τ=50ms)
     plot(r./1000,frs[1:2], xlims=(300,400))
     ##
     plots = []
@@ -73,7 +73,7 @@ function learning_plot(model)
         end
     end
     fig = plot(plots..., layout=(5,5), size=(800, 800), margin=0Plots.mm)
-    savefig(fig, joinpath(plot_path, "population_firing_correlation.svg"))
+    savefig(fig, joinpath(plot_path, "population_firing_correlation.pdf"))
     ##
         # cor(frs[1][1:4_000], frs[5][1:4_000])
         # cor(frs[1][end-4_000:end], frs[2][end-4_000:end])
@@ -102,7 +102,7 @@ function learning_plot(model)
         end
     end
     fig = plot(plots..., layout=(5,5), size=(800, 800), margin=5Plots.mm, legend=false)
-    savefig(fig, joinpath(plot_path, "population_firing_crosscorrelation.svg"))
+    savefig(fig, joinpath(plot_path, "population_firing_crosscorrelation.pdf"))
     fig
     ##
 end
@@ -126,8 +126,8 @@ function response_plot(recs, models)
     p1 = scatter(EEs, responses, label="E1", xlabel="SST1_to_E1", ylabel="E1 response", legend=:topleft)
     plot!(p2, xlims=(0.3s, 1.9s), legendtitle="NSST (%)", size=(800, 800), xlabel="Time (s)", ylabel="ΔFiring rate (Hz)", margin=5Plots.mm, )
     plot!(p3, legendtitle="NSST (%)", size=(800, 800), xlabel="Time (s)", ylabel="Firing rate (Hz)", margin=5Plots.mm)
-    vline!(p2,[1s, 1.5s], label="", ls=:dash, lc=:black, ylims=(-4, 20))
-    vline!(p3,[1s, 1.5s], label="", ls=:dash, lc=:black, ylims=(-4, 35))
+    vline!(p2,[1s, 1.5s], label="", ls=:dash, lc=:black)
+    vline!(p3,[1s, 1.5s], label="", ls=:dash, lc=:black)
     plot(p1,p2,p3, layout=(3,1), size=(800, 800), margin=5Plots.mm, bottommargin=10Plots.mm)
 end
 
