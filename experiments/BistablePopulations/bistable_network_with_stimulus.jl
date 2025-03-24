@@ -40,7 +40,7 @@ n_assemblies = 2
 ## Instantiate the network assemblies and local inhibitory populations
 subnets = Dict(Symbol("sub_$n") => define_network(400) for n = 1:n_assemblies)
 # Add noise to each assembly
-noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=2.5kHz, cells=:ALL) for i in eachindex(subnets))
+noise = Dict(Symbol("noise_$(i)") => SNN.PoissonStimulus(subnets[i].pop.E, :he, param=2.5kHz, neurons=:ALL) for i in eachindex(subnets))
 # Create synaptic connections between the assemblies and the lateral inhibitory populations
 syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)
@@ -78,7 +78,7 @@ for n in 1:n_assemblies
         SNN.PoissonStimulus(
             subnets[Symbol("sub_$n")].pop.E, 
             :ge, 
-            cells=:ALL,
+            neurons=:ALL,
             param=PSParam(
                 rate=input,  
                 variables = Dict(

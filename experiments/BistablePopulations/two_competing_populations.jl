@@ -43,8 +43,8 @@ inter = (
 )
 
 noise = (
-    A = SNN.PoissonStimulus(network1.pop.E, :he,  param=4.5kHz, cells=:ALL, μ=1.7f0,),
-    B = SNN.PoissonStimulus(network2.pop.E, :he,  param=4.5kHz, cells=:ALL, μ=1.7f0,),
+    A = SNN.PoissonStimulus(network1.pop.E, :he,  param=4.5kHz, neurons=:ALL, μ=1.7f0,),
+    B = SNN.PoissonStimulus(network2.pop.E, :he,  param=4.5kHz, neurons=:ALL, μ=1.7f0,),
 )
 
 model = merge_models( noise, inter; n1=network1, n2=network2)

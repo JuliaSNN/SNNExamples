@@ -33,7 +33,7 @@ function define_network(N, name, istdp)
     # Store neurons and synapses into a dictionary
     pop = SNN.@symdict E I
     syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
-    noise = SNN.PoissonStimulus(E, :he, param=4.5kHz, cells=:ALL)
+    noise = SNN.PoissonStimulus(E, :he, param=4.5kHz, neurons=:ALL)
     # Return the network as a tuple
     SNN.monitor([E, I], [:fire])
     SNN.monitor(I_to_E, [:W], sr=10Hz)
@@ -66,8 +66,8 @@ network = SNN.merge_models(subnets, syns, silent=true)
 trig_param1 = PoissonStimulusInterval(fill(8.5kHz, 400), [[8s, 9s]])
 trig_param2 = PoissonStimulusInterval(fill(8.5kHz, 400), [[12s, 13s]])
 trigger = Dict{Symbol,Any}(
-    :first => SNN.PoissonStimulus(network.pop.sub_1_E, :he, param=trig_param1, cells=:ALL, name="First stim"),
-    :second => SNN.PoissonStimulus(network.pop.sub_2_E, :he, param=trig_param2, cells=:ALL, name="Second stim")
+    :first => SNN.PoissonStimulus(network.pop.sub_1_E, :he, param=trig_param1, neurons=:ALL, name="First stim"),
+    :second => SNN.PoissonStimulus(network.pop.sub_2_E, :he, param=trig_param2, neurons=:ALL, name="Second stim")
 )
 network = SNN.merge_models(network, trigger=trigger)
 

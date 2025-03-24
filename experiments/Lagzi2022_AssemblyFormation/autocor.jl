@@ -26,7 +26,7 @@ for (n,t) in enumerate([10, 20, 50, 100])
         rate = SNN.OrnsteinUhlenbeckProcess,
     )
     E = Identity(N=100)
-    signal= SNN.PoissonStimulus(E, :g, cells = :ALL, μ = 1.0, param = stim, name="ExtSignal_E1")
+    signal= SNN.PoissonStimulus(E, :g, neurons = :ALL, μ = 1.0, param = stim, name="ExtSignal_E1")
     monitor(signal,[:fire])
     monitor(E,[:fire])
     monitor(E,[:fire, :spikecount])

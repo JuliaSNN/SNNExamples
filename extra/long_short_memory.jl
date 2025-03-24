@@ -35,7 +35,7 @@ network = let
     (pop = pop, syn = syn)
 end
 
-noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, cells=:ALL)
+noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, neurons=:ALL)
 model = SNN.merge_models(network=network, noise=noise)
 SNN.monitor([model.pop...], [:fire, :v])
 # SNN.monitor([network.syn.E_to_E], [:x])

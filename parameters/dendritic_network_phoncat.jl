@@ -26,7 +26,7 @@ bursty_dendritic_network2 = let
             mg = 1.0f0,  # NMDA voltage dependency parameter
         ),
             # After spike timescales and membrane
-        param= AdExMultiCompartmentParameter(
+        param= AdExSoma(
             C = 281pF,  # membrane capacitance
             gl = 40nS,  # leak conductance
             R = nS / 40nS * SNN.GΩ,  # membrane resistance
@@ -114,11 +114,11 @@ bursty_dendritic_network2 = let
     )
 
     noise_params = let
-        exc_soma = (param=4.5kHz,  μ=2.78f0pF,  N=500, cells=:ALL, name="noise_exc_soma")
-        exc_dend = (param=0.0kHz,  μ=0.f0,  N=500, cells=:ALL, name="noise_exc_dend")
-        inh1 = (param=2.25kHz,  μ=2.78f0pF,  N=500, cells=:ALL,     name="noise_inh1")
-        inh2 = (param=2.25kHz,  μ=2.78f0pF, N=500, cells=:ALL,     name="noise_inh2")
-        inhib = (param=2.25kHz,  μ=2.78f0pF, N=500, cells=:ALL,     name="noise_inhib")
+        exc_soma = (param=4.5kHz,  μ=2.78f0pF,  N=500, neurons=:ALL, name="noise_exc_soma")
+        exc_dend = (param=0.0kHz,  μ=0.f0,  N=500, neurons=:ALL, name="noise_exc_dend")
+        inh1 = (param=2.25kHz,  μ=2.78f0pF,  N=500, neurons=:ALL,     name="noise_inh1")
+        inh2 = (param=2.25kHz,  μ=2.78f0pF, N=500, neurons=:ALL,     name="noise_inh2")
+        inhib = (param=2.25kHz,  μ=2.78f0pF, N=500, neurons=:ALL,     name="noise_inhib")
         (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2, inhib=inhib)
     end
 

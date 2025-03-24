@@ -23,7 +23,7 @@ stim_assembly = Dict( assembly.name=>begin
                                     Dict(:intervals=>[intervals[assembly.id]]))
                             param = PSParam(rate=attack_decay, 
                                         variables=variables)
-                            SNN.PoissonStimulus(model.pop.E, :ge, μ=1pF, cells=assembly.cells, param=param, name=string(assembly.name))
+                            SNN.PoissonStimulus(model.pop.E, :ge, μ=1pF, neurons=assembly.neurons, param=param, name=string(assembly.name))
                         end 
                     for assembly in assemblies)
 
@@ -38,7 +38,7 @@ SNN.monitor(model.syn.EE, [(:ρ, w_rec ), (:W, w_rec )], sr=20Hz)
 simtime = SNN.train!(model=model,duration=1.3s, dt=0.125, pbar=true)
 
 root = datadir("working_memory", "Mongillo2008") |> x-> (mkpath(dirname(x)); x)
-path = SNN.save_model(path= root, model= model, name="8000_cells_oneitem_nostim", assemblies=assemblies, simtime=simtime)
+path = SNN.save_model(path= root, model= model, name="8000_neurons_oneitem_nostim", assemblies=assemblies, simtime=simtime)
 interval = 0s:10ms:get_time(simtime)
 
 stp_plot(model, interval, assemblies)
@@ -46,8 +46,8 @@ stp_plot(model, interval, assemblies)
 @unpack model, simtime, assemblies =  SNN.load_data(path)
 simtime = SNN.train!(model=model,duration=0.5s, dt=0.125, pbar=true, time=simtime)
 μee_assembly = 0.48 * 8000/model.pop.E.N  *2.5
-update_weights!(model.syn.EE, assemblies[1].cells, assemblies[1].cells, μee_assembly)
-update_weights!(model.syn.EE, assemblies[2].cells, assemblies[2].cells, μee_assembly)
+update_weights!(model.syn.EE, assemblies[1].neurons, assemblies[1].neurons, μee_assembly)
+update_weights!(model.syn.EE, assemblies[2].neurons, assemblies[2].neurons, μee_assembly)
 
 using ProgressBars
 input = 0.08pA

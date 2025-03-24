@@ -134,7 +134,7 @@ function potjans_layer(scale)
     for pop in exc_pop
         νe = 2.5kHz
         post = neurons[pop]
-        s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
+        s = SNN.PoissonStimulus(post, :ge; param = νe, neurons=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
     return merge_models(neurons, connections, stimuli)

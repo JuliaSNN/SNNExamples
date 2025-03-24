@@ -45,14 +45,14 @@ pr2 = SNN.raster(model.pop, Trange)
 plot(pr1, pr2, layout = (2, 1), size = (800, 800), margin = 5Plots.mm)
 plot_activity(model, Trange)
 
-## Raster plot the activity of the cells in certain population
-pop = model.stim.LOP_d.cells
+## Raster plot the activity of the neurons in certain population
+pop = model.stim.LOP_d.neurons
 vecplot(model.pop.E, :v_d, r=Trange, neurons=pop, pop_average=true, ribbon=false)
 raster(spiketimes(model.pop.E, interval=Trange)[pop], Trange)
 
 ## Plot the firing rate of a single population
-cells = model.stim.POLL_d.cells
-fr, interval = firing_rate(spiketimes(model.pop.E)[cells], τ =10ms)
+neurons = model.stim.POLL_d.neurons
+fr, interval = firing_rate(spiketimes(model.pop.E)[neurons], τ =10ms)
 plot(interval, mean(fr, dims=1)[1,:], xlabel="Time (ms)", ylabel="Firing rate (Hz)", title="Firing rate of :L_d")
 plot!(xlims=(1000,2500))
 
@@ -97,8 +97,8 @@ hline!([10.5], c=:black, ls=:dash, label="")
 
 ## Plot the synaptic weights from L and P to POLL
 @unpack stim = model
-histogram(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.L_d.cells][:], alpha=0.5, bins=1:0.5:45, label="L->POLL")
-histogram!(matrix(model.syn.E_to_E)[stim.POLL_d.cells, model.stim.P_d.cells][:], alpha=0.5, bins=1:0.5:45, label="P->POLL")
+histogram(matrix(model.syn.E_to_E)[stim.POLL_d.neurons, model.stim.L_d.neurons][:], alpha=0.5, bins=1:0.5:45, label="L->POLL")
+histogram!(matrix(model.syn.E_to_E)[stim.POLL_d.neurons, model.stim.P_d.neurons][:], alpha=0.5, bins=1:0.5:45, label="P->POLL")
 plot!(title = "Synaptic weights from L and P to POLL")
 
 

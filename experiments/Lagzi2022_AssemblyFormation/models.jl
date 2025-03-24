@@ -16,9 +16,9 @@ function network(;local_config, type= :pv1)
             PV = SNN.IF(; N = NPV, param = pv_param,  name="PV")
             pop = (@symdict E1 E2 PV )
             noise = (
-                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, cells=:ALL),
-                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, cells=:ALL),
-                inh_noise = SNN.PoissonStimulus(PV, :he, param=I_noise, cells=:ALL)
+                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                inh_noise = SNN.PoissonStimulus(PV, :he, param=I_noise, neurons=:ALL)
                 )
         end
         if type == :pv2 
@@ -26,10 +26,10 @@ function network(;local_config, type= :pv1)
             PV1 = SNN.IF(; N = NPV, param = pv_param,  name="PV1")
             PV2 = SNN.IF(; N = NPV, param = pv_param,  name="PV2")
             noise = (
-                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, cells=:ALL),
-                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, cells=:ALL),
-                inh_noise1 = SNN.PoissonStimulus(PV1, :he, param=I_noise, cells=:ALL),
-                inh_noise2 = SNN.PoissonStimulus(PV2, :he, param=I_noise, cells=:ALL)
+                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                inh_noise1 = SNN.PoissonStimulus(PV1, :he, param=I_noise, neurons=:ALL),
+                inh_noise2 = SNN.PoissonStimulus(PV2, :he, param=I_noise, neurons=:ALL)
                 )
             pop = (@symdict E1 E2 PV1 PV2)
         end
@@ -40,9 +40,9 @@ function network(;local_config, type= :pv1)
             SST2 = SNN.IF(; N = NSST, param = sst_param,  name="SST2")
             pop = (@symdict E1 E2 PV SST1 SST2)
             noise = (
-                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, cells=:ALL),
-                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, cells=:ALL),
-                inh_noise = SNN.PoissonStimulus(PV, :he,  param=I_noise, cells=:ALL)
+                exc_noise1 = SNN.PoissonStimulus(E1, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                exc_noise2 = SNN.PoissonStimulus(E2, :he, μ=2mV, param= E_noise, neurons=:ALL),
+                inh_noise = SNN.PoissonStimulus(PV, :he,  param=I_noise, neurons=:ALL)
                 )
         end
         pop = dict2ntuple(pop)
@@ -60,8 +60,8 @@ function network(;local_config, type= :pv1)
             )
     
         signal = (
-            signal_E1= SNN.PoissonStimulus(E1, :he, cells = :ALL, μ = 1.0, param = variable_stim1, name="ExtSignal_E1"),
-            signal_E2= SNN.PoissonStimulus(E2, :he, cells = :ALL, μ = 1.0, param = variable_stim2, name="ExtSignal_E2")
+            signal_E1= SNN.PoissonStimulus(E1, :he, neurons = :ALL, μ = 1.0, param = variable_stim1, name="ExtSignal_E1"),
+            signal_E2= SNN.PoissonStimulus(E2, :he, neurons = :ALL, μ = 1.0, param = variable_stim2, name="ExtSignal_E2")
         )
     
         synapses = Dict{Symbol,Any}()

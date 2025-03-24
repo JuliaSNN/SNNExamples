@@ -34,8 +34,8 @@ network = let
 end
 
 # Create background for the network simulation
-noise  = PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, cells=:ALL)
-noise2 = PoissonStimulus(network.pop[:E], :gi, param=3kHz, cells=:ALL)
+noise  = PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
+noise2 = PoissonStimulus(network.pop[:E], :gi, param=3kHz, neurons=:ALL)
 old_model = merge_models(network, noise=noise, noise2=noise2)
 
 ## Save the model. Important to `merge_model` before saving to maintain shared memory pointers.

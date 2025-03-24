@@ -23,7 +23,7 @@ function attractor_model(config;)
         # Store neurons and synapses into a dictionary
         pop = SNN.@symdict E I
         syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
-        noise = SNN.PoissonStimulus(E, :he, param=config.noise, cells=:ALL)
+        noise = SNN.PoissonStimulus(E, :he, param=config.noise, neurons=:ALL)
         # Return the network as a tuple
         SNN.monitor([E, I], [:fire])
         SNN.monitor(I_to_E, [:W], sr=10Hz)
@@ -52,7 +52,7 @@ function add_stimulus(network, population, interval)
     trig_param = PoissonStimulusInterval(rate=fill(ext_stim, 400), intervals=[interval])
     name = Symbol("stim_$(population)_$(randstring(2))")
     trigger = Dict{Symbol,Any}(
-        name => SNN.PoissonStimulus(getfield(network.pop,population), :he, param=trig_param, cells=:ALL, name=string(name)),
+        name => SNN.PoissonStimulus(getfield(network.pop,population), :he, param=trig_param, neurons=:ALL, name=string(name)),
     )
     SNN.merge_models(network, trigger, silent=true)
 end

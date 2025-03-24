@@ -24,9 +24,9 @@ network = create_network(;stdp, network_param, neuron_param ) = let
 
     pop = dict2ntuple(@strdict E I1)
     stim = Dict{Symbol,Any}(
-        :stim_e => SNN.PoissonStimulus(E, :ge, param=50Hz*40, μ=1f0, cells=:ALL),
-        :stim_i => SNN.PoissonStimulus(I1, :ge, param=50Hz*40, μ=0.2f0, cells=:ALL),
-        # :stim_i => SNN.CurrentStimulus(I1, I_base=I_base, cells=:ALL),
+        :stim_e => SNN.PoissonStimulus(E, :ge, param=50Hz*40, μ=1f0, neurons=:ALL),
+        :stim_i => SNN.PoissonStimulus(I1, :ge, param=50Hz*40, μ=0.2f0, neurons=:ALL),
+        # :stim_i => SNN.CurrentStimulus(I1, I_base=I_base, neurons=:ALL),
     )
     merge_models(pop, synapses, stim, silent=true)
 end

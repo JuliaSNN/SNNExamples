@@ -38,8 +38,8 @@ end
 
 
 # Create background for the network simulation
-noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, cells=:ALL)
-noise2 = SNN.PoissonStimulus(network.pop[:E], :gi, param=3kHz, cells=:ALL)
+noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
+noise2 = SNN.PoissonStimulus(network.pop[:E], :gi, param=3kHz, neurons=:ALL)
 old_model = SNN.merge_models(network, noise=noise, noise2=noise2)
 
 using SpikingNeuralNetworks:MetaGraphs

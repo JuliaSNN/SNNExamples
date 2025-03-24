@@ -37,7 +37,7 @@ network = let
 end
 
 # Create background for the network simulation
-noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, cells=:ALL)
+noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, neurons=:ALL)
 
 # Combine all
 model_soma = SNN.merge_models(network, noise=noise)

@@ -60,7 +60,7 @@ addprocs(4)
     end
 
     # Create background for the network simulation
-    noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, cells=:ALL)
+    noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
     model = SNN.merge_models(network, noise=noise, silent=true)
     SNN.monitor([model.pop...], [:fire])
     simtime = SNN.Time()

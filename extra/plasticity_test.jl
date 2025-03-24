@@ -36,7 +36,7 @@ network = let
 end
 
 # Create background for the network simulation
-noise = SNN.PoissonStimulus(network.pop.E, :ge, param=1.8kHz, cells=:ALL)
+noise = SNN.PoissonStimulus(network.pop.E, :ge, param=1.8kHz, neurons=:ALL)
 cellA = 23
 cellB = 58
 W = zeros(network.pop.E.N, network.pop.E.N)
