@@ -191,12 +191,12 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.IsE...)
     I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.EIf...)
     I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...)
-    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...)
+    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IsIf...)
     I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.IsIs...)
+    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IfIs...)
     I2_to_E1 = SNN.SpikingSynapse(I2, E, :hi, :d1; param = plasticity.iSTDP_potential, connectivity.EdIs...)
     I2_to_E2 = SNN.SpikingSynapse(I2, E, :hi, :d2; param = plasticity.iSTDP_potential, connectivity.EdIs...)
 
-    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
     # Define normalization
     norm1 = SNN.SynapseNormalization(NE, [E_to_E1], param = SNN.MultiplicativeNorm(τ = 20ms))
     norm2 = SNN.SynapseNormalization(NE, [E_to_E2], param = SNN.MultiplicativeNorm(τ = 20ms))
@@ -211,7 +211,7 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     pop = dict2ntuple(@strdict E I1 I2)
     syn = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E1 I2_to_E2 I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E1 E_to_E2 norm1 norm2 )
     # Return the network as a model
-    model = merge_models(pop, syn, noise=stimuli, name=name)
+    model = merge_models(;pop, syn, noise=stimuli, name=name)
     if !STDP
         syn.E_to_E1.param.active[1] = false
         syn.E_to_E2.param.active[1] = false

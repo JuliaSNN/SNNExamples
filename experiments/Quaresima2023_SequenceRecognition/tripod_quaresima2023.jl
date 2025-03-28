@@ -24,7 +24,7 @@ end
 
 exp_config = (      # Sequence parameters
                     init_silence=1s, 
-                    repetition=50, 
+                    repetition=100, 
                     silent_intervals=1, 
                     peak_rate=8kHz, 
                     start_rate=8kHz, 
@@ -44,21 +44,22 @@ model_info = (repetition=exp_config.repetition,
             peak_rate=exp_config.peak_rate,
             proj_strength=exp_config.proj_strength,
             p_post = exp_config.p_post,
-            UUID = randstring(4)
+            UUI = randstring(4)
             )
 
 ## Merge network and stimuli in model
 network = tripod_network(;exp_config...)
+model = network
 stim, seq = SNNUtils.step_input_sequence(network = network, lexicon = lexicon; exp_config..., )
 model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d1, :v_d2, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=1Hz)
-mytime = SNN.Time()
-SNN.train!(model=model, duration= sequence_end(seq), pbar=true, dt=0.125, time=mytime)
-
-model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config, mytime=mytime, seq=seq)
+SNN.train!(model=model, duration= 10s, pbar=true, dt=0.125)
+model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config)
+model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config, seq=seq)
 ##
+model_path = get_path(;path, name="Tripod-associative", info=model_info)
 @unpack model, seq, mytime, lexicon, config = load_model(model_path)
 recall_config = (;config..., STDP=false, words=false,)
 seq = randomize_sequence!(;seq=seq, model=model, recall_config...)
@@ -74,3 +75,8 @@ path = datadir("sequence_recognition", "overlap_lexicon")
 save_model(path=path, name="Tripod-recall", model =model, info=recall_config; data...)
 filesize(model_path) |> Base.format_bytes
 basename(model_path)
+
+
+##
+
+raster(model.pop, 1s:1ms:10s, every=1, size=(1200, 1000))
