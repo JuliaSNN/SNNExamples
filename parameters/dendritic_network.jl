@@ -73,8 +73,8 @@ bursty_dendritic_network = let
         τw = 144ms,        #(s) adaptation time constant (~Ca-activated K current inactivation)
     )
     plasticity = (
-        iSTDP_rate = SNN.iSTDPParameterRate(η = 0.2, τy = 10ms, r=10Hz, Wmax = 200.0pF, Wmin = 2.78pF),
-        iSTDP_potential =SNN.iSTDPParameterPotential(η = 0.2, v0 = -70mV, τy = 20ms, Wmax = 200.0pF, Wmin = 2.78pF),
+        iSTDP_rate = SNN.iSTDPParameterRate(η = 0.2, τy = 10ms, r=5Hz, Wmax = 200.0pF, Wmin = 2.78pF),
+        iSTDP_potential =SNN.iSTDPParameterPotential(η = 0.2, v0 = -40mV, τy = 20ms, Wmax = 200.0pF, Wmin = 2.78pF),
         vstdp = SNN.vSTDPParameter(
                 A_LTD = 4.0f-4,  #ltd strength
                 A_LTP = 14.0f-4, #ltp strength
@@ -88,30 +88,30 @@ bursty_dendritic_network = let
             )
     )
     connectivity = (
-        EdE = (p = 0.2,  μ = 10.78, dist = Normal, σ = 1),
-        IfE = (p = 0.2,  μ = log(15.27),  dist = LogNormal, σ = 0.),
-        IsE = (p = 0.2,  μ = log(15.27),  dist = LogNormal, σ = 0.),
+        E_to_Ed = (p = 0.2,  μ = 10.78, dist = :Normal, σ = 1),
+        E_to_If = (p = 0.2,  μ = log(15.27),  dist = :LogNormal, σ = 0.),
+        E_to_Is = (p = 0.2,  μ = log(15.27),  dist = :LogNormal, σ = 0.),
 
-        EIf = (p = 0.2,  μ = log(15.8), dist = LogNormal, σ = 0.),
-        IsIf = (p = 0.2, μ = log(0.83),  dist = LogNormal, σ = 0.),
-        IfIf = (p = 0.2, μ = log(16.2), dist = LogNormal, σ = 0.),
+        If_to_E = (p = 0.2,  μ = log(15.8), dist = :LogNormal, σ = 0.),
+        If_to_Is = (p = 0.2, μ = log(0.83),  dist = :LogNormal, σ = 0.),
+        If_to_If = (p = 0.2, μ = log(16.2), dist = :LogNormal, σ = 0.),
 
-        EdIs = (p = 0.2, μ = log(15.8), dist = LogNormal, σ = 0.),
-        IfIs = (p = 0.2, μ = log(1.47), dist = LogNormal, σ = 0.),
-        IsIs = (p = 0.2, μ = log(16.2), dist = LogNormal, σ = 0.),
+        Is_to_Ed = (p = 0.2, μ = log(15.8), dist = :LogNormal, σ = 0.),
+        Is_to_If = (p = 0.2, μ = log(1.47), dist = :LogNormal, σ = 0.),
+        Is_to_Is = (p = 0.2, μ = log(16.2), dist = :LogNormal, σ = 0.),
     )
 
     noise_params = let
-        exc_soma = (param=4.0kHz,  μ=2.8f0,  neurons=:ALL, name="noise_exc_soma")
-        exc_dend = (param=0.0kHz,  μ=0.f0,  neurons=:ALL, name="noise_exc_dend")
-        inh1 = (param=2.5kHz,  μ=2.8f0,  neurons=:ALL,     name="noise_inh1")
-        inh2 = (param=3.5kHz,  μ=2.8f0, neurons=:ALL,     name="noise_inh2")
+        exc_soma = (param=2.0kHz,  μ=2.8f0,  neurons=:ALL, name="noise_exc_soma")
+        exc_dend = (param=5.0kHz,  μ=2.f0,  neurons=:ALL, name="noise_exc_dend")
+        inh1 = (param=3.5kHz,  μ=5f0,  neurons=:ALL,     name="noise_inh1")
+        inh2 = (param=6kHz,  μ=5f0, neurons=:ALL,     name="noise_inh2")
         (exc_soma=exc_soma, exc_dend=exc_dend, inh1=inh1, inh2=inh2)
     end
 
     inh_ratio = (
                     ni1 = 0.35 *1/4,
-                    ni2 = 0.65 *    1/4,    
+                    ni2 = 0.65 *1/4,    
         )
 
     (exc=exc, pv=PV, sst=SST, plasticity,connectivity, noise_params, inh_ratio)
@@ -135,15 +135,17 @@ function ballstick_network(;params, name, NE, STDP, kwargs...)
     I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
     I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
-    E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.EdE..., param= plasticity.vstdp)
-    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.IfE...)
-    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.IsE...)
-    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.EIf...)
-    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...)
-    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...)
-    I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.IsIs...)
-    I2_to_E = SNN.SpikingSynapse(I2, E, :hi, :d; param = plasticity.iSTDP_potential, connectivity.EdIs...)
-    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
+    E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.E_to_Ed..., param= plasticity.vstdp)
+    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.E_to_If...)
+    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.E_to_Is...)
+
+    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.If_to_E...)
+    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.If_to_If...)
+    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.If_to_Is...)
+
+    I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.Is_to_Is...)
+    I2_to_E = SNN.SpikingSynapse(I2, E, :hi, :d; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.Is_to_If...)
     # Define normalization
     norm = SNN.SynapseNormalization(NE, [E_to_E], param = SNN.MultiplicativeNorm(τ = 20ms))
     # background noise
@@ -184,19 +186,20 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
     I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
-    E_to_E1 = SNN.SpikingSynapse(E, E, :he, :d1 ; connectivity.EdE..., param= plasticity.vstdp)
-    E_to_E2 = SNN.SpikingSynapse(E, E, :he, :d2 ; connectivity.EdE..., param= plasticity.vstdp)
+    E_to_E1 = SNN.SpikingSynapse(E, E, :he, :d1 ; connectivity.E_to_Ed..., param= plasticity.vstdp)
+    E_to_E2 = SNN.SpikingSynapse(E, E, :he, :d2 ; connectivity.E_to_Ed..., param= plasticity.vstdp)
+    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.E_to_If...)
+    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.E_to_Is...)
 
-    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.IfE...)
-    E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.IsE...)
-    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.EIf...)
-    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.IfIf...)
-    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.IfIs...)
-    I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.IsIs...)
-    I2_to_E1 = SNN.SpikingSynapse(I2, E, :hi, :d1; param = plasticity.iSTDP_potential, connectivity.EdIs...)
-    I2_to_E2 = SNN.SpikingSynapse(I2, E, :hi, :d2; param = plasticity.iSTDP_potential, connectivity.EdIs...)
+    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.If_to_E...)
+    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.If_to_If...)
+    I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.If_to_Is...)
 
-    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.IsIf...)
+    I2_to_E1 = SNN.SpikingSynapse(I2, E, :hi, :d1; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_E2 = SNN.SpikingSynapse(I2, E, :hi, :d2; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.Is_to_If...)
+    I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.Is_to_Is...)
+
     # Define normalization
     norm1 = SNN.SynapseNormalization(NE, [E_to_E1], param = SNN.MultiplicativeNorm(τ = 20ms))
     norm2 = SNN.SynapseNormalization(NE, [E_to_E2], param = SNN.MultiplicativeNorm(τ = 20ms))
@@ -204,17 +207,19 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     @unpack exc_soma, exc_dend, inh1, inh2= noise_params
     stimuli = Dict(
         :s   => SNN.PoissonStimulus(E,  :he_s; exc_soma... ),
+        :d1   => SNN.PoissonStimulus(E,  :he_d1; exc_dend... ),
+        :d2   => SNN.PoissonStimulus(E,  :he_d2; exc_dend... ),
         :i1  => SNN.PoissonStimulus(I1, :ge;   inh1...  ),
         :i2  => SNN.PoissonStimulus(I2, :ge;   inh2...  )
     )
     # Store neurons and synapses into a dictionary
     pop = dict2ntuple(@strdict E I1 I2)
-    syn = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E1 I2_to_E2 I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E1 E_to_E2 norm1 norm2 )
+    synapses = dict2ntuple(@strdict E_to_I1 E_to_I2 I1_to_E I2_to_E1 I2_to_E2 I1_to_I1 I2_to_I2 I1_to_I2 I2_to_I1 E_to_E1 E_to_E2 norm1 norm2 )
     # Return the network as a model
-    model = merge_models(pop, syn, noise=stimuli, name=name)
+    model = merge_models(pop, synapses, noise=stimuli, name=name)
     if !STDP
-        syn.E_to_E1.param.active[1] = false
-        syn.E_to_E2.param.active[1] = false
+        model.syn.E_to_E1.param.active[1] = false
+        model.syn.E_to_E2.param.active[1] = false
     end
     @info "STDP enabled: $(has_plasticity(model.syn.E_to_E1))"
     return model
