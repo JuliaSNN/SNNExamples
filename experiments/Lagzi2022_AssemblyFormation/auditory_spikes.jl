@@ -9,7 +9,7 @@ using Random
 using StatsBase
 using SparseArrays
 using Distributions
-@unpack rates, interval= load(datadir("zeus", "ExpData", "ACrates.jld2")) |> dict2ntuple
+@unpack rates, interval= DrWatson.load(datadir("zeus", "ExpData", "ACrates.jld2")) |> dict2ntuple
 sound = rates[1]
 
 ##
@@ -19,7 +19,7 @@ r = 0:1:500
 fr, r = firing_rate(spikes, interval=r, τ=1ms, interpolate=false)
 fr
 plot(r, fr)
-plot!(1:500, sound[ss,:])
+plot!(1:501, sound[ss,:])
 ##
 
 sound = mean(rates)
