@@ -11,10 +11,10 @@ using Statistics
 using YAML
 ##
 
-root = YAML.load_file(projectdir("conf.yml"))["paths"]["zeus"]
-path = joinpath(root, "sequence_recognition", "overlap")
+root = YAML.load_file(projectdir("conf.yml"))["paths"]["local"]
+path = joinpath(root, "sequence_recognition", "overlap") |> mkpath
+include("parameters.jl")
 
-include(projectdir("examples/parameters/dendritic_network.jl"))
 lexicon = let
     dictionary = getdictionary(["POLLEN", "GOLD", "GOLDEN", "DOLL", "LOP", "GOD", "LOG", "POLL", "GOAL", "DOG"])
     duration = getduration(dictionary, 50ms)
@@ -55,9 +55,9 @@ model = merge_models(network, stim)
 SNN.monitor([model.pop...], [:fire])
 SNN.monitor([model.pop...], [ :v_d1, :v_d2, :v_s], sr=200Hz)
 SNN.monitor([model.syn...], [ :W], sr=1Hz)
-SNN.train!(model=model, duration= 10s, pbar=true, dt=0.125)
-model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config)
+SNN.train!(model=model, duration= sequence_end(seq), pbar=true, dt=0.125)
 model_path = save_model(path=path, name="Tripod-associative", model=model, info=model_info, lexicon=lexicon, config=exp_config, seq=seq)
+
 ##
 model_path = get_path(;path, name="Tripod-associative", info=model_info)
 @unpack model, seq, mytime, lexicon, config = load_model(model_path)

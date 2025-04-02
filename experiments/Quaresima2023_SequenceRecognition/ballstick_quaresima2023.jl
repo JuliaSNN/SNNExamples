@@ -13,7 +13,7 @@ using YAML
 root = YAML.load_file(projectdir("conf.yml"))["paths"]["zeus"]
 path = joinpath(root, "sequence_recognition", "overlap")
 
-params_file = projectdir("examples/parameters/dendritic_network.jl")
+params_file = projectdir("examples/parameters.jl")
 include(params_file)
 
 

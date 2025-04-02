@@ -14,7 +14,7 @@ using YAML
 root = YAML.load_file(projectdir("conf.yml"))["paths"]["local"]
 path = joinpath(root, "sequence_recognition", "overlap")
 
-include(projectdir("examples/parameters/dendritic_network.jl"))
+include(projectdir("examples/parameters.jl"))
 
 exp_config = (      # Sequence parameters
                     init_silence=1s, 
