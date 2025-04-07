@@ -20,7 +20,7 @@ for syn in [:nmda, :ampa]
                         NSST = NSSTs[t])
         info = (NSST = NSSTs[t], τ= local_config.stim_τ, rate=local_config.stim_rate, syn=syn)
         model = nothing
-        if isfile(get_path(path=path, name="Model_sst", info=info))
+        if isfile(model_path_name(path=path, name="Model_sst", info=info))
             @info "Loading model $(exp_name) with NSST = $(NSSTs[t]), synapse = $(syn)"
             model = load_model(path, "Model_sst", info).model
         else
@@ -36,7 +36,7 @@ for syn in [:nmda, :ampa]
         model.stim.exc_noise2.param.rate.= 0.8*config.stim_rate
         model.stim.signal_signal_E1.param.active[1] = false
         model.stim.signal_signal_E2.param.active[1] = false
-        isfile(get_path(path=path, name="Model_sst", info=info)) && continue
+        isfile(model_path_name(path=path, name="Model_sst", info=info)) && continue
         train!(model=model, duration=500s, pbar=true)
         save_model(path=path,name="Model_sst", model=model, info=info, config=local_config)
     end 

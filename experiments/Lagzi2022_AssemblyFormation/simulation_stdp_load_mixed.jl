@@ -20,7 +20,7 @@ path = datadir("Lagzi2022_AssemblyFormation", "mixed_inh")
 Threads.@threads for t in eachindex(NSSTs)
         @unpack stim_τ, stim_rate = config
         info = (τ= stim_τ, rate=stim_rate, signal=:off, NSST=NSSTs[t])
-        !isfile(get_path(path=path, name="Model_sst", info=info)) && continue
+        !isfile(model_path_name(path=path, name="Model_sst", info=info)) && continue
         @show info
         model = load_model(path, "Model_sst", info).model
         #recurrent

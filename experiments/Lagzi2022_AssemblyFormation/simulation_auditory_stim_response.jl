@@ -37,7 +37,7 @@ for n in eachindex(running_exps)
                         @assert isdir(load_path)
                         path_response = joinpath(root, exp_config.name) |> mkpath
 
-                        name = get_path(;path=load_path, name="Model_sst", info=info)
+                        name = model_path_name(;path=load_path, name="Model_sst", info=info)
                         data = load_model(load_path, "Model_sst", info)
                         push!(models, name=>data)
                 end
@@ -64,7 +64,7 @@ Threads.@threads for n in eachindex(running_exps)
                         @assert isdir(load_path)
                         path_response = joinpath(root, exp_config.name) |> mkpath
 
-                        name = get_path(;path=load_path, name="Model_sst", info=info)
+                        name = model_path_name(;path=load_path, name="Model_sst", info=info)
                         data = deepcopy(models[name])
 
                         model = data.model
@@ -80,7 +80,7 @@ Threads.@threads for n in eachindex(running_exps)
                         )
                         @info "Running experiment with $(info)"
                         model, TTL, sim_interval = nothing, nothing, nothing
-                        if exp_config.force || !isfile(get_path(path = path_response, name = "SoundResponse", info = info))
+                        if exp_config.force || !isfile(model_path_name(path = path_response, name = "SoundResponse", info = info))
                                 # Test sound response without train and save model
                                 #------------------------------------------------------------------------------
                                 @info "Model not found, running experiment with $(info)"

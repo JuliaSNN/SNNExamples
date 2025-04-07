@@ -29,7 +29,7 @@ Threads.@threads for n in eachindex(NSSTs)
         nsst = NSSTs[n]
         @unpack stim_τ, stim_rate = config
         info = (τ= stim_τ, rate=stim_rate, NSST=nsst, syn=syn)
-        !isfile(get_path(path=path, name="Model_sst", info=info)) && continue
+        !isfile(model_path_name(path=path, name="Model_sst", info=info)) && continue
         model = load_model(path, "Model_sst", info).model
         #recurrent
         WW[1,1,n,s] = mean(model.syn.E1_to_E1.W)

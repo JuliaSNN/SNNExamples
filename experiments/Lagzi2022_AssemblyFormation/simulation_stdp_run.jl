@@ -31,8 +31,8 @@ Threads.@threads for t in eachindex(τs)
                 ),
         )
         info = (τ= local_config.stim_τ, rate=local_config.stim_rate)
-        @show get_path(path=path, name="Model_sst", info=info)
-        isfile(get_path(path=path, name="Model_sst", info=info)) && continue
+        @show model_path_name(path=path, name="Model_sst", info=info)
+        isfile(model_path_name(path=path, name="Model_sst", info=info)) && continue
         model = network(local_config=local_config, type= :sst)
         train!(model=model, duration=1000s, pbar=true)
         save_model(path=path,name="Model_sst", model=model, info=info, config=config)
@@ -70,7 +70,7 @@ Threads.@threads for t in eachindex(τs)
         SNN.monitor(model.syn.PV_to_E2, [:W], sr=10Hz)
 
         no_ext_info = (τ= stim_τ, rate=stim_rate, signal=:off)
-        isfile(get_path(path=path, name="Model_sst", info=no_ext_info)) && continue
+        isfile(model_path_name(path=path, name="Model_sst", info=no_ext_info)) && continue
         train!(model=model, duration=500s, pbar=true)
         save_model(path=path,name="Model_sst", model=model, info=no_ext_info, config=config)
     end
@@ -105,7 +105,7 @@ Threads.@threads for t in eachindex(τs)
         SNN.monitor(model.syn.PV_to_E2, [:W], sr=10Hz)
 
         no_ext_info = (τ= stim_τ, rate=stim_rate, signal=:off)
-        isfile(get_path(path=path, name="Model_sst", info=no_ext_info)) && continue
+        isfile(model_path_name(path=path, name="Model_sst", info=no_ext_info)) && continue
         train!(model=model, duration=500s, pbar=true)
         save_model(path=path,name="Model_sst", model=model, info=no_ext_info, config=config)
     end

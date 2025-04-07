@@ -127,7 +127,7 @@ fr, r = firing_rate(model.pop.E1, interval=1s:4s, pop_average=true)
 #         SNN.monitor(model.syn.PV_to_E2, [:W], sr=10Hz)
 
 #         no_ext_info = (τ= stim_τ, rate=stim_rate, signal=:off)
-#         isfile(get_path(path=path, name="Model_sst", info=no_ext_info)) && continue
+#         isfile(model_path_name(path=path, name="Model_sst", info=no_ext_info)) && continue
 #         train!(model=model, duration=500s, pbar=true)
 #         save_model(path=path,name="Model_sst", model=model, info=no_ext_info, config=config)
 #     end
