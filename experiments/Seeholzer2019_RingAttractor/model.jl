@@ -1,5 +1,5 @@
 
-function run_model(config)
+function run_model(config, input_neurons, input_duration=0.5s)
     # Define IFParameterSingleExponential structs for E and I neurons using the parameters from Ep and Ip
     E_param = SNN.IFParameterSingleExponential(
         τm = 20ms,
@@ -27,8 +27,8 @@ function run_model(config)
     )
     # Example usage of the IFParameter structs
 
-    E = IF(N=1600, param=E_param)
-    I = IF(N=400, param=I_param)
+    E = IF(N=800, param=E_param)
+    I = IF(N=200, param=I_param)
     #
     @unpack E_to_I, I_to_I, I_to_E, STPparam, σ_w, w_max = config
     W = linear_network(E.N, σ_w=σ_w, w_max=w_max)
@@ -62,19 +62,19 @@ function run_model(config)
         silent = true
     )
 
-    input_neurons = 701:900
 
     SNN.monitor(model.pop, [:fire])
     # SNN.monitor(model.syn.E_to_E, [:u, :x], sr=200Hz)
-    # SNN.monitor(model.syn.E_to_E, [:ρ], sr=40Hz)
+    SNN.monitor(model.syn.E_to_E, [:ρ], sr=20Hz)
 
     train!(;model, duration=4s, dt=0.125ms, pbar=true)
-    let ## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons] .+= 300pF
-        train!(;model, duration=1s, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons] .-= 300pF
+    for i in eachindex(input_neurons)## External input on E neurons
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 300pF
+        train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 300pF
+        train!(;model, duration=5s, dt=0.125ms, pbar=true)
     end
-    train!(;model, duration=10s, dt=0.125ms, pbar=true)
+    train!(;model, duration=5s, dt=0.125ms, pbar=true)
 
     return model
 end

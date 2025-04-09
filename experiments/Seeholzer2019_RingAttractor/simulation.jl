@@ -30,18 +30,21 @@ config = (
     STPparam = STPParameter(
         τD= 150ms, # τx
         τF= 650ms, # τu
-        U = 0.2f0,
+        U = 0.4f0,
     )
 )
-model = run_model(config)
-raster(model.pop, 0s:20s, every=1)
+input_neurons = [400:500, 100:200]
+model = run_model(config, input_neurons, 2s)
+raster(model.pop, 0s:25s, every=5)
 
 ##
 ρ, r = record(model.syn.E_to_E, :ρ, interpolate=true)
 
-w_rec = indices(model.syn.E_to_E, 700:900, 700:900)
-w_out = indices(model.syn.E_to_E, 100:200, 700:900)
-plot(r, mean(ρ[w_rec,r] , dims=1)[1,:])
+w_1 = indices(model.syn.E_to_E, input_neurons[1], input_neurons[1])
+w_2 = indices(model.syn.E_to_E, input_neurons[2], input_neurons[2])
+w_out = indices(model.syn.E_to_E, 1:100, input_neurons[2])
+plot(r, mean(ρ[w_1,r] , dims=1)[1,:])
+plot!(r, mean(ρ[w_2,r], dims=1)[1,:])
 plot!(r, mean(ρ[w_out,r], dims=1)[1,:])
 ##
 p1 = vecplot(model.syn.E_to_E, :u, interval = 4s:10s, dt=0.125ms, neurons=700:900, pop_average=true, title="E Neuron Voltage")
