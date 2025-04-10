@@ -1,5 +1,5 @@
 
-function run_model(config, input_neurons, input_duration=0.5s)
+function init_model(config; W=nothing)
     # Define IFParameterSingleExponential structs for E and I neurons using the parameters from Ep and Ip
     E_param = SNN.IFParameterSingleExponential(
         τm = 20ms,
@@ -27,17 +27,16 @@ function run_model(config, input_neurons, input_duration=0.5s)
     )
     # Example usage of the IFParameter structs
 
-    E = IF(N=800, param=E_param)
-    I = IF(N=200, param=I_param)
+    E = IF(N=config.NE, param=E_param)
+    I = IF(N=config.NE ÷ 4, param=I_param)
     #
     @unpack E_to_I, I_to_I, I_to_E, STPparam, σ_w, w_max = config
-    W = linear_network(E.N, σ_w=σ_w, w_max=w_max)
 
-    # WI = linear_network(E.N, σ_w=0.38, w_max=1.4)[1:I.N, 1:E.N]
-    # E_to_I = SNN.SpikingSynapse(E,I, :ge; w=WI)
     E_to_I = SNN.SpikingSynapse(E,I, :ge; μ=E_to_I, p=0.2, σ=0)
     I_to_I = SNN.SpikingSynapse(I,I, :gi; μ=I_to_I, p=0.2, σ=0)
     I_to_E = SNN.SpikingSynapse(I,E, :gi; μ=I_to_E, p=0.2, σ=0)
+
+    W = isnothing(W) ? linear_network(E.N, σ_w=σ_w, w_max=w_max) : W 
     E_to_E = SNN.SpikingSynapse(E,E, :ge; w=W, 
     param=STPparam
     )
@@ -64,18 +63,6 @@ function run_model(config, input_neurons, input_duration=0.5s)
 
 
     SNN.monitor!(model.pop, [:fire])
-    # SNN.monitor!(model.syn.E_to_E, [:u, :x], sr=200Hz)
-    SNN.monitor!(model.syn.E_to_E, [:ρ], sr=20Hz)
-
-    train!(;model, duration=4s, dt=0.125ms, pbar=true)
-    for i in eachindex(input_neurons)## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 300pF
-        train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 300pF
-        train!(;model, duration=5s, dt=0.125ms, pbar=true)
-    end
-    train!(;model, duration=5s, dt=0.125ms, pbar=true)
-
     return model
 end
 
@@ -84,5 +71,18 @@ function model_loss(model, interval=5s:10ms:10s, fr_λ = 0.1)
     cv, ff = asynchronous_state(model, interval)
     fr = firing_rate(model.pop; interval, τ=20ms, pop_average=true) |> x-> mean.(x[1])
     return attractor_width, abs(fr[2]-20), abs(fr[1]-3) 
+end
+
+function test_WM(model, input_neurons, input_duration=1s)
+    reset_time!(model.time)
+    clear_records!(model)
+    train!(;model, duration=5s, dt=0.125ms, pbar=true)
+    for i in eachindex(input_neurons)## External input on E neurons
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 300pF
+        train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 300pF
+        train!(;model, duration=5s, dt=0.125ms, pbar=true)
+    end
+    train!(;model, duration=5s, dt=0.125ms, pbar=true)
 end
 
