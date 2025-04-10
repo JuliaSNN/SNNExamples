@@ -13,9 +13,9 @@ function test_sound_response(model, sound_stim;
 
         sim!(model=model, duration=warmup)
         # Monitor firing rates and synaptic weights
-        monitor(model.pop, [:fire])
+        monitor!(model.pop, [:fire])
         for syn in model.syn
-                !isa(syn.param, no_STDPParameter) &&  monitor(syn,[:W], sr=5Hz)
+                !isa(syn.param, no_STDPParameter) &&  monitor!(syn,[:W], sr=5Hz)
         end
 
         sound_stim = SpikeTimeStimulus(getfield(model.pop,target_pop), :he, param=SpikeTimeParameter(sound_stim))

@@ -44,7 +44,7 @@ model_path = save_model(path=path, name="blank_network", model=old_model)
 ## Load the model, run the simulation and store the results
 model = DrWatson.load(model_path)["model"]
 simtime = SNN.Time()
-SNN.monitor([model.pop...], [:fire])
+SNN.monitor!([model.pop...], [:fire])
 train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
 model_path = save_model(path=path, name="network_with_spikes", model=model)
 
@@ -55,7 +55,7 @@ p1 = SNN.raster(new_model.pop, [1s, 2s], title="Strong inhibitory noise")
 
 ## Remove a stimulus, run the simulation, and plot the results
 nogi_model = remove_element(new_model, :noise2)
-SNN.monitor([nogi_model.pop...], [:fire])
+SNN.monitor!([nogi_model.pop...], [:fire])
 train!(model=nogi_model, duration = 5000ms, dt = 0.125f0, pbar = true)
 p2 = SNN.raster(nogi_model.pop, [1s, 2s], title="No inhibitory noise")
 plot(p1,p2, layout=(2,1), size=(800,800))

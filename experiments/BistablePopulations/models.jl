@@ -25,8 +25,8 @@ function attractor_model(config;)
         syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
         noise = SNN.PoissonStimulus(E, :he, param=config.noise, neurons=:ALL)
         # Return the network as a tuple
-        SNN.monitor([E, I], [:fire])
-        SNN.monitor(I_to_E, [:W], sr=10Hz)
+        SNN.monitor!([E, I], [:fire])
+        SNN.monitor!(I_to_E, [:W], sr=10Hz)
         SNN.merge_models(pop, syn, noise=noise, silent=true)
     end
 
@@ -60,7 +60,7 @@ end
 function test_istdp(config) 
     model = attractor_model(config)
     mytime = train!(model = model, duration = config.warmup, pbar = true, dt = 0.125)
-    clear_records(model)
+    clear_records!(model)
     mytime = Time()
     for (pop, interval) in config.intervals
         model = add_stimulus(model, pop, interval)

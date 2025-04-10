@@ -45,8 +45,8 @@ model_soma = SNN.merge_models(network, noise=noise)
 #
 @info "Initializing network"
 simtime = SNN.Time()
-SNN.monitor([network.pop...], [:fire])
-SNN.monitor([network.pop...], [:v], sr=200Hz)
+SNN.monitor!([network.pop...], [:fire])
+SNN.monitor!([network.pop...], [:v], sr=200Hz)
 
 train!(model=model_soma, duration = 2500ms, time = simtime, dt = 0.125f0, pbar = true)
 ##

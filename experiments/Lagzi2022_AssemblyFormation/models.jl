@@ -46,8 +46,8 @@ function network(;local_config, type= :pv1)
                 )
         end
         pop = dict2ntuple(pop)
-        SNN.monitor(pop, [:fire])
-        # SNN.monitor(pop, [:v], sr=50Hz)
+        SNN.monitor!(pop, [:fire])
+        # SNN.monitor!(pop, [:v], sr=50Hz)
     
     
             variable_stim1 = PoissonStimulusVariable(
@@ -72,7 +72,7 @@ function network(;local_config, type= :pv1)
                 if pre[1] =='E'
                     if post[1] == 'E'
                         synapse = SNN.SpikingSynapse(pop[i], pop[j], :he, p = EE.p, μ = EE.μ, name = "$(pre)_to_$(post)", param= stdp_exc)
-                        SNN.monitor(synapse, [:W], sr=4Hz)
+                        SNN.monitor!(synapse, [:W], sr=4Hz)
                         push!(synapses, Symbol("$(pre)_to_$(post)") => synapse)
                     elseif post[1] == 'S'
                         if post[end] == pre[end] # cotuned
@@ -92,7 +92,7 @@ function network(;local_config, type= :pv1)
                 elseif pre[1] =='S'
                     if post[1] == 'E'
                         synapse = SNN.SpikingSynapse(pop[i], pop[j], :hi, p = IE.p, μ = IE.μ, name = "$(pre)_to_$(post)", param= stdp_sst)
-                        SNN.monitor(synapse, [:W], sr=4Hz)
+                        SNN.monitor!(synapse, [:W], sr=4Hz)
                         push!(synapses, Symbol("$(pre)_to_$(post)") => synapse)
                     else
                         synapse = SNN.SpikingSynapse(pop[i], pop[j], :hi, p = II.p, μ = II.μ, name = "$(pre)_to_$(post)")
@@ -101,7 +101,7 @@ function network(;local_config, type= :pv1)
                 elseif pre[1] =='P'
                     if post[1] == 'E'
                         synapse = SNN.SpikingSynapse(pop[i], pop[j], :hi, p = IE.p, μ = IE.μ, name = "$(pre)_to_$(post)", param= stdp_pv)
-                        SNN.monitor(synapse, [:W], sr=4Hz)
+                        SNN.monitor!(synapse, [:W], sr=4Hz)
                         push!(synapses, Symbol("$(pre)_to_$(post)") => synapse)
                     else
                         synapse = SNN.SpikingSynapse(pop[i], pop[j], :hi, p = II.p, μ = II.μ, name = "$(pre)_to_$(post)")

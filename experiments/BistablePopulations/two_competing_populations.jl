@@ -50,7 +50,7 @@ noise = (
 model = merge_models( noise, inter; n1=network1, n2=network2)
 
 ## @info "Initializing network"
-SNN.monitor([model.pop...], [:fire, :v, :he, :ge])
+SNN.monitor!([model.pop...], [:fire, :v, :he, :ge])
 train!(model = model, duration = 15000ms, pbar = true, dt = 0.125ms)
 SNN.raster([model.pop...], [14s, 15s])
 

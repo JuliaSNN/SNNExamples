@@ -85,7 +85,7 @@ Threads.@threads for n in eachindex(running_exps)
                                 #------------------------------------------------------------------------------
                                 @info "Model not found, running experiment with $(info)"
                                 model = deepcopy(base_model)
-                                clear_records(model)
+                                clear_records!(model)
                                 TTL, sim_interval = test_sound_response(
                                         model,
                                         sound_stim;

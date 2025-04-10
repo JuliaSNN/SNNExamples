@@ -32,7 +32,7 @@ function define_network(N = 800)
     pop = dict2ntuple(@strdict E I)
     syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
     # Return the network as a tuple
-    SNN.monitor([E, I], [:fire])
+    SNN.monitor!([E, I], [:fire])
     (pop = pop, syn = syn)
 end
 
@@ -92,7 +92,7 @@ network = SNN.merge_models(noise, subnets, syns, stimuli)
 train!(model = network, duration = 5000ms, pbar = true, dt = 0.125)
 
 ## Create a model object with only the populations to run the analysis
-SNN.monitor([network.pop...], [:fire])
+SNN.monitor!([network.pop...], [:fire])
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 time_keeper = SNN.Time()

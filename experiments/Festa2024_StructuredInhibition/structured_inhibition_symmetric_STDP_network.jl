@@ -80,10 +80,10 @@ model= create_network(;stdp=stdp_sym, network_param, neuron_param)
 #
 @info "Initializing network"
 simtime = SNN.Time()
-monitor(model.pop, [:fire])
-monitor(model.syn, [:W],  sr=1Hz)
-monitor(model.pop, [:gi], sr=20Hz)
-monitor(model.pop, [:ge], sr=20Hz)
+monitor!(model.pop, [:fire])
+monitor!(model.syn, [:W],  sr=1Hz)
+monitor!(model.pop, [:gi], sr=20Hz)
+monitor!(model.pop, [:ge], sr=20Hz)
 sim!(model=model, duration = 50s, time = simtime, pbar = true)
 ##
 tic = time()

@@ -54,20 +54,20 @@ Threads.@threads for t in eachindex(τs)
         model.stim.exc_noise2.param.rate.=2kHz
         model.stim.signal_signal_E1.param.active[1] = false
         model.stim.signal_signal_E2.param.active[1] = false
-        SNN.monitor(model.pop, [:fire])
+        SNN.monitor!(model.pop, [:fire])
 
-        SNN.monitor(model.syn.E1_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E1_to_E2, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E2_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E2_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E1_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E1_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E2_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E2_to_E2, [:W], sr=10Hz)
 
-        SNN.monitor(model.syn.SST1_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST1_to_E2, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST2_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST2_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST1_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST1_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST2_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST2_to_E2, [:W], sr=10Hz)
 
-        SNN.monitor(model.syn.PV_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.PV_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.PV_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.PV_to_E2, [:W], sr=10Hz)
 
         no_ext_info = (τ= stim_τ, rate=stim_rate, signal=:off)
         isfile(model_path_name(path=path, name="Model_sst", info=no_ext_info)) && continue
@@ -89,20 +89,20 @@ Threads.@threads for t in eachindex(τs)
         model.stim.exc_noise2.param.rate.=2kHz
         model.stim.signal_signal_E1.param.active[1] = false
         model.stim.signal_signal_E2.param.active[1] = false
-        SNN.monitor(model.pop, [:fire])
+        SNN.monitor!(model.pop, [:fire])
 
-        SNN.monitor(model.syn.E1_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E1_to_E2, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E2_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.E2_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E1_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E1_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E2_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.E2_to_E2, [:W], sr=10Hz)
 
-        SNN.monitor(model.syn.SST1_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST1_to_E2, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST2_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.SST2_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST1_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST1_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST2_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.SST2_to_E2, [:W], sr=10Hz)
 
-        SNN.monitor(model.syn.PV_to_E1, [:W], sr=10Hz)
-        SNN.monitor(model.syn.PV_to_E2, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.PV_to_E1, [:W], sr=10Hz)
+        SNN.monitor!(model.syn.PV_to_E2, [:W], sr=10Hz)
 
         no_ext_info = (τ= stim_τ, rate=stim_rate, signal=:off)
         isfile(model_path_name(path=path, name="Model_sst", info=no_ext_info)) && continue

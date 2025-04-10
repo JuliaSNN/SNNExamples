@@ -29,10 +29,10 @@ stim_assembly = Dict( assembly.name=>begin
 
 model = SNN.merge_models(model, stim_assembly)
 #
-SNN.monitor([model.pop...], [:fire, :v], sr=50Hz)
-SNN.monitor(model.syn.EE, [:u, :x], sr=50Hz)
+SNN.monitor!([model.pop...], [:fire, :v], sr=50Hz)
+SNN.monitor!(model.syn.EE, [:u, :x], sr=50Hz)
 w_rec = [assemblies[1].indices..., indices(model.syn.EE, 81:160, 81:160)...]
-SNN.monitor(model.syn.EE, [(:ρ, w_rec ), (:W, w_rec )], sr=20Hz)
+SNN.monitor!(model.syn.EE, [(:ρ, w_rec ), (:W, w_rec )], sr=20Hz)
 
 ## Training
 simtime = SNN.train!(model=model,duration=1.3s, dt=0.125, pbar=true)

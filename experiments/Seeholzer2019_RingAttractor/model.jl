@@ -63,9 +63,9 @@ function run_model(config, input_neurons, input_duration=0.5s)
     )
 
 
-    SNN.monitor(model.pop, [:fire])
-    # SNN.monitor(model.syn.E_to_E, [:u, :x], sr=200Hz)
-    SNN.monitor(model.syn.E_to_E, [:ρ], sr=20Hz)
+    SNN.monitor!(model.pop, [:fire])
+    # SNN.monitor!(model.syn.E_to_E, [:u, :x], sr=200Hz)
+    SNN.monitor!(model.syn.E_to_E, [:ρ], sr=20Hz)
 
     train!(;model, duration=4s, dt=0.125ms, pbar=true)
     for i in eachindex(input_neurons)## External input on E neurons

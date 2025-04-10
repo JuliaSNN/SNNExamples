@@ -35,8 +35,8 @@ function define_network(N, name, istdp)
     syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
     noise = SNN.PoissonStimulus(E, :he, param=4.5kHz, neurons=:ALL)
     # Return the network as a tuple
-    SNN.monitor([E, I], [:fire])
-    SNN.monitor(I_to_E, [:W], sr=10Hz)
+    SNN.monitor!([E, I], [:fire])
+    SNN.monitor!(I_to_E, [:W], sr=10Hz)
     SNN.merge_models(pop, syn, noise=noise, silent=true)
 end
 
@@ -73,8 +73,8 @@ network = SNN.merge_models(network, trigger=trigger)
 
 # Define a time object to keep track of the simulation time, the time object will be passed to the train! function, otherwise the simulation will not create one on the fly.
 # train!(model = network, duration = 5000ms, pbar = true, dt = 0.125)
-SNN.clear_records(network.pop)
-SNN.clear_records(network.syn)
+SNN.clear_records!(network.pop)
+SNN.clear_records!(network.syn)
 train!(model = network, duration = 15000ms, pbar = true, dt = 0.125)
 
 # Plot the raster plot of the network

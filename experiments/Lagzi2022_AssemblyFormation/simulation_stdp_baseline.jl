@@ -28,7 +28,7 @@ for syn in [:nmda, :ampa]
             model = network(local_config=local_config, type= :sst)
             train!(model=model, duration=500s, pbar=true)
             save_model(path=path,name="Model_sst", model=model, info=info, config=local_config)
-            clear_records(model)
+            clear_records!(model)
         end
         @info "Running signal off model $(exp_name) with NSST = $(NSSTs[t])"
         info = (;info..., signal=:off)

@@ -143,8 +143,8 @@ end
 
 model = potjans_layer(0.01)
 duration = 15000ms
-SNN.monitor([model.pop...], [:fire])
-SNN.monitor([model.pop...], [:v], sr=200Hz)
+SNN.monitor!([model.pop...], [:fire])
+SNN.monitor!([model.pop...], [:v], sr=200Hz)
 SNN.sim!(model=model; duration = duration, pbar = true, dt = 0.125)
 SNN.raster(model.pop, [10s, 15s])
 

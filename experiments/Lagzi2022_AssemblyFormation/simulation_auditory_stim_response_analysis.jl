@@ -171,7 +171,7 @@ model.syn.E1_to_E2.W .*= 0.5/mean(model.syn.E1_to_E1.W)
 model.syn.E2_to_E1.W .*= 0.5/mean(model.syn.E1_to_E1.W)
 exp_config = (delay=1s, repetitions=10, warmup=10s, target_pop =:E1 , input_strength=200)
 
-SNN.monitor(model.pop.E1, [:v, :ge, :gi ])
+SNN.monitor!(model.pop.E1, [:v, :ge, :gi ])
 sound_stim = deepcopy(SNN.sample_inputs(exp_config.input_strength, sound, interval))
 TTL, sim_interval = test_sound_response(model, sound_stim, plasticity=false; exp_config...)
 ##

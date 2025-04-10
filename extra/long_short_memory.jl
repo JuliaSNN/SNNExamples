@@ -37,10 +37,10 @@ end
 
 noise = SNN.PoissonStimulus(network.pop.E, :ge, param=2.8kHz, neurons=:ALL)
 model = SNN.merge_models(network=network, noise=noise)
-SNN.monitor([model.pop...], [:fire, :v])
-# SNN.monitor([network.syn.E_to_E], [:x])
-# SNN.monitor([network.syn.E_to_E], [:v])
-# SNN.monitor([network.syn.E_to_E], [:ρ])
+SNN.monitor!([model.pop...], [:fire, :v])
+# SNN.monitor!([network.syn.E_to_E], [:x])
+# SNN.monitor!([network.syn.E_to_E], [:v])
+# SNN.monitor!([network.syn.E_to_E], [:ρ])
 
 simtime = SNN.Time()
 train!(model=model, duration = 5000ms, time = simtime, dt = 0.1f0, pbar = true)

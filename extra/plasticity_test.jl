@@ -56,7 +56,7 @@ model = SNN.merge_models(network, noise=noise, measured_syn=measured_syn)
 
 @info "Initializing network"
 simtime = SNN.Time()
-SNN.monitor([network.pop...], [:fire])
+SNN.monitor!([network.pop...], [:fire])
 
 train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
 

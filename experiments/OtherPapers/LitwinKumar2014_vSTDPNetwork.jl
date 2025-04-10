@@ -66,11 +66,11 @@ Input_I = SNN.PoissonStimulus(I, :ge, param = νi, neurons=:ALL)
 
 ##
 model =  merge_models(SNN.@symdict E I Input_E Input_I EE EI IE II )
-SNN.monitor(model.pop, [:fire])
+SNN.monitor!(model.pop, [:fire])
 
 SNN.sim!(P, C; duration = 15second)
 SNN.raster(P, [4.3s, 5s])
-SNN.monitor([E, I], [:ge, :gi, :v])
+SNN.monitor!([E, I], [:ge, :gi, :v])
 SNN.sim!(P, C; duration = 1second)
 
 plot([hcat(E.records[:ge]...)[123, :], hcat(E.records[:gi]...)[123, :]])

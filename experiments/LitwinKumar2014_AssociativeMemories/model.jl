@@ -15,6 +15,6 @@ function soma_network(config)
     )
     model = merge_models(;E,I, noiseI, noiseE, synapses..., silent=true, name="Balanced network") 
     scaling = SNN.SynapseNormalization(E, [synapses.E_to_E], param = SNN.MultiplicativeNorm(τ = 20ms))
-    monitor(model.pop, [:fire])
+    monitor!(model.pop, [:fire])
     return merge_models(;model..., scaling)
 end
