@@ -22,20 +22,44 @@ include("model.jl")
 
 
 config = (
-    E_to_I = 1.29,
-    I_to_I = 2.7,
-    I_to_E = 1.8,
-    σ_w = 0.38,
-    w_max = 0.73,
-    STPparam = STPParameter(
-        τD= 150ms, # τx
-        τF= 650ms, # τu
-        U = 0.4f0,
-    )
-)
-input_neurons = [400:500, 100:200]
-model = run_model(config, input_neurons, 2s)
-raster(model.pop, 0s:25s, every=5)
+        E_to_I = 1.29,
+        I_to_I = 2.7,
+        I_to_E = 1.8,
+        σ_w = 0.38,
+        w_max = 0.73,
+        STPparam = STPParameter(
+            τD= 150ms, # τx
+            τF= 650ms, # τu
+            U = 0.4f0,
+        ),
+        NE = 800,
+        ΔT = 1s,
+        input_neurons = [400:500],
+        sparsity = .2,
+    )#
+
+base_conf = config
+file_path = "/home/user/Documents/aquaresi/network_models/data/working_memory/Seeholzer/network_parameters.csv"
+entry = 5 # Example entry
+
+config = get_configuration(base_conf, entry, file_path)
+config |> dump
+model, pre, post = run_task(config)
+
+raster(model.pop, 0s:10ms:15s, every=1)
+# objective_values = (width_pre-width_post, abs(cv_pre-1), abs(ff_pre-1))
+
+##
+width_pre, fE_pre, fI_pre, cv_pre, ff_pre = model_loss(model, 0s:10ms:5s)
+width_post, fE_post, fI_post, cv_post, ff_post = model_loss(model, (ΔT+ 5s):10ms:(10s + ΔT))
+
+width, fE, fI, cv, ff = model_loss(model, 6s:10ms:11s)
+##
+
+
+st = merge_spiketimes(spiketimes(model.pop.E))
+bins,_ = SNN.bin_spiketimes(st; time_range = 0:10ms:5s, do_sparse = false)
+ff = var(bins) / mean(bins)  # Fano Factor
 
 ##
 ρ, r = record(model.syn.E_to_E, :ρ, interpolate=true)
