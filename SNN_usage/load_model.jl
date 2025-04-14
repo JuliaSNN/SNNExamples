@@ -1,6 +1,6 @@
-using Plots
 using DrWatson
 using Revise
+using Plots
 using SpikingNeuralNetworks
 SNN.@load_units;
 using SNNUtils
@@ -36,32 +36,29 @@ end
 # Create background for the network simulation
 noise  = PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
 noise2 = PoissonStimulus(network.pop[:E], :gi, param=3kHz, neurons=:ALL)
-old_model = merge_models(network, noise=noise, noise2=noise2)
+init_model = merge_models(network, noise=noise, noise2=noise2)
 
 ## Save the model. Important to `merge_model` before saving to maintain shared memory pointers.
-model_path = save_model(path=path, name="blank_network", model=old_model)
+name = "network"
+info = (state=:test, )
+path = datadir("test")
+model_path = SNNsave(path=path, name=name, model=init_model, info=info, count=1, config=info)
 
 ## Load the model, run the simulation and store the results
-model = DrWatson.load(model_path)["model"]
-simtime = SNN.Time()
-SNN.monitor!([model.pop...], [:fire])
-train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
-model_path = save_model(path=path, name="network_with_spikes", model=model)
+model = SNNload(;path, name,info, count=1).model
+SNN.monitor!(model.pop, [:fire])
+train!(model=model, duration = 5000ms, dt = 0.125f0, pbar = true)
+model_path = SNNsave(path=path, name=name, model=model, info=info, count=2, config=info)
 
-## Load the model and plot the results
-new_model =load_model(model_path).model
-spiketimes = SNN.spiketimes(model.pop)
-p1 = SNN.raster(new_model.pop, [1s, 2s], title="Strong inhibitory noise")
-
-## Remove a stimulus, run the simulation, and plot the results
-nogi_model = remove_element(new_model, :noise2)
-SNN.monitor!([nogi_model.pop...], [:fire])
+## Load the model, remove a stimulus, run the simulation, and plot the results
+init_model =SNNload(;path, name, info, count=1).model
+nogi_model = remove_element(init_model, :noise2)
+SNN.monitor!(nogi_model.pop, [:fire])
 train!(model=nogi_model, duration = 5000ms, dt = 0.125f0, pbar = true)
+## Load the model and plot the results
+
+p1 = SNN.raster(model.pop, [1s, 2s], title="Strong inhibitory noise")
 p2 = SNN.raster(nogi_model.pop, [1s, 2s], title="No inhibitory noise")
 plot(p1,p2, layout=(2,1), size=(800,800))
-pointer(new_model.pop.E.name)
 
-## Save the model:
-model_path = joinpath(path,"network_with_spikes_test.jld2")
-save_model(path = path, model=new_model; simtime, name="example_network")
 
