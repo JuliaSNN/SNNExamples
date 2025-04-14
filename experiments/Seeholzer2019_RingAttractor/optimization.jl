@@ -19,7 +19,7 @@ addprocs(maximum([8-nprocs(), 0]))
 # Load configuration
 
 @everywhere begin
-    root = YAML.load_file(projectdir("conf.yml"))["paths"]["local"]
+    root = YAML.load_file(projectdir("paths.yaml"))["kilo_local"]
     data_path = joinpath(root, "working_memory", "Seeholzer") |> mkpath
     include("model.jl")
     study_name = "async_sparsity_facilitation"

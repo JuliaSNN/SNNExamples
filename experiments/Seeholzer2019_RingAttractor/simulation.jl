@@ -1,25 +1,14 @@
 using DrWatson
-quickactivate("../../")
-using Revise
-using SpikingNeuralNetworks
-SNN.@load_units;
-using SNNUtils
-using Plots
-using Distributions
-using Random
-using Statistics
-using YAML
-using PyCall
-using DataFrames
-using DataFramesMeta
-using CSV
+quickactivate(findproject())
+include(projectdir("loaders", "analysis.jl"))
 
 # Load configuration
-root = YAML.load_file(projectdir("conf.yml"))["paths"]["local"]
-data_path = joinpath(root, "working_memory", "Seeholzer") |> mkpath
+data_path = datadir("working_memory", "Seeholzer") |> mkpath
 include("model.jl")
-##
 
+file_path = joinpath(@__DIR__,"network_parameters.csv")
+entry = 5 # Example entry
+##
 
 config = (
         E_to_I = 1.29,
@@ -39,9 +28,6 @@ config = (
     )#
 
 base_conf = config
-file_path = "/home/user/Documents/aquaresi/network_models/data/working_memory/Seeholzer/network_parameters.csv"
-entry = 5 # Example entry
-
 config = get_configuration(base_conf, entry, file_path)
 config |> dump
 model, pre, post = run_task(config)

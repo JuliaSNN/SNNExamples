@@ -5,7 +5,7 @@ using Distributions
 SNN.@load_units
 using YAML
 ##
-SETTINGS = YAML.load_file(projectdir("conf.yml"))
+SETTINGS = YAML.load_file(projectdir("conf.yaml"))
 begin
     root = SETTINGS["paths"]["local"]
     include("parameters.jl")
