@@ -8,7 +8,7 @@ Network layer sources (pre-synaptic densities), network layer targets (post syna
 """
 function sankey_applied(from_jld=true)
     if from_jld
-        @load "sankey_data.jld" connections _
+        @load "sankey_data.jld" connections labels
     else
         throw("implement connectome creating code here.")
     end
@@ -24,21 +24,26 @@ function sankey_applied(from_jld=true)
             thickness = 20,
             line     = attr(color = "black", width = 0.5)
         ),
-        if isa(connections, Vector{<:Vector})
+        #if isa(connections, Vector{<:Any})
 
-            link = attr(
-                source = [i[1] for i in connections],
-                target = [i[2] for i in connections],
-                value  = [i[3] for i in connections]
-                )
-        else
-            link = attr(
-                source = connections[:, 1],  # First column for source
-                target = connections[:, 2],  # Second column for target
-                value  = connections[:, 3]   # Third column for value
+        link = attr(
+            source = [i[1] for i in connections],
+            target = [i[2] for i in connections],
+            value  = [i[3] for i in connections]
             )
-        end
+        
     )
-    plt = plot(sankey_trace)
+    plt = PlotlyJS.plot(sankey_trace)
     ElectronDisplay.display(plt)  # opens a new Electron window
 end
+#=
+else
+    #@show(typeof(connections))
+    #@show([i[1] for i in connections])
+    link = attr(
+        source = connections[:, 1],  # First column for source
+        target = connections[:, 2],  # Second column for target
+        value  = connections[:, 3]   # Third column for value
+    )
+end
+=#

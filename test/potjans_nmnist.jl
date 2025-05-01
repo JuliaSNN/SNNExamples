@@ -9,120 +9,11 @@ using Plots
 #using ProgressMeter
 using Plots
 using SpikingNeuralNetworks
-using SNNUtils
+#using SNNUtils
 using JLD2
 using Distributions
 include("Tonic_NMNIST_Stimulus.jl")
 using .Tonic_NMNIST_Stimulus
-
-"""
-Model parameters pasted here from original 2015 paper.
-
-https://pmc.ncbi.nlm.nih.gov/articles/PMC3920768/
-
-Layer-specific external inputs
-External inputs 	L2/3 	L4 	    L5 	    L6
-Total 	            1606 	2111 	1997 	2915
-
-
-Parameter specification
-Populations and inputs
-Name 	L2/3e 	L2/3i 	L4e 	L4i 	L5e 	L5i 	L6e 	L6i 	Th 	
-Population size, N 	20 683 	5834 	21 915 	5479 	4850 	1065 	14 395 	2948 	902 	
-External inputs, kext (reference) 	1600 	1500 	2100 	1900 	2000 	1900 	2900 	2100 	n/a 	
-External inputs, kext (layer independent) 	2000 	1850 	2000 	1850 	2000 	1850 	2000 	1850 	n/a 	
-Background rate, νbg 	8 Hz
-Connectivity
-		
-        from (columns are presynaptic, rows are post synaptic) 				
-		L2/3e 	L2/3i 	L4e 	L4i 	L5e 	L5i 	L6e 	L6i 	Th
-to 	L2/3e 	0.101 	0.169 	0.044 	0.082 	0.032 	0.0 	0.008 	0.0 	0.0
-	L2/3i 	0.135 	0.137 	0.032 	0.052 	0.075 	0.0 	0.004 	0.0 	0.0
-	L4e 	0.008 	0.006 	0.050 	0.135 	0.007 	0.0003 	0.045 	0.0 	0.0983
-	L4i 	0.069 	0.003 	0.079 	0.160 	0.003 	0.0 	0.106 	0.0 	0.0619
-	L5e 	0.100 	0.062 	0.051 	0.006 	0.083 	0.373 	0.020 	0.0 	0.0
-	L5i 	0.055 	0.027 	0.026 	0.002 	0.060 	0.316 	0.009 	0.0 	0.0
-	L6e 	0.016 	0.007 	0.021 	0.017 	0.057 	0.020 	0.040 	0.225 	0.0512
-	L6i 	0.036 	0.001 	0.003 	0.001 	0.028 	0.008 	0.066 	0.144 	0.0196
-Name 	Value 	Description
-w ± δw 	87.8 ± 8.8 pA 	Excitatory synaptic strengths
-g 	–4 	Relative inhibitory synaptic strength
-de ± δde 	1.5 ± 0.75 ms 	Excitatory synaptic transmission delays
-di ± δdi 	0.8 ± 0.4 ms 	Inhibitory synaptic transmission delays
-Neuron model
-Name 	Value 	Description
-
-τm 	10 ms 	Membrane time constant
-τref 	2 ms 	Absolute refractory period
-τsyn 	0.5 ms 	Postsynaptic current time constant
-Cm 	250 pF 	Membrane capacity
-Vreset 	−65 mV 	Reset potential
-θ 	−50 mV 	Fixed firing threshold
-νth 	15 Hz 	Thalamic firing rate during input perio
-
-
-Populations 	Nine; 8 cortical populations and 1 thalamic population
-Topology 	—
-Connectivity 	Random connections
-Neuron model 	Cortex: Leaky integrate-and-fire, fixed voltage threshold, fixed absolute refractory period (voltage clamp), thalamus: Fixed-rate Poisson
-Synapse model 	Exponential-shaped postsynaptic currents
-Plasticity 	—
-Input 	Cortex: Independent fixed-rate Poisson spike trains
-Measurements 	Spike activity, membrane potentials
-Populations
-Type 	Elements
-Cortical network 	iaf neurons, 8 populations (2 per layer), type specific size N
-Th 	Poisson, 1 population, size Nth
-Connectivity
-Type 	Random connections with independently chosen pre- and postsynaptic neurons; see Table 5 for probabilities
-Weights 	Fixed, drawn from Gaussian distribution
-Delays 	Fixed, drawn from Gaussian distribution multiples of computation stepsize
-Neuron and synapse model
-Name 	iaf neuron
-Type 	Leaky integrate-and-fire, exponential-shaped synaptic current inputs
-Subthreshold dynamics 	Inline graphic
-	V(t) = Vreset else
-	Inline graphic
-Spiking 	If Inline graphic
-	1. set t* = t, 2. emit spike with time stamp t*
-Input
-Type 	Description
-Background 	Independent Poisson spikes to iaf neurons (Table 5)
-Measurements
-Spiking activity and membrane potentials from a subset of neurons in every population
-"""
-
-
-"""
-Auxiliary Potjans parameters for neural populations with scaled cell counts
-Name 	L2/3e 	L2/3i 	L4e 	L4i 	L5e 	L5i 	L6e 	L6i 	Th 	
-Population size, N 	20683 	5834 	21 915 	5479 	4850 	1065 	14395 	2948 	902 	
-
-"""
-
-"""
-τm 	10 ms 	Membrane time constant
-τref 	2 ms 	Absolute refractory period
-τsyn 	0.5 ms 	Postsynaptic current time constant
-Cm 	250 pF 	Membrane capacity
-Vreset 	−65 mV 	Reset potential
-θ 	−50 mV 	Fixed firing threshold
-νth 	15 Hz 	Thalamic firing rate during input period
-  
-τm::FT = 20ms # Membrane time constant
-Vt::FT = -50mV # Membrane potential threshold
-Vr::FT = -60mV # Reset potential
-El::FT = -70mV # Resting membrane potential
-R::FT = nS / gL # 40nS Membrane conductance
-ΔT::FT = 2mV # Slope factor
-τabs::FT = 2ms # Absolute refractory period
-#synapses
-τe::FT = 6ms # Rise time for excitatory synapses
-τi::FT = 2ms # Rise time for inhibitory synapses
-E_i::FT = -75mV # Reversal potential
-E_e::FT = 0mV # Reversal potential
-
-"""
 
 function potjans_neurons(scale=1.0)
     ccu = Dict(
@@ -328,7 +219,7 @@ end
 #@show(connections_.vals)
 
 before_learnning_weights = model.syn[1].W
-#=
+@show(before_learnning_weights)
 ΔTs = -100:1:100ms
 ΔWs = zeros(Float32, length(ΔTs))
 Threads.@threads for i in eachindex(ΔTs)
@@ -348,7 +239,6 @@ Threads.@threads for i in eachindex(ΔTs)
     train!(model=model, duration=3000ms, dt=0.1ms)
     ΔWs[i] = model.syn[1].W[1] - 1
 end
-=#
 
 duration = 15000ms
 SNN.monitor([model.pop...], [:fire])

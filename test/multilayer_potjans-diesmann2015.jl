@@ -3,9 +3,12 @@ using DrWatson
 using SpikingNeuralNetworks
 SNN.@load_units
 using SNNPlots
+#gr()
 using Statistics, Random
+using StatsBase
+
 using Plots
-using JLD2
+#using JLD
 using ProgressMeter
 
 using SpikingNeuralNetworks
@@ -15,10 +18,7 @@ using Distributions
 using Test
 
 using DataFrames
-using Statistics
-using StatsBase
 using Plots
-using StatsBase  
 
 using Random
 
@@ -34,12 +34,13 @@ function potjans_neurons(scale=1.0)
         :I4 => trunc(Int32, 5479 * scale),
         :Th => trunc(Int32, 902 * scale)
     )
-    potjans2015_param = SNN.IFCurrentParameter(; El = -49mV,τm=10ms,τabs=2ms,Vt=−50mV,Vr=-65mV)
+    #potjans2015_param = SNN.IFCurrentParameter(; El = -49mV,τm=10ms,τabs=2ms,Vt=−50mV,Vr=-65mV)
 
     neurons = Dict{Symbol, SNN.AbstractPopulation}()
-    for (k, v) in ccu
+    for (k, neuron_count) in pairs(ccu)
         
-        neurons[k] = IFCurrent(N = v, param=potjans2015_param, name=string(k))
+        neurons[k] = SNN.IF(; N = neuron_count, param = SNN.IFParameter(τm = 20ms, El = -50mV), name=string(k))
+        #IFCurrent(N = v, param=potjans2015_param, name=string(k))
         
     end
     return neurons
@@ -62,25 +63,25 @@ function potjans_conn(Ne)
     function j_from_name(pre, post)
         if occursin("E", String(pre)) && occursin("E", String(post))
             syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
-            return rand(syn_weight_dist)pA
+            return rand(syn_weight_dist)*10^-6#pA
 
         elseif occursin("I", String(pre)) && occursin("E", String(post))
             #syn_weight_dist = Normal(0.15, 0.1)
-            return -4.0pA
+            return -4.0#mV
         elseif occursin("E", String(pre)) && occursin("I", String(post))
-            syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
-            return rand(syn_weight_dist)pA
+            syn_weight_dist = Normal(87.8,  8.8)*10^-6# # Unit is pA
+            return rand(syn_weight_dist)mV
 
         elseif occursin("I", String(pre)) && occursin("I", String(post))
             #syn_weight_dist = Normal(0.15, 0.1)
-            return -4.0pA
+            return -4.0#mV
         elseif occursin("Th", String(pre)) && occursin("I", String(post))
-            syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
-            return rand(syn_weight_dist)pA
+            syn_weight_dist = Normal(87.8,  8.8)*10^-6# # Unit is pA
+            return rand(syn_weight_dist)mV
 
         elseif occursin("Th", String(pre)) && occursin("E", String(post))
-            syn_weight_dist = Normal(87.8,  8.8) # Unit is pA
-            return rand(syn_weight_dist)pA
+            syn_weight_dist = Normal(87.8,  8.8)*10^-6# # Unit is pA
+            return rand(syn_weight_dist)mV
 
 
         else 
@@ -137,19 +138,22 @@ function potjans_layer(scale)
     connections = Dict()
     conn_map_pre_density = Dict()
     conn_map_post_density = Dict()
+    cnt=0
     for i in eachindex(pre_layer_names)
         for j in eachindex(post_layer_names)
             pre = pre_layer_names[i]
             post = post_layer_names[j]
             p = conn_probs[j, i]
+            @show(p)
             J = conn_j[j, i]
             sym = J>=0 ? :ge : :gi
-            μ = abs(J)
+            μ = J
+            #@show(μ)
             if J>=0      
                 s = SNN.SpikingSynapse(neurons[pre], neurons[post], sym; μ = μ, p=p, σ=0, delay_dist=delay_dist_exc)
             
             else
-                s = SNN.SpikingSynapse(neurons[pre], neurons[post], sym; μ = -μ, p=p, σ=0, delay_dist=delay_dist_inh)
+                s = SNN.SpikingSynapse(neurons[pre], neurons[post], sym; μ = μ, p=p, σ=0, delay_dist=delay_dist_inh)
             end
             keyed = Symbol(string(pre,post))
             if haskey(conn_map_pre_density, keyed)
@@ -164,6 +168,7 @@ function potjans_layer(scale)
             connections[Symbol(string(i,"_",pre,"_",j,"_",post))] = s
         end
     end
+
     # Name 	L2/3e 	L2/3i 	L4e 	L4i 	L5e 	L5i 	L6e 	L6i 	Th 	
     # Population size, N 	20 683 	5834 	21 915 	5479 	4850 	1065 	14 395 	2948 	902 	
     # External inputs, kext (reference) 	1600 	1500 	2100 	1900 	2000 	1900 	2900 	2100 	n/a 	
@@ -171,33 +176,41 @@ function potjans_layer(scale)
     # Background rate, νbg 	8 Hz
     νe = 8Hz # background stimulation
     stimuli = Dict()
-    SE23 = SNN.PoissonStimulus(neurons[:E23], :ge, nothing; cells=[i for i in range(1,neurons[:E23].N)],μ=1pF, param = νe,N=1600)
-    stimuli[Symbol(string("Poisson_SE23", :E23))] = SE23
-    SI23 = SNN.PoissonStimulus(neurons[:I23], :ge, nothing; cells=[i for i in range(1,neurons[:I23].N)],μ=1pF, param = νe,N=1500)
-    stimuli[Symbol(string("Poisson_SI23", :I23))] = SI23
-    SE4 = SNN.PoissonStimulus(neurons[:E4], :ge, nothing; cells=[i for i in range(1,neurons[:E4].N)],μ=1pF, param = νe,N=2100)
-    stimuli[Symbol(string("Poisson_SE4", :E4))] = SE4
-    SI4 = SNN.PoissonStimulus(neurons[:I4], :ge, nothing; cells=[i for i in range(1,neurons[:I4].N)],μ=1pF, param = νe,N=1900)
-    stimuli[Symbol(string("Poisson_SI4", :I4))] = SI4
-    SE5 = SNN.PoissonStimulus(neurons[:E5], :ge, nothing; cells=[i for i in range(1,neurons[:E5].N)],μ=1pF, param = νe,N=2000)
-    stimuli[Symbol(string("Poisson_SE5", :E5))] = SE5
-    SI5 = SNN.PoissonStimulus(neurons[:I5], :ge, nothing; cells=[i for i in range(1,neurons[:I5].N)],μ=1pF, param = νe,N=1900)
-    stimuli[Symbol(string("Poisson_SI5", :I5))] = SI5
-    SE6 = SNN.PoissonStimulus(neurons[:E6], :ge, nothing; cells=[i for i in range(1,neurons[:E6].N)],μ=1pF,  param = νe,N=2900)
-    stimuli[Symbol(string("Poisson_SE6", SE6))] = SE6
-    SI6 = SNN.PoissonStimulus(neurons[:I6], :ge, μ=1pF, nothing; cells=[i for i in range(1,neurons[:I6].N)],param = νe,N=2100,name=string("I6"))
-    stimuli[Symbol(string("Poisson_SI6", :I6))] = SI6
+    μ=0.0525
+    peak_rate = 2kHz
+    stim_parameters = Dict(:decay=>1ms, :peak=>peak_rate, :start=>peak_rate)
+    
+    param = PSParam(rate=attack_decay, 
+    variables=variables)
+    SNN.PoissonStimulus(model.pop.E, :ge, μ=1pF, cells=assembly.cells, param=param, name=string(assembly.name))
 
+    SE23 = SNN.PoissonStimulus(neurons[:E23], :ge, nothing; cells=[i for i in range(1,neurons[:E23].N)],μ=μ, param = νe,N=1600)
+    stimuli[Symbol(string("Poisson_SE23", :E23))] = SE23
+    SI23 = SNN.PoissonStimulus(neurons[:I23], :ge, nothing; cells=[i for i in range(1,neurons[:I23].N)],μ=μ, param = νe,N=1500)
+    stimuli[Symbol(string("Poisson_SI23", :I23))] = SI23
+    SE4 = SNN.PoissonStimulus(neurons[:E4], :ge, nothing; cells=[i for i in range(1,neurons[:E4].N)],μ=μ, param = νe,N=2100)
+    stimuli[Symbol(string("Poisson_SE4", :E4))] = SE4
+    SI4 = SNN.PoissonStimulus(neurons[:I4], :ge, nothing; cells=[i for i in range(1,neurons[:I4].N)],μ=μ, param = νe,N=1900)
+    stimuli[Symbol(string("Poisson_SI4", :I4))] = SI4
+    SE5 = SNN.PoissonStimulus(neurons[:E5], :ge, nothing; cells=[i for i in range(1,neurons[:E5].N)],μ=μ, param = νe,N=2000)
+    stimuli[Symbol(string("Poisson_SE5", :E5))] = SE5
+    SI5 = SNN.PoissonStimulus(neurons[:I5], :ge, nothing; cells=[i for i in range(1,neurons[:I5].N)],μ=μ, param = νe,N=1900)
+    stimuli[Symbol(string("Poisson_SI5", :I5))] = SI5
+    SE6 = SNN.PoissonStimulus(neurons[:E6], :ge, nothing; cells=[i for i in range(1,neurons[:E6].N)],μ=μ,  param = νe,N=2900,name=string("SE6"))
+    stimuli[Symbol(string("Poisson_SE6", SE6))] = SE6
+    SI6 = SNN.PoissonStimulus(neurons[:I6], :ge, nothing; cells=[i for i in range(1,neurons[:I6].N)],μ=μ,param = νe,N=2100,name=string("I6"))
+    stimuli[Symbol(string("Poisson_SI6", :I6))] = SI6
     for (ind,pop) in enumerate(exc_pop)
-        νe = 8Hz # background stimulation
+        #νe = 4Hz # background stimulation
         post = neurons[pop]
-        s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1pF, name="PoissonE_$(post.name)")
+        #@show(μ=1/100)
+        s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=μ, name="PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
     for (ind,pop) in enumerate(inh_pop)
-        νe = 8Hz # background stimulation
+        #νe = 4Hz # background stimulation
         post = neurons[pop]
-        s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=1pF, name="PoissonI_$(post.name)")
+        s = SNN.PoissonStimulus(post, :ge; param = νe, cells=:ALL, μ=μ, name="PoissonI_$(post.name)")
         stimuli[Symbol(string("PoissonI_", pop))] = s
     end
     
@@ -217,24 +230,18 @@ if !isfile("data_connectome.jld")
         push!(layer_names,k)
 
     end
-    @save "data_connectome.jld" pre_synapses post_synapses layer_names conn_map_pre_density conn_map_post_density pre_layer_names post_layer_names
+    @save "data_connectome.jld" pre_synapses post_synapses layer_names conn_map_pre_density conn_map_post_density pre_layer_names post_layer_names neurons 
+    #@save "just_model.jld" model
 
 else
-    @load "data_connectome.jld" pre_synapses post_synapses layer_names conn_map_pre_density conn_map_post_density pre_layer_names post_layer_names
-end
-function get_num_samples(length)
-    if length > 100000
-        return Int(trunc(1.0/length))# * 0.0001))  # 1% for lengths > 100,000
-    elseif length > 10000
-        return Int(trunc(1.0/length))# * 0.001))  # 1% for lengths > 100,000
+    @load "data_connectome.jld" pre_synapses post_synapses layer_names conn_map_pre_density conn_map_post_density pre_layer_names post_layer_names neurons 
+    #@load "just_model.jld" model
 
-    elseif length > 1000 #&& length<= 10000
-        return Int(trunc(1.0/length))# * 0.01))    # 10% for lengths > 1,000
-    else
-        return length                       # Use the full length for smaller lists
-    end
 end
 
+model,neurons,connections,stimuli,conn_map_pre_density,conn_map_post_density,pre_layer_names,post_layer_names = potjans_layer(0.125)
+@save "data_connectome.jld" pre_synapses post_synapses layer_names conn_map_pre_density conn_map_post_density pre_layer_names post_layer_names neurons 
+#@save "just_model.jld" model
 
 function pre_process_for_sankey(pre_layer_names,post_layer_names,conn_map_pre_density)
     labels = []
@@ -250,29 +257,50 @@ function pre_process_for_sankey(pre_layer_names,post_layer_names,conn_map_pre_de
     @save "sankey_data.jld" pre_layer_names post_layer_names connections labels
 end
 
-sources = pre_synapses[1]  # Indices of source nodes
-targets = post_synapses[1]  # Indices of target nodes
-values_ = [1 for i in range(1,length(sources))] # Values or densities for ribbons
-layer_names  = [layer_names[ind] for (ind,post) in enumerate(post_synapses) if length(post) != 0]
-pre_synapses = [pre for pre in pre_synapses if length(pre) != 0]
-post_synapses = [post for post in post_synapses if length(post) != 0]
-pre_process_for_sankey(pre_layer_names,post_layer_names,conn_map_pre_density)
-include("sankey_only.jl")
-sankey_applied(true)
-p = SNNPlots.doparallelCoords(pre_synapses,post_synapses)
-Plots.plot(p)
-savefig("parallelCoordinatesPlot.png")
-TotalNNeurons = sum([v.N for v in values(neurons)])
-duration = 15000ms
-SNN.monitor([model.pop...], [:fire])
-SNN.monitor([model.pop...], [:v], sr=200Hz)
-SNN.sim!(model=model; duration = duration, pbar = true, dt = 0.125)
-display(SNN.raster(model.pop, [10s, 15s]))
-display(SNN.raster(model.pop, [14.5s, 15s]))
+#include("sankey_only.jl")
+#sankey_applied(true)
+sankeyed=false
+if sankeyed
+    sources = pre_synapses[1]  # Indices of source nodes
+    targets = post_synapses[1]  # Indices of target nodes
+    values_ = [1 for i in range(1,length(sources))] # Values or densities for ribbons
+    layer_names  = [layer_names[ind] for (ind,post) in enumerate(post_synapses) if length(post) != 0]
+    pre_synapses = [pre for pre in pre_synapses if length(pre) != 0]
+    post_synapses = [post for post in post_synapses if length(post) != 0]
 
-Trange = 5s:10:15s
-frE, interval, names_pop = SNN.firing_rate(model.pop, interval = Trange)
-display(plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft))
-display(vecplot(model.pop.E23, :v, neurons =1, r=0s:15s,label="soma"))
+    pre_process_for_sankey(pre_layer_names,post_layer_names,conn_map_pre_density)
+
+    p = SNNPlots.doparallelCoords_optimized(pre_synapses,post_synapses;figure_name="parallelCoordinatesPlot.png")
+end
+    #p = SNNPlots.doparallelCoords(pre_synapses,post_synapses)
+#Plots.plot(p)
+#Plots.savefig("parallelCoordinatesPlot.png")
+
+
+#@snn_kw struct PoissonStimulusInterval{R=Float32, } <: PoissonStimulusParameter
+#    rate::Vector{R} = fill(0.0, N)
+#    intervals::Vector{Vector{R}}
+#end
+
+param = PoissonStimulusInterval(rate,[[]])
+TotalNNeurons = sum([v.N for v in values(neurons)])
+duration = 1500ms
+SNN.monitor([model.pop...], [:fire])
+SNN.monitor([model.pop...], [:v], sr=400Hz)
+SNN.sim!(model=model; duration = duration, pbar = true, dt = 0.125)
+gui(SNN.raster(model.pop, [10s, 15s]))
+gui(SNN.raster(model.pop, [14.5s, 15s]))
+gui(SNN.raster(model.pop.E23, [14.5s, 15s]))
+
+#gui(plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft))
+gui(vecplot(model.pop.E23, :v, neurons =1:200, r=0s:0.0125s,label="soma"))
+gui(vecplot(model.pop.Th, :v, neurons =1:50, r=0s:0.125s,label="soma"))
+gui(vecplot(model.pop.I4, :v, neurons =1:200, r=0s:0.125s,label="soma"))
+gui(vecplot(model.pop.E4, :v, neurons =1:200, r=0s:0.125s,label="soma"))
+#gui(vecplot(model.pop.E23, :v, neurons =1:200, r=0s:0.0125s,label="soma"))
 layer_names, conn_probs, conn_j = potjans_conn(4000)
 pj = heatmap(conn_j, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:bluesreds,  title="Synaptic weights", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500), clims=(-maximum(abs.(conn_j)), maximum(abs.(conn_j))))
+gui(pj)
+Trange = 0s:0.25:1.5s
+frE, interval, names_pop = SNN.firing_rate(model.pop, interval = Trange)
+gui(scatter([i for i in range(1,9)],mean.(frE), labels=names_pop, xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topright))
