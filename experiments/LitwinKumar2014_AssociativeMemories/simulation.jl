@@ -7,7 +7,6 @@ using YAML
 ##
 SETTINGS = YAML.load_file(projectdir("conf.yaml"))
 begin
-    root = SETTINGS["paths"]["local"]
     include("parameters.jl")
     include("model.jl")
     plots_path = plotsdir("LKD2014") |> mkpath
