@@ -33,7 +33,7 @@ function Mongillo2008(;n_assemblies=1, n_neurons=800)
     input_inh = 19.8
 
     syn = (
-        EE = SpikingSynapse(pop.E, pop.E, :ge, p=0.2, σ=0, μ=μee, param=SNN.STPParameter(), delay_dist=Uniform(1ms,5ms)),
+        EE = SpikingSynapse(pop.E, pop.E, :ge, p=0.2, σ=0, μ=μee, STP=SNN.STPParameter(), delay_dist=Uniform(1ms,5ms)),
         EI = SpikingSynapse(pop.E, pop.I, :ge, p=0.2, σ=0, μ=μei, delay_dist=Uniform(1ms,5ms)),
         IE = SpikingSynapse(pop.I, pop.E, :gi, p=0.2, σ=0, μ=μie, delay_dist=Uniform(1ms,5ms)),
         II = SpikingSynapse(pop.I, pop.I, :gi, p=0.2, σ=0, μ=μii, delay_dist=Uniform(1ms,5ms)),

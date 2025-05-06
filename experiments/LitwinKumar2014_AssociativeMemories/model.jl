@@ -8,9 +8,9 @@ function soma_network(config)
 
     @unpack iSTDP_rate, vSTDP = config.plasticity
     synapses = (
-        E_to_E = SpikingSynapse(E, E, :he, p=connections.E_to_E.p, μ=connections.E_to_E.μ, name="E_to_E", param=NoSTDP),
+        E_to_E = SpikingSynapse(E, E, :he, p=connections.E_to_E.p, μ=connections.E_to_E.μ, name="E_to_E",LTPParam=NoSTDP),
         E_to_I = SpikingSynapse(E, I, :he, p=connections.E_to_I.p, μ=connections.E_to_I.μ, name="E_to_I"),
-        I_to_E = SpikingSynapse(I, E, :hi, p=connections.I_to_E.p, μ=connections.I_to_E.μ, name="I_to_E",param=iSTDP_rate),
+        I_to_E = SpikingSynapse(I, E, :hi, p=connections.I_to_E.p, μ=connections.I_to_E.μ, name="I_to_E",LTP=iSTDP_rate),
         I_to_I = SpikingSynapse(I, I, :hi, p=connections.I_to_I.p, μ=connections.I_to_I.μ, name="I_to_I"),
     )
     model = merge_models(;E,I, noiseI, noiseE, synapses..., silent=true, name="Balanced network") 

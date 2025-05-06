@@ -237,7 +237,7 @@ Threads.@threads for i in eachindex(ΔTs)
     w[1, 2] = 1f0
     st = Identity(N=max_neurons(inputs))
     stim = SpikeTimeStimulusIdentity(st, :g, param=inputs)
-    syn = SpikingSynapse( st, st, nothing, w = w,  param = stdp_param)
+    syn = SpikingSynapse( st, st, nothing, w = w,LTPParamParam = stdp_param)
 
     model = merge_models(pop=st, stim=stim, syn=syn, silent=true)
     SNN.monitor(model.pop..., [:fire])
@@ -353,7 +353,7 @@ st = Identity(N = max_neurons(inputs))
 stim = SpikeTimeStimulusIdentity(st, :g, param = inputs)
 
 
-syn = SpikingSynapse(st, neurons_[:E4], nothing, w = w)#,  param = stdp_param)
+syn = SpikingSynapse(st, neurons_[:E4], nothing, w = w)#,LTPParamparam = stdp_param)
 model2 = merge_models(
     pop = [st, model],
     stim = [stim, stimuli_],

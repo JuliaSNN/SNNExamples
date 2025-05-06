@@ -85,15 +85,15 @@ Inh2 = AdExMultiTimescale(100, param=inh_params, name="Inh")
 populations = (;Exc, Inh1, Inh2)
 
 synapses = (
-    E_to_E = SpikingSynapse(Exc, Exc, :h, 1; syn_params.E_to_E..., param=NoSTDP),
-    E_to_I1 = SpikingSynapse(Exc, Inh1, :h, 1; syn_params.E_to_I1..., param=NoSTDP),
-    E_to_I2 = SpikingSynapse(Exc, Inh2, :h, 1; syn_params.E_to_I2..., param=NoSTDP),
-    I1_to_E = SpikingSynapse(Inh1, Exc, :h, 1; syn_params.I1_to_E..., param=NoSTDP),
-    I1_to_I1 = SpikingSynapse(Inh1, Inh1, :h, 1; syn_params.I1_to_I1..., param=NoSTDP),
-    I1_to_I2 = SpikingSynapse(Inh1, Inh2, :h, 1; syn_params.I1_to_I2..., param=NoSTDP),
-    I2_to_E = SpikingSynapse(Inh2, Exc, :h, 1; syn_params.I2_to_E..., param=NoSTDP),
-    I2_to_I1 = SpikingSynapse(Inh2, Inh1, :h, 1; syn_params.I2_to_I1..., param=NoSTDP),
-    I2_to_I2 = SpikingSynapse(Inh2, Inh2, :h, 1; syn_params.I2_to_I2..., param=NoSTDP),
+    E_to_E = SpikingSynapse(Exc, Exc, :h, 1; syn_params.E_to_E...),
+    E_to_I1 = SpikingSynapse(Exc, Inh1, :h, 1; syn_params.E_to_I1...),
+    E_to_I2 = SpikingSynapse(Exc, Inh2, :h, 1; syn_params.E_to_I2...),
+    I1_to_E = SpikingSynapse(Inh1, Exc, :h, 1; syn_params.I1_to_E...),
+    I1_to_I1 = SpikingSynapse(Inh1, Inh1, :h, 1; syn_params.I1_to_I1...),
+    I1_to_I2 = SpikingSynapse(Inh1, Inh2, :h, 1; syn_params.I1_to_I2...),
+    I2_to_E = SpikingSynapse(Inh2, Exc, :h, 1; syn_params.I2_to_E...),
+    I2_to_I1 = SpikingSynapse(Inh2, Inh1, :h, 1; syn_params.I2_to_I1...),
+    I2_to_I2 = SpikingSynapse(Inh2, Inh2, :h, 1; syn_params.I2_to_I2...),
 )
 
 exc_stim_param = CurrentNoiseParameter(Exc.N, I_base =0pA, I_dist=Normal(300pA, 300pA))

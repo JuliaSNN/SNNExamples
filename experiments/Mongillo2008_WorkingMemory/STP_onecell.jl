@@ -12,7 +12,7 @@ using Distributions
 pre = Identity(N=1)
 post = IFCurrent(N=1, param=MongilloParam.Exc)
 w = ones(1,1)
-EE = SpikingSynapse(pre, post, :ge, w=w, param=SNN.STPParameter())
+EE = SpikingSynapse(pre, post, :ge, w=w, STP=SNN.STPParameter())
 SNN.monitor!(post, [:v, :ge])
 SNN.monitor!(EE, [:u, :x], sr=250Hz)
 test = merge_models(pre=pre, post=post, EE)

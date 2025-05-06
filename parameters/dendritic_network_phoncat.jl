@@ -81,8 +81,8 @@ bursty_dendritic_network2 = let
         τw = 144ms,        #(s) adaptation time constant (~Ca-activated K current inactivation)
     )
     plasticity = (
-        iSTDP_rate = SNN.iSTDPParameterRate(η = 0.2, τy = 20ms, r=10Hz, Wmax = 243.0pF, Wmin = 2.78pF),
-        iSTDP_potential =SNN.iSTDPParameterPotential(η = 0.2, v0 = -70mV, τy = 5ms, Wmax = 243.0pF, Wmin = 2.78pF),
+        iSTDP_rate = SNN.iSTDPRate(η = 0.2, τy = 20ms, r=10Hz, Wmax = 243.0pF, Wmin = 2.78pF),
+        iSTDP_potential =SNN.iSTDPPotential(η = 0.2, v0 = -70mV, τy = 5ms, Wmax = 243.0pF, Wmin = 2.78pF),
         # iSTDP_antihebbian = SNN.STDPAntiHebbianAsymmetric(τpre=5ms, τpost=5ms, A_post = 10e-1pA / mV, A_pre =  10e-1pA / (mV * mV), Wmax=15.0pF),
         vstdp = SNN.vSTDPParameter(
             A_LTD = 4.0f-4,  #ltd strength # CHANGED from 4.0f-5
@@ -148,14 +148,14 @@ function ballstick_network(;params, name, NE, STDP, kwargs...)
     I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
     I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
-    E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.E_to_Ed..., param= plasticity.vstdp)
+    E_to_E = SNN.SpikingSynapse(E, E, :he, :d ; connectivity.E_to_Ed...,LTPParam = plasticity.vstdp)
     E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.E_to_If...)
     E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.E_to_Is...)
-    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.If_to_E...)
+    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s;LTPParam  = plasticity.iSTDP_rate, connectivity.If_to_E...)
     I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.If_to_If...)
     I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.Is_to_If...)
     I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.Is_to_Is...)
-    I2_to_E = SNN.SpikingSynapse(I2, E, :hi, :d; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_E = SNN.SpikingSynapse(I2, E, :hi, :d;LTPParam  = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
     I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.If_to_Is...)
     # Define normalization
     norm = SNN.SynapseNormalization(NE, [E_to_E], param = SNN.MultiplicativeNorm(τ = 20ms))
@@ -197,17 +197,17 @@ function tripod_network(;params, name, NE, STDP, kwargs...)
     I1 = SNN.IF(; N = NI1, param = pv, name="I1_pv")
     I2 = SNN.IF(; N = NI2, param = sst, name="I2_sst")
     # Define synaptic interactions between neurons and interneurons
-    E_to_E1 = SNN.SpikingSynapse(E, E, :he, :d1 ; connectivity.E_to_Ed..., param= plasticity.vstdp)
-    E_to_E2 = SNN.SpikingSynapse(E, E, :he, :d2 ; connectivity.E_to_Ed..., param= plasticity.vstdp)
+    E_to_E1 = SNN.SpikingSynapse(E, E, :he, :d1 ; connectivity.E_to_Ed...,LTPParam= plasticity.vstdp)
+    E_to_E2 = SNN.SpikingSynapse(E, E, :he, :d2 ; connectivity.E_to_Ed...,LTPParam= plasticity.vstdp)
 
     E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; connectivity.E_to_If...)
     E_to_I2 = SNN.SpikingSynapse(E, I2, :ge; connectivity.E_to_Is...)
-    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s; param = plasticity.iSTDP_rate, connectivity.If_to_E...)
+    I1_to_E = SNN.SpikingSynapse(I1, E, :hi, :s;LTPParam = plasticity.iSTDP_rate, connectivity.If_to_E...)
     I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; connectivity.If_to_If...)
     I1_to_I2 = SNN.SpikingSynapse(I1, I2, :gi; connectivity.Is_to_If...)
     I2_to_I2 = SNN.SpikingSynapse(I2, I2, :gi; connectivity.Is_to_Is...)
-    I2_to_E1 = SNN.SpikingSynapse(I2, E, :hi, :d1; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
-    I2_to_E2 = SNN.SpikingSynapse(I2, E, :hi, :d2; param = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_E1 = SNN.SpikingSynapse(I2, E, :hi, :d1;LTPParam = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
+    I2_to_E2 = SNN.SpikingSynapse(I2, E, :hi, :d2;LTPParam = plasticity.iSTDP_potential, connectivity.Is_to_Ed...)
 
     I2_to_I1 = SNN.SpikingSynapse(I2, I1, :gi; connectivity.If_to_Is...)
     # Define normalization

@@ -11,12 +11,12 @@ entry = 5 # Example entry
 ##
 
 config = (
-        E_to_I = 1.29,
+        E_to_I = 2.29,
         I_to_I = 2.7,
-        I_to_E = 1.8,
+        I_to_E = 2.8,
         σ_w = 0.38,
-        w_max = 0.73,
-        STPparam = STPParameter(
+        w_max = 0.073,
+        STPparam = MarkramSTPParameter(
             τD= 150ms, # τx
             τF= 650ms, # τu
             U = 0.4f0,
@@ -24,7 +24,7 @@ config = (
         NE = 800,
         ΔT = 1s,
         input_neurons = [400:500],
-        sparsity = .2,
+        sparsity = 1.,
     )#
 
 base_conf = config

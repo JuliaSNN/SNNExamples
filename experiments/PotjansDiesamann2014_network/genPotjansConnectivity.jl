@@ -268,9 +268,9 @@ function initialize_LKD(Epop_numbers,IPop_numbers,w0Weights, Lee, Lie, Lei, Lii;
     Input_I = SNN.Poisson(; N = N, param = SNN.PoissonParameter(; rate = νi))
     E = SNN.AdEx(; N = size(Lee)[1], param = LKD_AdEx_exc)
     I = SNN.IF(; N = size(Lee)[1], param = LKD_IF_inh)
-    EE = SNN.SpikingSynapse(E, E, w = Lee, :ge; μ = μEE, param = SNN.vSTDPParameter())
-    EI = SNN.SpikingSynapse(E, I, w = Lei, :ge; μ = μEI, param = SNN.vSTDPParameter())
-    IE = SNN.SpikingSynapse(I, E, w = Lie, :gi; μ = μIE, param = SNN.vSTDPParameter())
+    EE = SNN.SpikingSynapse(E, E, w = Lee, :ge; μ = μEE,LTPParam = SNN.vSTDPParameter())
+    EI = SNN.SpikingSynapse(E, I, w = Lei, :ge; μ = μEI,LTPParam = SNN.vSTDPParameter())
+    IE = SNN.SpikingSynapse(I, E, w = Lie, :gi; μ = μIE,LTPParam = SNN.vSTDPParameter())
     II = SNN.SpikingSynapse(I, I, w = Lii, :gi; μ = μII)
     ProjI = SNN.SpikingSynapse(Input_I, I, :ge; μ = μ_in_E, p = p_in)
     ProjE = SNN.SpikingSynapse(Input_E, E, :ge; μ = μ_in_E, p = p_in) # connection from input to E

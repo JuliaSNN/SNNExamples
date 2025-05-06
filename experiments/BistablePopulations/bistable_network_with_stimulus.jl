@@ -16,7 +16,7 @@ function define_network(N = 800)
     I = SNN.IF(; N = N ÷ 2, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
     E_to_I = SNN.SpikingSynapse(E, I, :he, p = 0.2, μ = 2.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 3.0)#, param = SNN.vSTDPParameter())
+    E_to_E = SNN.SpikingSynapse(E, E, :he, p = 0.2, μ = 3.0)#,LTPParam = SNN.vSTDPParameter())
     I_to_I = SNN.SpikingSynapse(I, I, :hi, p = 0.2, μ = 1.0)
     I_to_E = SNN.SpikingSynapse(
         I,
@@ -24,7 +24,7 @@ function define_network(N = 800)
         :hi,
         p = 0.2,
         μ = 1,
-        param = SNN.iSTDPParameterRate(r = 4Hz),
+        param = SNN.iSTDPRate(r = 4Hz),
     )
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 10ms))
 

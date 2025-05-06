@@ -67,8 +67,8 @@ config = (
             warmup = 30s
         )
 istdps = (
-    istdp_rate = SNN.iSTDPParameterRate(τy = 20ms, η = Alearn*1e3, r=5Hz) ,
-    istdp_time = SNN.iSTDPParameterTime(τy = 20ms, η = Alearn*1e3) ,
+    istdp_rate = SNN.iSTDPRate(τy = 20ms, η = Alearn*1e3, r=5Hz) ,
+    istdp_time = SNN.iSTDPTime(τy = 20ms, η = Alearn*1e3) ,
     Hebbian= AntiSymmetricSTDP( A_x = Alearn*1e3,
                                 A_y  = 0.7Alearn*1e3,
                                 # αpre = -0.7f0,

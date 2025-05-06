@@ -19,7 +19,7 @@ network = create_network(;stdp, network_param, neuron_param ) = let
         :E_to_E => SNN.SpikingSynapse(E, E, :ge, p = pee, μ = wee, name = "E_to_E"),
         :E_to_I1 => SNN.SpikingSynapse(E, I1, :ge, p = pei, μ = wei, name = "E_to_I1"),
         :I1_to_I1 => SNN.SpikingSynapse(I1, I1, :gi, p = pii, μ = wii, name = "I1_to_I1"),
-        :I1_to_E => SNN.SpikingSynapse(I1, E, :gi, p = pie, μ = wie, param = stdp, name = "I1_to_E"),
+        :I1_to_E => SNN.SpikingSynapse(I1, E, :gi, p = pie, μ = wie,LTPParam = stdp, name = "I1_to_E"),
     ) |> dict2ntuple
 
     pop = dict2ntuple(@strdict E I1)

@@ -16,8 +16,7 @@ network = let
     I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
     # Define synaptic interactions between neurons and interneurons
     E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 3.0)
-    LSSPparam = SNN.LSSPParameter(;long=SNN.vSTDPParameter(), short=SNN.STPParameter())
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5, param = LSSPparam)
+    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5,LTPParam=SNN.vSTDPParameter(), STP=SNN.STPParameter())
     I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 4.0)
     I_to_E = SNN.SpikingSynapse(
         I,
@@ -25,7 +24,7 @@ network = let
         :gi,
         p = 0.2,
         μ = 1,
-        param = SNN.iSTDPParameterRate(r = 4Hz),
+        param = SNN.iSTDPRate(r = 4Hz),
     )
     norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
     # Store neurons and synapses into a dictionary

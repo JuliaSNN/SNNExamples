@@ -37,15 +37,15 @@ function init_model(config; W=nothing)
     I_to_E = SNN.SpikingSynapse(I,E, :gi; μ=I_to_E, p=sparsity, σ=0)
 
     W = isnothing(W) ? linear_network(E.N, σ_w=σ_w, w_max=w_max) : W 
-    E_to_E = SNN.SpikingSynapse(E,E, :ge; w=W, param=STPparam
+    E_to_E = SNN.SpikingSynapse(E,E, :ge; w=W, STPParam=STPparam
     )
 
     ExcNoise = CurrentStimulus(E;
-        param = CurrentNoiseParameter(E.N; I_base = 400pF, I_dist=Normal(250pF,450pF), α=0.5f0)
+        param = CurrentNoiseParameter(E.N; I_base = 100pF, I_dist=Normal(350pF,250pF), α=0.5f0)
     )
 
     InhNoise = CurrentStimulus(I;
-        param = CurrentNoiseParameter(I.N; I_base =100pF, I_dist=Normal(2pF,1pF), α=1f0)
+        param = CurrentNoiseParameter(I.N; I_base =100pF, I_dist=Normal(100pF,100pF), α=1f0)
     )
 
     model = merge_models(;
@@ -78,7 +78,7 @@ function get_configuration(base_conf, entry::Int, file_path::String)
         I_to_E = row.g_IE,
         σ_w = row.σ_w,
         w_max = row.g_EE,
-        STPparam = STPParameter(
+        STPparam = MarkramSTPParameter(
             τD = row.STP_τσ * ms, # τx
             τF = row.STP_τu * ms, # τu
             U = row.STP_U,
@@ -103,9 +103,9 @@ function test_WM!(model, input_neurons; input_duration=1s, measure_duration=5s)
     toc = get_time(model)
     pre_interval = tic:10ms:toc
     for i in eachindex(input_neurons)## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 300pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 100pF
         train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 300pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 100pF
         train!(;model, duration=5s, dt=0.125ms, pbar=true)
     end
     tic = get_time(model)

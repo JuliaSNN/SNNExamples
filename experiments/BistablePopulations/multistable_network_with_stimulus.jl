@@ -41,7 +41,7 @@ function define_network(N, name, istdp)
 end
 
 n_assemblies = 4
-istdp = SNN.iSTDPParameterTime(τy = 20ms, η = 0.5) 
+istdp = SNN.iSTDPTime(τy = 20ms, η = 0.5) 
 subnets = Dict(Symbol("sub_$n") => define_network(400, n, istdp) for n = 1:n_assemblies)
 syns = Dict{Symbol,Any}()
 for i in eachindex(subnets)

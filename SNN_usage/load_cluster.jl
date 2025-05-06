@@ -49,7 +49,7 @@ addprocs(4)
             :gi,
             p = 0.2,
             μ = 1,
-            param = SNN.iSTDPParameterRate(r = 4Hz),
+            param = SNN.iSTDPRate(r = 4Hz),
         )
         norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
         
