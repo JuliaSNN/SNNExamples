@@ -1,13 +1,14 @@
 using DrWatson
 quickactivate(findproject())
 include(projectdir("loaders", "analysis.jl"))
+using SNNPlots
 
 # Load configuration
 data_path = datadir("working_memory", "Seeholzer") |> mkpath
 include("model.jl")
 
 file_path = joinpath(@__DIR__,"network_parameters.csv")
-entry = 5 # Example entry
+entry = 1 # Example entry
 ##
 
 config = (
@@ -15,16 +16,17 @@ config = (
         I_to_I = 2.7,
         I_to_E = 2.8,
         σ_w = 0.38,
-        w_max = 0.073,
+        w_max = 0.73,
+        # STPparam = NoSTP(),
         STPparam = MarkramSTPParameter(
             τD= 150ms, # τx
             τF= 650ms, # τu
-            U = 0.4f0,
+            U = 0.1f0,
         ),
         NE = 800,
         ΔT = 1s,
         input_neurons = [400:500],
-        sparsity = 1.,
+        sparsity = 1,
     )#
 
 base_conf = config
