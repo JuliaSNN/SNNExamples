@@ -103,9 +103,9 @@ function test_WM!(model, input_neurons; input_duration=1s, measure_duration=5s)
     toc = get_time(model)
     pre_interval = tic:10ms:toc
     for i in eachindex(input_neurons)## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 100pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 40pF
         train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 100pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 40pF
         train!(;model, duration=5s, dt=0.125ms, pbar=true)
     end
     tic = get_time(model)

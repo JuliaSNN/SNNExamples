@@ -39,7 +39,7 @@ vecplot(model.pop.E, :v, interval=5s:10s, neurons=8, title="E", xlabel="Time (s)
 using PyCall
 rastermap =pyimport("rastermap")
 
-spikes = bin_spiketimes(spiketimes(model.pop.E), time_range=5s:10ms:10s, do_sparse=false)
+spikes, r = bin_spiketimes(spiketimes(model.pop.E), time_range=5s:10ms:10s, do_sparse=false)
 
 scatter(mean(spikes, dims=2))
 # , time_range=5s:10ms:10s, sparse=false)
