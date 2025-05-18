@@ -48,7 +48,7 @@ function soma_network(config)
     E = IF(N=Npop.E, param=config.exc, name="E")
     I = IF(N=Npop.I, param=config.inh, name="I")
 
-    AfferentParam = PoissonStimulusLayer(afferents.N; rate=afferents.rate, ϵ=afferents.ϵ)
+    AfferentParam = PoissonStimulusLayer(afferents.rate; afferents...)
     afferentE = PoissonLayer(E, :ge, μ=afferents.μ, param=AfferentParam, name="noiseE")
     afferentI = PoissonLayer(I, :ge, μ=afferents.μ, param=AfferentParam, name="noiseI")
 

@@ -9,7 +9,7 @@ include("model.jl")
 
 file_path = joinpath(@__DIR__,"network_parameters.csv")
 entry = 1 # Example entry
-##
+#
 
 config = (
         E_to_I = 2.29,
@@ -21,12 +21,12 @@ config = (
         STPparam = MarkramSTPParameter(
             τD= 150ms, # τx
             τF= 650ms, # τu
-            U = 0.1f0,
+            U = 0.9f0,
         ),
         NE = 800,
         ΔT = 1s,
         input_neurons = [400:500],
-        sparsity = 1,
+        sparsity = 0.5,
     )#
 
 base_conf = config
@@ -46,7 +46,7 @@ width, fE, fI, cv, ff = model_loss(model, 6s:10ms:11s)
 
 
 st = merge_spiketimes(spiketimes(model.pop.E))
-bins,_ = SNN.bin_spiketimes(st; time_range = 0:10ms:5s, do_sparse = false)
+bins,_ = SNN.bin_spiketimes(st; interval = 0:10ms:5s, do_sparse = false)
 ff = var(bins) / mean(bins)  # Fano Factor
 
 ##

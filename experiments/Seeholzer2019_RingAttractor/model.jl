@@ -103,9 +103,9 @@ function test_WM!(model, input_neurons; input_duration=1s, measure_duration=5s)
     toc = get_time(model)
     pre_interval = tic:10ms:toc
     for i in eachindex(input_neurons)## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 40pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 50pA
         train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 40pF
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 50pA
         train!(;model, duration=5s, dt=0.125ms, pbar=true)
     end
     tic = get_time(model)
@@ -118,7 +118,7 @@ end
 function run_task(config)
     @unpack sparsity, input_neurons, ΔT = config
     W = linear_network(config.NE, σ_w=config.σ_w, w_max=config.w_max)
-    # sparsify!(W, 0.2)
+    sparsify!(W, config.sparsity)
     model = init_model(config; W)
     fr = mean(firing_rate(model.pop.E; interval=0s:10ms:5s, pop_average=true))
     if fr[1] > 20
@@ -129,7 +129,6 @@ function run_task(config)
     pre, post = test_WM!(model, input_neurons, input_duration=ΔT )
     return model, pre, post
 end
-
 
 
 function sparsify!(W::Matrix,  p::Real)
