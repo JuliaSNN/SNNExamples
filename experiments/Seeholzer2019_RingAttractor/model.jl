@@ -30,11 +30,12 @@ function init_model(config; W=nothing)
     E = IF(N=config.NE, param=E_param)
     I = IF(N=config.NE ÷ 4, param=I_param)
     #
-    @unpack E_to_I, I_to_I, I_to_E, STPparam, σ_w, w_max, sparsity = config
+    @unpack STPparam, σ_w, w_max, sparsity = config
+    @unpack E_to_I, I_to_I, I_to_E = config.connections
 
-    E_to_I = SNN.SpikingSynapse(E,I, :ge; μ=E_to_I, p=sparsity, σ=0)
-    I_to_I = SNN.SpikingSynapse(I,I, :gi; μ=I_to_I, p=sparsity, σ=0)
-    I_to_E = SNN.SpikingSynapse(I,E, :gi; μ=I_to_E, p=sparsity, σ=0)
+    E_to_I = SNN.SpikingSynapse(E,I, :ge; E_to_I..., p=sparsity, σ=0)
+    I_to_I = SNN.SpikingSynapse(I,I, :gi; I_to_I..., p=sparsity, σ=0)
+    I_to_E = SNN.SpikingSynapse(I,E, :gi; I_to_E..., p=sparsity, σ=0)
 
     W = isnothing(W) ? linear_network(E.N, σ_w=σ_w, w_max=w_max) : W 
     E_to_E = SNN.SpikingSynapse(E,E, :ge; w=W, STPParam=STPparam
@@ -62,20 +63,25 @@ function init_model(config; W=nothing)
 
 
     SNN.monitor!(model.pop, [:fire])
-    train!(;model, duration=5s, dt=0.125ms, pbar=true)
+    # train!(;model, duration=5s, dt=0.125ms, pbar=true)
     return model
 end
 
-function get_configuration(base_conf, entry::Int, file_path::String)
+function get_configuration(entry::Int, sparsity=1)
+    file_path = joinpath(@__DIR__,"network_parameters.csv")
     df = CSV.read(file_path, DataFrame)
     if entry <= 0 || entry > nrow(df)
         throw(ArgumentError("Entry $entry is out of bounds for the CSV file."))
     end
     row = df[entry, :]
-    config = (;base_conf...,
-        E_to_I = row.g_EI,
-        I_to_I = row.g_II,
-        I_to_E = row.g_IE,
+    config = (
+        sparsity = sparsity,
+        NE = 800,
+        connections = (
+            E_to_I = (μ= row.g_EI, p = sparsity),
+            I_to_I = (μ= row.g_II, p = sparsity),
+            I_to_E = (μ= row.g_IE, p = sparsity),
+        ),
         σ_w = row.σ_w,
         w_max = row.g_EE,
         STPparam = MarkramSTPParameter(
@@ -103,9 +109,9 @@ function test_WM!(model, input_neurons; input_duration=1s, measure_duration=5s)
     toc = get_time(model)
     pre_interval = tic:10ms:toc
     for i in eachindex(input_neurons)## External input on E neurons
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 50pA
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .+= 20pA
         train!(;model, duration=input_duration, dt=0.125ms, pbar=true)
-        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 50pA
+        model.stim.ExcNoise.param.I_base[input_neurons[i]] .-= 20pA
         train!(;model, duration=5s, dt=0.125ms, pbar=true)
     end
     tic = get_time(model)
@@ -115,8 +121,8 @@ function test_WM!(model, input_neurons; input_duration=1s, measure_duration=5s)
     return pre_interval, post_interval
 end
 
-function run_task(config)
-    @unpack sparsity, input_neurons, ΔT = config
+function run_task(config, input_neurons)
+    @unpack sparsity= config
     W = linear_network(config.NE, σ_w=config.σ_w, w_max=config.w_max)
     sparsify!(W, config.sparsity)
     model = init_model(config; W)
@@ -126,7 +132,7 @@ function run_task(config)
     end
     # heatmap(W)
     reset_time!(model.time)
-    pre, post = test_WM!(model, input_neurons, input_duration=ΔT )
+    pre, post = test_WM!(model, input_neurons, input_duration=1s)
     return model, pre, post
 end
 

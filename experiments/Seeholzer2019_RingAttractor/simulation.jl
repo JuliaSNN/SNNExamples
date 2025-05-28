@@ -6,33 +6,15 @@ using SNNPlots
 # Load configuration
 data_path = datadir("working_memory", "Seeholzer") |> mkpath
 include("model.jl")
-
 file_path = joinpath(@__DIR__,"network_parameters.csv")
+
 entry = 1 # Example entry
 #
 
-config = (
-        E_to_I = 2.29,
-        I_to_I = 2.7,
-        I_to_E = 2.8,
-        σ_w = 0.38,
-        w_max = 0.73,
-        # STPparam = NoSTP(),
-        STPparam = MarkramSTPParameter(
-            τD= 150ms, # τx
-            τF= 650ms, # τu
-            U = 0.9f0,
-        ),
-        NE = 800,
-        ΔT = 1s,
-        input_neurons = [400:500],
-        sparsity = 0.5,
-    )#
-
-base_conf = config
-config = get_configuration(base_conf, entry, file_path)
+config = get_configuration(entry)
+config = Seeholzer2019_config()
 config |> dump
-model, pre, post = run_task(config)
+model, pre, post = run_task(config, [300:400])
 
 raster(model.pop, 0s:10ms:15s, every=1)
 # objective_values = (width_pre-width_post, abs(cv_pre-1), abs(ff_pre-1))
