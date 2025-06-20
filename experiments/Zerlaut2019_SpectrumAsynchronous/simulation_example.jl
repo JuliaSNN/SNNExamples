@@ -81,7 +81,6 @@ function soma_network(config)
 end
 
 
-
 νa =  exp.(range(log(1), log(20), 20))
 f_rate = map(νa) do x
     frs = tmap(1:5) do _
@@ -90,7 +89,7 @@ f_rate = map(νa) do x
         end 
         model = soma_network(config)
         sim!(;model, duration=10_000ms,  pbar=false)
-        fr= firing_rate(model.pop.E, interval=3s:10s, pop_average=true, time_average=true)
+        fr, _ = firing_rate(model.pop.E, interval=3s:10s, pop_average=true, time_average=true)
     end
         f =     mean(frs)
     @info "rate: $x Hz = $(mean(f))"
