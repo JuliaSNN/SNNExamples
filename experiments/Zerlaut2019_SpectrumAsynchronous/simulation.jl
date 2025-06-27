@@ -15,6 +15,7 @@ begin
 end
 #
 
+model = soma_network(Zerlaut2019_network)
 
 νa =  exp.(range(log(1), log(40), 20))
 f_rate = map(νa) do x

@@ -37,7 +37,7 @@ Zerlaut2019_network = (
     
     afferents = (
         N = 100,
-        ϵ = 0.1f0,
+        p = 0.1f0,
         rate = 20Hz,
         μ = 4.0,
         ), 
@@ -49,8 +49,8 @@ function soma_network(config)
     I = IF(N=Npop.I, param=config.inh, name="I")
 
     AfferentParam = PoissonStimulusLayer(afferents.rate; afferents...)
-    afferentE = PoissonLayer(E, :ge, μ=afferents.μ, param=AfferentParam, name="noiseE")
-    afferentI = PoissonLayer(I, :ge, μ=afferents.μ, param=AfferentParam, name="noiseI")
+    afferentE = PoissonLayer(E, :ge, param=AfferentParam, name="noiseE")
+    afferentI = PoissonLayer(I, :ge, param=AfferentParam, name="noiseI")
 
     synapses = (
         E_to_E = SpikingSynapse(E, E, :ge, p=connections.E_to_E.p, μ=connections.E_to_E.μ, name="E_to_E"),
@@ -62,5 +62,5 @@ function soma_network(config)
     monitor!(model.pop, [:fire])
     monitor!(model.stim, [:fire])
     # monitor!(model.pop, [:v], sr=200Hz)
-    return merge_models(;model..., silent=true)
+    return merge_models(;model..., silent=false)
 end
