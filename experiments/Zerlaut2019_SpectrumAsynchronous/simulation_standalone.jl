@@ -1,14 +1,22 @@
-using DrWatson
-findproject() |> quickactivate
+using Pkg
+Pkg.add("ThreadTools")
+Pkg.add("Plots")
+Pkg.add("UnPack")
+Pkg.add("Statistics")
+Pkg.add("Plots")
+Pkg.add(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl")
+
+##
 using ThreadTools
 using Plots
 using UnPack
 using Statistics
 using SpikingNeuralNetworks
 SNN.@load_units
-##
 
-Zerlaut2019_network = (Npop = (E=8000, I=2000),
+Zerlaut2019_network = (
+    Npop = (E=4000, I=1000),
+
     exc = IFParameterSingleExponential(
                 τm = 200pF / 10nS, 
                 El = -70mV, 
@@ -72,25 +80,26 @@ function soma_network(config)
     return merge_models(;model..., silent=true)
 end
 
+
 νa =  exp.(range(log(1), log(20), 20))
-f_rate = tmap(νa) do x
-    frs = map(1:5) do _
+f_rate = map(νa) do x
+    frs = tmap(1:5) do _
         config = @update Zerlaut2019_network begin
             afferents.rate = x*Hz
         end 
         model = soma_network(config)
         sim!(;model, duration=10_000ms,  pbar=false)
         fr, _ = firing_rate(model.pop.E, interval=3s:10s, pop_average=true, time_average=true)
-        fr
     end
         f =     mean(frs)
     @info "rate: $x Hz = $(mean(f))"
     frs
 end
 
-ff_rate = [filter(x -> x < 10, mean.(fr)) for fr in f_rate]
-##
-ff_rate = [quantile(fr,0.2) for fr in f_rate]
-scatter(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9,20), ylims=(0.00001,80))#, xscale=:log, yscale=:log)
-plot!(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9, 20), ylims=(0.00001,80), lw=5, xticks=([1,5,10, 20], [1,5,10,20]))#, xscale=:log, yscale=:log)
+ff_rate = [filter(x -> x < 80, mean.(fr)) for fr in f_rate]
+scatter(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9,20), ylims=(0.0000001,80))#, xscale=:log, yscale=:log)
+plot!(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9, 20), ylims=(0.0000001,80), lw=5, xticks=([1,5,10, 20], [1,5,10,20]))#, xscale=:log, yscale=:log)
 plot!(xlabel="Afferent rate (Hz)", ylabel="Firing rate (Hz)",  legend=false, size=(400,400))
+
+
+

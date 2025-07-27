@@ -1,22 +1,12 @@
-using Pkg
-Pkg.add("ThreadTools")
-Pkg.add("Plots")
-Pkg.add("UnPack")
-Pkg.add("Statistics")
-Pkg.add("Plots")
-Pkg.add(url="https://github.com/JuliaSNN/SpikingNeuralNetworks.jl")
-
-##
-using ThreadTools
-using Plots
+using DrWatson
+findproject() |> quickactivate
 using UnPack
-using Statistics
 using SpikingNeuralNetworks
+import SNNPlots: Plots, plot, raster
 SNN.@load_units
+##
 
-Zerlaut2019_network = (
-    Npop = (E=4000, I=1000),
-
+Zerlaut2019_network = (Npop = (E=8000, I=2000),
     exc = IFParameterSingleExponential(
                 τm = 200pF / 10nS, 
                 El = -70mV, 
@@ -58,7 +48,7 @@ Zerlaut2019_network = (
         ), 
 )
 
-function soma_network(config)
+function network(config)
     @unpack afferents, connections, Npop = config
     E = IF(N=Npop.E, param=config.exc, name="E")
     I = IF(N=Npop.I, param=config.inh, name="I")
@@ -81,25 +71,28 @@ function soma_network(config)
 end
 
 
-νa =  exp.(range(log(1), log(20), 20))
-f_rate = map(νa) do x
-    frs = tmap(1:5) do _
-        config = @update Zerlaut2019_network begin
-            afferents.rate = x*Hz
-        end 
-        model = soma_network(config)
-        sim!(;model, duration=10_000ms,  pbar=false)
-        fr, _ = firing_rate(model.pop.E, interval=3s:10s, pop_average=true, time_average=true)
-    end
-        f =     mean(frs)
-    @info "rate: $x Hz = $(mean(f))"
-    frs
+##
+plots = map([4, 10]) do input_rate
+    config = @update Zerlaut2019_network begin
+        afferents.rate = input_rate*Hz
+    end 
+    model = soma_network(config)
+    sim!(;model, duration=10_000ms,  pbar=true)
+    pr= raster(model.pop, every=40)
+
+    # Firing rate of the network with a fixed afferent rate
+    frE, r = firing_rate(model.pop.E, interval=3s:10s, pop_average=true)
+    frI, r = firing_rate(model.pop.I, interval=3s:10s, pop_average=true)
+    pf = plot(r, [frE, frI], labels=["E" "I"],
+        xlabel="Time (s)", ylabel="Firing rate (Hz)", 
+        title="Afferent rate: $input_rate Hz",
+        size=(600, 400), lw=2)
+
+    # Plot the raster plot of the network
+    plot(pf, pr, layout=(2, 1))
 end
 
-ff_rate = [filter(x -> x < 80, mean.(fr)) for fr in f_rate]
-scatter(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9,20), ylims=(0.0000001,80))#, xscale=:log, yscale=:log)
-plot!(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9, 20), ylims=(0.0000001,80), lw=5, xticks=([1,5,10, 20], [1,5,10,20]))#, xscale=:log, yscale=:log)
-plot!(xlabel="Afferent rate (Hz)", ylabel="Firing rate (Hz)",  legend=false, size=(400,400))
+p = plot(plots..., layout=(1,2), size=(1200, 600), xlabel="Time (s)", leftmargin=10Plots.mm)
+##
 
-
-
+savefig(p, "/home/user/mnt/zeus/User_folders/aquaresi/network_models/src/SpikingNeuralNetworks.jl/docs/src/assets/examples/recurrent_network.png")
