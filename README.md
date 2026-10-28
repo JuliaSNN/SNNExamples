@@ -63,6 +63,8 @@ The tutorials follow the pages of the documentation ([populations](https://julia
 
 Status: **pass** = ran as it came from SpikingNeuralNetworks.jl, **fixed** = ported to the current API and now runs,
 **not run** = not executed (cluster data, removed models, unfinished code; reason in [STATUS.md](STATUS.md)).
+"Ran" means the script finished without error; STATUS.md also lists observations about results that look wrong
+(for example the Izhikevich tutorials).
 
 <!-- examples:begin -->
 
