@@ -1,96 +1,36 @@
-using DrWatson
-findproject() |> quickactivate
+# Transfer function of the balanced network of Zerlaut et al. (2019) with 8000 excitatory and 2000 inhibitory
+# neurons: lower quintile (over 5 repetitions) of the excitatory rate over the last 7 s of a 10 s simulation, against
+# the afferent rate (20 values between 1 and 20 Hz). Parallel over afferent rates with `tmap`.
+# Runtime: about 7.5 min.
 using ThreadTools
-using Plots
-using UnPack
-using Statistics
 using SpikingNeuralNetworks
+using CairoMakie, Statistics
 SNN.@load_units
-##
+include("model.jl")
 
-Zerlaut2019_network = (Npop = (E=8000, I=2000),
-    exc = IFParameterSingleExponential(
-                τm = 200pF / 10nS, 
-                El = -70mV, 
-                Vt = -50.0mV, 
-                Vr = -70.0f0mV,
-                R  = 1/10nS, 
-                τabs = 2ms,       
-                τi=5ms,
-                τe=5ms,
-                E_i = -80mV,
-                E_e = 0mV,
-                ),
-
-    inh = IFParameterSingleExponential(
-                τm = 200pF / 10nS, 
-                El = -70mV, 
-                Vt = -53.0mV, 
-                Vr = -70.0f0mV,
-                R  = 1/10nS, 
-                τabs = 2ms,       
-                τi=5ms,
-                τe=5ms,
-                E_i = -80mV,
-                E_e = 0mV,
-                ),
-
-    connections = (
-        E_to_E = (p = 0.05, μ = 2nS),
-        E_to_I = (p = 0.05, μ = 2nS),
-        I_to_E = (p = 0.05, μ = 10nS),
-        I_to_I = (p = 0.05, μ = 10nS),
-        ),
-    
-    afferents = (
-        N = 100,
-        p = 0.1f0,
-        rate = 20Hz,
-        μ = 4.0,
-        ), 
-)
-
-function soma_network(config)
-    @unpack afferents, connections, Npop = config
-    E = IF(N=Npop.E, param=config.exc, name="E")
-    I = IF(N=Npop.I, param=config.inh, name="I")
-
-    AfferentParam = PoissonStimulusLayer(afferents.rate; afferents...)
-    afferentE = PoissonLayer(E, :ge, param=AfferentParam, name="noiseE")
-    afferentI = PoissonLayer(I, :ge, param=AfferentParam, name="noiseI")
-
-    synapses = (
-        E_to_E = SpikingSynapse(E, E, :ge, p=connections.E_to_E.p, μ=connections.E_to_E.μ, name="E_to_E"),
-        E_to_I = SpikingSynapse(E, I, :ge, p=connections.E_to_I.p, μ=connections.E_to_I.μ, name="E_to_I"),
-        I_to_E = SpikingSynapse(I, E, :gi, p=connections.I_to_E.p, μ=connections.I_to_E.μ, name="I_to_E"),
-        I_to_I = SpikingSynapse(I, I, :gi, p=connections.I_to_I.p, μ=connections.I_to_I.μ, name="I_to_I"),
-    )
-    model = merge_models(;E,I, afferentE, afferentI, synapses..., silent=true, name="Balanced network") 
-    monitor!(model.pop, [:fire])
-    monitor!(model.stim, [:fire])
-    # monitor!(model.pop, [:v], sr=200Hz)
-    return merge_models(;model..., silent=true)
+config_big = SNN.@update Zerlaut2019_network begin
+    Npop = (E = 8000, I = 2000)
 end
 
-νa =  exp.(range(log(1), log(20), 20))
+νa = exp.(range(log(1), log(20), 20))
 f_rate = tmap(νa) do x
     frs = map(1:5) do _
-        config = @update Zerlaut2019_network begin
-            afferents.rate = x*Hz
-        end 
+        config = SNN.@update config_big begin
+            afferents.rate = x * Hz
+        end
         model = soma_network(config)
-        sim!(;model, duration=10_000ms,  pbar=false)
-        fr, _ = firing_rate(model.pop.E, interval=3s:10s, pop_average=true, time_average=true)
+        SNN.sim!(; model, duration = 10_000ms)
+        fr, _ = SNN.firing_rate(model.pop.E, interval = 3s:10ms:10s, pop_average = true, time_average = true)
         fr
     end
-        f =     mean(frs)
-    @info "rate: $x Hz = $(mean(f))"
+    @info "rate: $x Hz = $(mean(frs))"
     frs
 end
 
-ff_rate = [filter(x -> x < 10, mean.(fr)) for fr in f_rate]
-##
-ff_rate = [quantile(fr,0.2) for fr in f_rate]
-scatter(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9,20), ylims=(0.00001,80))#, xscale=:log, yscale=:log)
-plot!(νa, mean.(ff_rate), ribbon=std.(ff_rate), scale=:log10, xlims=(0.9, 20), ylims=(0.00001,80), lw=5, xticks=([1,5,10, 20], [1,5,10,20]))#, xscale=:log, yscale=:log)
-plot!(xlabel="Afferent rate (Hz)", ylabel="Firing rate (Hz)",  legend=false, size=(400,400))
+q = [quantile(fr, 0.2) for fr in f_rate]
+fig = Figure(size = (450, 450))
+ax = Axis(fig[1, 1], xlabel = "Afferent rate (Hz)", ylabel = "Firing rate (Hz)", xscale = log10, yscale = log10,
+          xticks = ([1, 5, 10, 20], ["1", "5", "10", "20"]))
+scatterlines!(ax, νa, max.(q, 1e-5), linewidth = 3)
+xlims!(ax, 0.9, 22)
+fig

@@ -1,69 +1,51 @@
-using DrWatson
-using Revise
+# Graph of a model: `SNN.graph(model)` returns a MetaGraph whose vertices are the populations and stimuli and
+# whose edges are the synapses and stimuli connections. Drawn here with a circular layout in CairoMakie (the
+# original used GraphMakie with an interactive GLMakie window).
+# Runtime: about 40 s.
 using SpikingNeuralNetworks
-SNN.@load_units;
-using SNNUtils
-
-using GLMakie
-using SpikingNeuralNetworks.Graphs
-using SpikingNeuralNetworks.MetaGraphs
+SNN.@load_units
+using Graphs
+using MetaGraphs
+using CairoMakie
 
 # Define the network
 network = let
-    # Number of neurons in the network
     N = 1000
-    # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV))
-    # Define interneurons 
-    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
-    # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 3.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5)#, param = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 4.0)
-    I_to_E = SNN.SpikingSynapse(
-        I,
-        E,
-        :gi,
-        p = 0.2,
-        μ = 1,
-        param = SNN.iSTDPRate(r = 4Hz),
-    )
-    norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
-    
-    # Store neurons and synapses into a dictionary
-    pop = SNN.@symdict E I
-    syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
-    (pop = pop, syn = syn)
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV), name = "E")
+    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, R = 0.06, El = -50mV), name = "I")
+    E_to_I = SNN.SpikingSynapse(E, I, :ge; conn = (p = 0.2, μ = 3.0))
+    E_to_E = SNN.SpikingSynapse(E, E, :ge; conn = (p = 0.2, μ = 0.5))
+    I_to_I = SNN.SpikingSynapse(I, I, :gi; conn = (p = 0.2, μ = 4.0))
+    I_to_E = SNN.SpikingSynapse(I, E, :gi; conn = (p = 0.2, μ = 1), LTPParam = SNN.iSTDPRate(r = 4Hz))
+    norm = SNN.MetaPlasticity(SNN.AdditiveNorm(τ = 30ms), [E_to_E])
+    (pop = (; E, I), syn = (; I_to_E, E_to_I, E_to_E, norm, I_to_I))
 end
 
-
 # Create background for the network simulation
-noise  = SNN.PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
-noise2 = SNN.PoissonStimulus(network.pop[:E], :gi, param=3kHz, neurons=:ALL)
-old_model = SNN.merge_models(network, noise=noise, noise2=noise2)
+noise = SNN.PoissonStimulus(network.pop.E, :ge; param = SNN.PoissonFixed(rate = 2.8kHz), neurons = :ALL)
+noise2 = SNN.PoissonStimulus(network.pop.E, :gi; param = SNN.PoissonFixed(rate = 3kHz), neurons = :ALL)
+model = SNN.compose(network, noise = noise, noise2 = noise2, silent = true)
 
-using SpikingNeuralNetworks:MetaGraphs
-my_graph = SNN.graph(old_model)
-##
+my_graph = SNN.graph(model)
+@info "Graph with $(nv(my_graph)) vertices and $(ne(my_graph)) edges"
 
-
-##
-set_theme!(theme_light())
-f, ax, p = graphplot(my_graph, 
-                    edge_width=[0.1 for i in 1:ne(my_graph)],
-                     node_size=[30 for i in 1:nv(my_graph)],
-                     arrow_shift=0.90,
-                     nlabels=[get_prop(my_graph, v, :name) for v in vertices(my_graph)],
-                     nlabels_distance=20,
-                     )
-
-
-
-                # f, ax, p = graphplot(my_graph, n_labels=names, nlabels_fontsize=12,node_size = 30, edge_width = .1, arrow_shift=.90)
-# hidedecorations!(ax)
-# names = [get_prop(my_graph, v, :name) for v in vertices(my_graph)]
-deregister_interaction!(ax, :rectanglezoom)
-register_interaction!(ax, :nhover, NodeHoverHighlight(p))
-register_interaction!(ax, :ehover, EdgeHoverHighlight(p))
-register_interaction!(ax, :ndrag, NodeDrag(p))
-register_interaction!(ax, :edrag, EdgeDrag(p))
+## Circular layout
+n = nv(my_graph)
+pos = [Point2f(cos(2π * (k - 1) / n), sin(2π * (k - 1) / n)) for k = 1:n]
+names = [get_prop(my_graph, v, :name) for v in vertices(my_graph)]
+fig = Figure(size = (600, 600))
+ax = Axis(fig[1, 1], aspect = DataAspect())
+hidedecorations!(ax); hidespines!(ax)
+for e in edges(my_graph)
+    a, b = pos[src(e)], pos[dst(e)]
+    if src(e) == dst(e)       # recurrent connection: small loop outside the node
+        c = 1.25f0 * a
+        lines!(ax, [Point2f(c .+ 0.12f0 .* (cos(t), sin(t))) for t in range(0, 2π, 30)], color = :gray)
+    else
+        lines!(ax, [a, b], color = :gray, linewidth = 1)
+        arrows2d!(ax, [a + 0.85f0 * (b - a)], [0.08f0 * (b - a)], color = :gray)
+    end
+end
+scatter!(ax, pos, markersize = 30, color = :steelblue)
+text!(ax, pos, text = string.(names), align = (:center, :bottom), offset = (0, 20))
+fig

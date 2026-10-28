@@ -1,116 +1,111 @@
+# Structured inhibition (Festa et al. 2024): 800 excitatory and 200 inhibitory IF neurons with a plastic I -> E
+# connection that follows a SYMMETRIC STDP rule (STDPSymmetric, tau_x = 30 ms, tau_y = 600 ms) and Poisson
+# drive. After 50 s of initial simulation the network is trained for another 500 s; the script then plots the mean
+# I -> E weight, the E and I rates, a raster of the last seconds and the weights of the reciprocal E <-> I pairs.
+# Only the I -> E weights are recorded (the original recorded all weights, which is several hundred MB).
+# Runtime: about 85 s.
 using DrWatson
-using Revise
-using Plots
 using SpikingNeuralNetworks
-SNN.@load_units;
-using SNNUtils
+SNN.@load_units
+using CairoMakie
 using Statistics
-using ProgressBars
-# Define the network
 
-
-network_param =(
-        Ne = 800,
-        Ni = 200,
-        pee = 0.2,
-        pei = 0.1,
-        pie = 0.3,
-        pii = 0.2,
-        wee = 1.0,
-        wei = 1.0,
-        wie = 1.8,
-        wii = 0.3,
-        )
-network = create_network(;stdp, network_param, neuron_param ) = let
-    # Network parameters
-    @unpack Ne, Ni, pee, pei, pie, pii, wee, wei, wii, wie= network_param
-    E = SNN.IF(N = Ne, param = neuron_param, name="Excitatory")
-    I1 = SNN.IF(N = Ni, param = neuron_param, name="Inh1")
-    pop = dict2ntuple(@strdict E I1)
-
-    # Synapses
-    synapses = Dict{Symbol,Any}(
-        :E_to_E => SNN.SpikingSynapse(E, E, :ge, p = pee, μ = wee, name = "E_to_E"),
-        :E_to_I1 => SNN.SpikingSynapse(E, I1, :ge, p = pei, μ = wei, name = "E_to_I1"),
-        :I1_to_I1 => SNN.SpikingSynapse(I1, I1, :gi, p = pii, μ = wii, name = "I1_to_I1"),
-        :I1_to_E => SNN.SpikingSynapse(I1, E, :gi, p = pie, μ = wie,LTPParam = stdp, name = "I1_to_E"),
-    ) |> dict2ntuple
-
-    # Stimuli
-    stim = Dict{Symbol,Any}(
-        :stim_e => SNN.PoissonStimulus(E, :ge, param=50Hz*50, μ=1f0, neurons=:ALL),
-        :stim_i => SNN.PoissonStimulus(I1, :ge, param=50Hz*40, μ=0.2f0, neurons=:ALL),
-        # :stim_i => SNN.CurrentStimulus(I1, I_base=I_base, neurons=:ALL),
-    )
-    merge_models(pop, synapses, stim, silent=true)
+## Analysis helpers (the originals, `plot_network_plasticity` and `mutual_EI_connections`, were part of SNNUtils < 1)
+# I -> E weight over time, and E/I rates
+function plot_network_plasticity(model; interval)
+    fig = Figure(size = (800, 700))
+    ax1 = Axis(fig[1, 1], ylabel = "Mean I → E weight", xlabel = "Time (s)")
+    W, r = SNN.record(model.syn.I1_to_E, :W, range = true)
+    wmean = vec(mean(SNN.getvariable(model.syn.I1_to_E, :W), dims = 1))
+    lines!(ax1, r ./ 1000, wmean, linewidth = 2)
+    ax2 = Axis(fig[2, 1], ylabel = "Rate (Hz)", xlabel = "Time (s)")
+    for p in (model.pop.E, model.pop.I1)
+        fr, rr = SNN.firing_rate(p; interval, τ = 100ms, pop_average = true)
+        lines!(ax2, rr ./ 1000, vec(fr), label = p.name)
+    end
+    axislegend(ax2)
+    ax3 = Axis(fig[3, 1], ylabel = "Neuron", xlabel = "Time (s)")
+    SNN.raster!(ax3, model.pop, (last(interval) - 5s):last(interval), every = 2)
+    return fig
 end
 
+# I -> E weights of the pairs that are also connected E -> I (reciprocal pairs) compared with the other I -> E pairs
+function mutual_EI_connections(syn)
+    W_EI = Matrix(SNN.matrix(syn.E_to_I1))      # N_I x N_E
+    W_IE = Matrix(SNN.matrix(syn.I1_to_E))      # N_E x N_I
+    reciprocal = (W_EI .> 0)' .& (W_IE .> 0)    # N_E x N_I, connected in both directions
+    one_way = (W_EI .== 0)' .& (W_IE .> 0)
+    fig = Figure(size = (500, 400))
+    ax = Axis(fig[1, 1], xlabel = "I → E weight", ylabel = "Number of synapses",
+              title = "$(count(reciprocal)) reciprocal and $(count(one_way)) one-way I → E pairs")
+    hist!(ax, W_IE[one_way], bins = 40, color = (:gray, 0.6), label = "I → E only")
+    hist!(ax, W_IE[reciprocal], bins = 40, color = (:red, 0.5), label = "reciprocal")
+    axislegend(ax)
+    return fig
+end
 
+## Define the network
+network_param = (
+    Ne = 800,
+    Ni = 200,
+    pee = 0.2,
+    pei = 0.1,
+    pie = 0.3,
+    pii = 0.2,
+    wee = 1.0,
+    wei = 1.0,
+    wie = 1.8,
+    wii = 0.3,
+)
+
+function create_network(; stdp, network_param, neuron_param, synapse)
+    (; Ne, Ni, pee, pei, pie, pii, wee, wei, wii, wie) = network_param
+    E = SNN.IF(N = Ne, param = neuron_param, synapse = synapse, spike = SNN.PostSpike(τabs = 5ms), name = "Excitatory")
+    I1 = SNN.IF(N = Ni, param = neuron_param, synapse = synapse, spike = SNN.PostSpike(τabs = 5ms), name = "Inh1")
+
+    E_to_E = SNN.SpikingSynapse(E, E, :ge; conn = (p = pee, μ = wee), name = "E_to_E")
+    E_to_I1 = SNN.SpikingSynapse(E, I1, :ge; conn = (p = pei, μ = wei), name = "E_to_I1")
+    I1_to_I1 = SNN.SpikingSynapse(I1, I1, :gi; conn = (p = pii, μ = wii), name = "I1_to_I1")
+    I1_to_E = SNN.SpikingSynapse(I1, E, :gi; conn = (p = pie, μ = wie), LTPParam = stdp, name = "I1_to_E")
+
+    stim_e = SNN.PoissonStimulus(E, :ge; param = SNN.PoissonFixed(rate = 50Hz * 50, μ = 1.0f0), neurons = :ALL)
+    stim_i = SNN.PoissonStimulus(I1, :ge; param = SNN.PoissonFixed(rate = 50Hz * 40, μ = 0.2f0), neurons = :ALL)
+    return SNN.compose(; E, I1, E_to_E, E_to_I1, I1_to_I1, I1_to_E, stim_e, stim_i, silent = true)
+end
 
 Alearn = 4e-2
-stdp_sym = SymmetricSTDP(   A_x = 1e3*Alearn,
-                            A_y = 1e3*Alearn,
-                            αpre = -0.05*Alearn,
-                            αpost = 0.0,
-                            τ_x = 30ms,
-                            τ_y = 600ms,
-                            Wmax = 80,
-                           )
+stdp = SNN.STDPSymmetric(
+    A_x = 1e3 * Alearn,
+    A_y = 1e3 * Alearn,
+    αpre = -0.05 * Alearn,
+    αpost = 0.0,
+    τ_x = 30ms,
+    τ_y = 600ms,
+    Wmax = 80,
+)
 
 C = 200pF
 gl = 10nS
-neuron_param = IFParameterSingleExponential(
-        R = 1/ gl,
-        τm= C/gl,
-        τabs = 5ms,
-        Vt = -50mV,
-        El=-60mV, 
-        # synapses
-        E_e = 0mV,
-        E_i = -80mV,
-        τe= 5ms,
-        τi= 10ms,
-        )
+neuron_param = SNN.IFParameter(R = 1 / gl, τm = C / gl, Vt = -50mV, El = -60mV)
+synapse = SNN.SingleExpSynapse(E_e = 0mV, E_i = -80mV, τe = 5ms, τi = 10ms)
 
+model = create_network(; stdp, network_param, neuron_param, synapse)
 
-
-model= create_network(;stdp=stdp_sym, network_param, neuron_param)
-
-
-#
+## Initial simulation and training
 @info "Initializing network"
-simtime = SNN.Time()
-monitor!(model.pop, [:fire])
-monitor!(model.syn, [:W],  sr=1Hz)
-monitor!(model.pop, [:gi], sr=20Hz)
-monitor!(model.pop, [:ge], sr=20Hz)
-sim!(model=model, duration = 50s, time = simtime, pbar = true)
-##
-tic = time()
-duration=500 #seconds 
-rI, rE, W, τrate, dt = 0, 0, 0, 150ms, 0.125f0
-iter = ProgressBar(1:duration)
-for x in iter
-    for i in 1:10
-        train!(model=model, duration = 0.1s, time = simtime, dt = dt, pbar = false)
-        W = mean(model.syn.I1_to_E.W)
-        rI += mean(model.pop.I1.fire) - rI/τrate
-        rE += mean(model.pop.E.fire)  - rE/τrate
-    end
-    set_multiline_postfix(iter, "Inh W: $(W)\nE rate: $(rE/dt/Hz/τrate)\nI rate: $(rI/dt/Hz/τrate)")
+SNN.monitor!(model.pop, [:fire])
+SNN.monitor!(model.syn.I1_to_E, [:W], sr = 1Hz)
+SNN.train!(model = model, duration = 50s, dt = 0.125f0)
+for x = 1:5
+    SNN.train!(model = model, duration = 100s, dt = 0.125f0)
+    @info "t = $(round(SNN.get_time(model) / 1000)) s, mean I → E weight = $(mean(model.syn.I1_to_E.W))"
 end
-tac = time()
-@info "Elapsed time: $(tac-tic) seconds"
-##
 
-path = datadir("structured_inhibition", "asymmetric") |> mkpath
-save_model(path=path, model=model, name="structured_symmetric", simtime=simtime)
-
-
-## Loade model and plot
-data = load_data(path=path, name="structured_symmetric", info=true)
-T = get_time(simtime)
-@unpack model = data
-p = plot_network_plasticity(model, simtime, ΔT= 4s, interval = T-120s:1s:T)
-mutual_EI_connections(synapses)
-
+## Save the model and plot (recordings are not kept in a saved model, so the plots use the model in memory)
+path = datadir("structured_inhibition", "symmetric")
+mkpath(path)
+info = (name = "structured_symmetric",)
+SNN.save_model(; model, path, name = "structured_symmetric", info, config = info)
+T = SNN.get_time(model)
+plot_network_plasticity(model; interval = (T-20s):100ms:T)
+mutual_EI_connections(model.syn)
