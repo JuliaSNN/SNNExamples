@@ -1,75 +1,41 @@
-using Plots
-using DrWatson
-using Revise
+# Test of voltage-based STDP on one synapse: in an E/I network of 1000 AdEx and 250 IF neurons (inhibitory STDP and
+# additive normalisation) a single extra E -> E synapse from neuron 23 to neuron 58 with weight 5 and a vSTDP rule
+# is added; the weights of the extra synapse are recorded while the network is driven by Poisson input for 5 s.
+# Plots a raster and the mean excitatory rate, and the weight of the test synapse over time. The network activity
+# collapses after an initial burst of 0.5 s, so the weight changes only during the burst.
+# Runtime: about 55 s.
 using SpikingNeuralNetworks
-SNN.@load_units;
-using SNNUtils
+SNN.@load_units
+using CairoMakie, Statistics
 
-# Define the network
-network = let
-    # Number of neurons in the network
-    N = 1000
-    # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV))
-    # Define interneurons 
-    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
-    # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 3.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5)#,LTPParam = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 4.0)
-    I_to_E = SNN.SpikingSynapse(
-        I,
-        E,
-        :gi,
-        p = 0.2,
-        μ = 1,
-        param = SNN.iSTDPRate(r = 4Hz),
-    )
-    norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
-    
-    # Store neurons and synapses into a dictionary
-    pop = dict2ntuple(@strdict E I)
-    syn = dict2ntuple(@strdict I_to_E E_to_I E_to_E norm I_to_I)
-    # Return the network as a tuple
-    # Return the network as a tuple
-    (pop = pop, syn = syn)
-end
+N = 1000
+E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV), name = "E")
+I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, R = 0.06, El = -50mV), name = "I")
+E_to_I = SNN.SpikingSynapse(E, I, :ge; conn = (p = 0.2, μ = 3.0))
+E_to_E = SNN.SpikingSynapse(E, E, :ge; conn = (p = 0.2, μ = 0.5))
+I_to_I = SNN.SpikingSynapse(I, I, :gi; conn = (p = 0.2, μ = 4.0))
+I_to_E = SNN.SpikingSynapse(I, E, :gi; conn = (p = 0.2, μ = 1), LTPParam = SNN.iSTDPRate(r = 4Hz))
+norm = SNN.MetaPlasticity(SNN.AdditiveNorm(τ = 30ms), [E_to_E])
+noise = SNN.PoissonStimulus(E, :ge; param = SNN.PoissonFixed(rate = 2.8kHz), neurons = :ALL)
 
-# Create background for the network simulation
-noise = SNN.PoissonStimulus(network.pop.E, :ge, param=1.8kHz, neurons=:ALL)
 cellA = 23
 cellB = 58
-W = zeros(network.pop.E.N, network.pop.E.N)
+W = zeros(E.N, E.N)           # N_post x N_pre
 W[cellB, cellA] = 5
+measured_syn = SNN.SpikingSynapse(E, E, :ge; conn = W, LTPParam = SNN.vSTDPParameter(), name = "measured")
 
-measured_syn = SNN.SpikingSynapse(
-    network.pop.E,
-    network.pop.E,
-    :ge,
-    w = W,
-    param = SNN.vSTDPParameter(),
-)
-
-## Combine all
-model = SNN.merge_models(network, noise=noise, measured_syn=measured_syn)
-
-
+model = SNN.compose(; E, I, E_to_I, E_to_E, I_to_I, I_to_E, norm, noise, measured_syn, silent = true)
 @info "Initializing network"
-simtime = SNN.Time()
-SNN.monitor!([network.pop...], [:fire])
+SNN.monitor!(model.pop, [:fire])
+SNN.monitor!(measured_syn, [:W], sr = 100Hz)
+SNN.train!(model = model, duration = 5000ms, dt = 0.125f0)
 
-train!(model=model, duration = 5000ms, time = simtime, dt = 0.125f0, pbar = true)
-
-
-
-spiketimes = SNN.spiketimes(network.pop.E)
-SNN.raster([network.pop...], [1s, 2s])
-# SNN.vecplot(network.pop.E, [:ge], neurons = 1:10, r = 800ms:4999ms)
-rates = SNN.firing_rate(network.pop.E, 100ms)
-# plot(rates[1:100,1:end]', legend=false)
-plot(mean(rates, dims = 1)[1, :], legend = false)
-##
-
-network.pop.E.records
-
-## The simulation achieves > 1.0 iteration per second on my M1 Pro machine.
+fig = Figure(size = (800, 800))
+SNN.raster!(Axis(fig[1, 1], ylabel = "Neuron"), model.pop, 1s:2s)
+rates, intervals = SNN.firing_rate(E, interval = 0:10ms:5s, τ = 100ms)
+ax2 = Axis(fig[2, 1], ylabel = "Mean rate (Hz)")
+lines!(ax2, intervals ./ 1000, vec(mean(rates, dims = 1)))
+_, r = SNN.record(measured_syn, :W, range = true)
+ax3 = Axis(fig[3, 1], xlabel = "Time (s)", ylabel = "W of the test synapse")
+lines!(ax3, r ./ 1000, vec(SNN.getvariable(measured_syn, :W)[1, :]))
+fig

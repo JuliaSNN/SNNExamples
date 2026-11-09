@@ -1,64 +1,42 @@
-using DrWatson
-using Revise
-using Plots
+# Save a network, load it back, continue it, and rerun it without one of its stimuli.
+# Runtime: about 55 s.
 using SpikingNeuralNetworks
-SNN.@load_units;
-using SNNUtils
+SNN.@load_units
+using CairoMakie
 
-# Define the network
-network = let
-    # Number of neurons in the network
-    N = 1000
-    # Create dendrites for each neuron
-    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV))
-    # Define interneurons 
-    I = SNN.IF(; N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, El = -50mV))
-    # Define synaptic interactions between neurons and interneurons
-    E_to_I = SNN.SpikingSynapse(E, I, :ge, p = 0.2, μ = 3.0)
-    E_to_E = SNN.SpikingSynapse(E, E, :ge, p = 0.2, μ = 0.5)#,LTPParam = SNN.vSTDPParameter())
-    I_to_I = SNN.SpikingSynapse(I, I, :gi, p = 0.2, μ = 4.0)
-    I_to_E = SNN.SpikingSynapse(
-        I,
-        E,
-        :gi,
-        p = 0.2,
-        μ = 1,
-        param = SNN.iSTDPRate(r = 4Hz),
-    )
-    norm = SNN.SynapseNormalization(E, [E_to_E], param = SNN.AdditiveNorm(τ = 30ms))
-    
-    # Store neurons and synapses into a dictionary
-    pop = SNN.@symdict E I
-    syn = SNN.@symdict I_to_E E_to_I E_to_E norm I_to_I
-    (pop = pop, syn = syn)
+function network(; N = 1000)
+    E = SNN.AdEx(N = N, param = SNN.AdExParameter(Vr = -60mV), name = "E")
+    I = SNN.IF(N = N ÷ 4, param = SNN.IFParameter(τm = 20ms, R = 0.06, El = -50mV), name = "I")
+    E_to_I = SNN.SpikingSynapse(E, I, :ge; conn = (p = 0.2, μ = 3.0))
+    E_to_E = SNN.SpikingSynapse(E, E, :ge; conn = (p = 0.2, μ = 0.5))
+    I_to_I = SNN.SpikingSynapse(I, I, :gi; conn = (p = 0.2, μ = 4.0))
+    I_to_E = SNN.SpikingSynapse(I, E, :gi; conn = (p = 0.2, μ = 1.0), LTPParam = SNN.iSTDPRate(r = 4Hz))
+    noise = SNN.Stimulus(SNN.PoissonFixed(rate = 2.8kHz), E, :ge)
+    noise2 = SNN.Stimulus(SNN.PoissonFixed(rate = 3kHz), E, :gi)
+    return SNN.compose(; E, I, E_to_I, E_to_E, I_to_I, I_to_E, noise, noise2, silent = true)
 end
 
-# Create background for the network simulation
-noise  = PoissonStimulus(network.pop[:E], :ge, param=2.8kHz, neurons=:ALL)
-noise2 = PoissonStimulus(network.pop[:E], :gi, param=3kHz, neurons=:ALL)
-init_model = merge_models(network, noise=noise, noise2=noise2)
+path = mktempdir()
+config = (N = 1000,)
 
-## Save the model. Important to `merge_model` before saving to maintain shared memory pointers.
-name = "network"
-info = (state=:test, )
-path = datadir("test")
-model_path = SNNsave(path=path, name=name, model=init_model, info=info, count=1, config=info)
+## Build, train for 1 s and save
+model = network(; config...)
+SNN.train!(model, 1s)
+SNN.save_model(; model, path, name = "network", info = config, config)
 
-## Load the model, run the simulation and store the results
-model = SNNload(;path, name,info, count=1).model
+## Load and continue: the clock resumes at 1 s
+loaded = SNN.load_model(path, "network", config)
+model = loaded.model
 SNN.monitor!(model.pop, [:fire])
-train!(model=model, duration = 5000ms, dt = 0.125f0, pbar = true)
-model_path = SNNsave(path=path, name=name, model=model, info=info, count=2, config=info)
+SNN.train!(model, 1s)
+@assert SNN.get_time(model.time) ≈ 2000
 
-## Load the model, remove a stimulus, run the simulation, and plot the results
-init_model =SNNload(;path, name, info, count=1).model
-nogi_model = remove_element(init_model, :noise2)
-SNN.monitor!(nogi_model.pop, [:fire])
-train!(model=nogi_model, duration = 5000ms, dt = 0.125f0, pbar = true)
-## Load the model and plot the results
+## Load again and rerun without the inhibitory noise
+nogi = SNN.remove_element(SNN.load_model(path, "network", config).model, :noise2)
+SNN.monitor!(nogi.pop, [:fire])
+SNN.train!(nogi, 1s)
 
-p1 = SNN.raster(model.pop, [1s, 2s], title="Strong inhibitory noise")
-p2 = SNN.raster(nogi_model.pop, [1s, 2s], title="No inhibitory noise")
-plot(p1,p2, layout=(2,1), size=(800,800))
-
-
+fig = Figure(size = (800, 600))
+SNN.raster!(Axis(fig[1, 1], title = "Saved network, continued"), model.pop, 1s:2s)
+SNN.raster!(Axis(fig[2, 1], title = "Saved network without inhibitory noise", xlabel = "Time (s)"), nogi.pop, 1s:2s)
+save(joinpath(mktempdir(), "load_model.png"), fig)

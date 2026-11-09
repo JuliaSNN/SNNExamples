@@ -1,0 +1,1116 @@
+# Every example with its topic, one-line description and status (run / not run / helper); edited by hand.
+# `changed` lists what was modified with respect to the version the file came from, `note` is an observation on the result.
+
+[[example]]
+path = "tutorials/neurons/IF_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "IF neuron under excitatory and inhibitory Poisson input"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/IF_noise_input.jl"
+topic = "Tutorials: neurons"
+desc = "IF neuron under a noisy input current"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/AdEx_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "AdEx firing patterns under a current step (Naud et al. 2008)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/AdEx_threshold.jl"
+topic = "Tutorials: neurons"
+desc = "AdEx neuron with an adaptive spike threshold"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/AdEx_balanced_stimuli.jl"
+topic = "Tutorials: neurons"
+desc = "AdEx neuron in the high-conductance state, balanced Poisson input"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/AdEx_multireceptors.jl"
+topic = "Tutorials: neurons"
+desc = "AdEx neuron with AMPA/NMDA/GABA-type receptors of different kinetics"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/Izikievich_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "Izhikevich firing patterns"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = "runs, but the figure is not valid: voltages diverge (FS and RZ panels reach -1e17 and -1e19 mV) and five panels are empty; a single regular-spiking IZ neuron with I = 10 for 500 ms already reaches -386 mV"
+
+[[example]]
+path = "tutorials/neurons/HH_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "Hodgkin-Huxley neuron, f-I curve"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = "runs; the f-I curve in the figure is flat at 11-12 Hz over the whole input range"
+
+[[example]]
+path = "tutorials/neurons/MorrisLecar_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "Morris-Lecar neuron, noisy current and phase plane"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/BallAndStick_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "Ball-and-stick neuron, receptor conductances"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/Tripod_neuron.jl"
+topic = "Tutorials: neurons"
+desc = "Tripod neuron (soma and two dendrites), AMPA/NMDA/GABA receptors"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/Tripod_multireceptors.jl"
+topic = "Tutorials: neurons"
+desc = "Tripod neuron with three GABA receptors"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/tripod2.jl"
+topic = "Tutorials: neurons"
+desc = "Tripod neuron under dendritic Poisson input"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = "runs; the soma voltage in the figure falls to -225 mV after each burst (check with the 2.1.0 Tripod changes)"
+
+[[example]]
+path = "tutorials/neurons/HetRec_layer.jl"
+topic = "Tutorials: neurons"
+desc = "HetRec layer with heterogeneous dendritic time constants"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/neurons/PoissonPop.jl"
+topic = "Tutorials: neurons"
+desc = "Poisson population: raster, rates, ISI CV2"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/timed_stim.jl"
+topic = "Tutorials: neurons"
+desc = "Spike-time stimulus"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/IF_net.jl"
+topic = "Tutorials: networks"
+desc = "Balanced IF network (3200 E, 800 I)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/HH_net.jl"
+topic = "Tutorials: networks"
+desc = "Hodgkin-Huxley network (no figure)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/Izikievich_net.jl"
+topic = "Tutorials: networks"
+desc = "Izhikevich network"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = "runs; the raster has almost no spikes (same IZ problem?)"
+
+[[example]]
+path = "tutorials/networks/AdEx_net.jl"
+topic = "Tutorials: networks"
+desc = "AdEx/IF network with heterogeneous parameters and delays"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/AdExVarStimuli.jl"
+topic = "Tutorials: networks"
+desc = "Network driven by a time-varying Poisson rate"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/COBA.jl"
+topic = "Tutorials: networks"
+desc = "COBA benchmark network (Brette et al. 2007)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/CUBA.jl"
+topic = "Tutorials: networks"
+desc = "CUBA benchmark network (Brette et al. 2007)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/CUBA_brian.py"
+topic = "Tutorials: networks"
+desc = "CUBA benchmark in Brian2, for the speed comparison"
+status = "not run"
+reason = "Python script, needs Brian2"
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/afferent_response.jl"
+topic = "Tutorials: networks"
+desc = "Network rate against afferent rate (Zerlaut et al. 2019 parameters)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/weak_strong_afferents.jl"
+topic = "Tutorials: networks"
+desc = "Network synchrony against afferent rate"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/ParadoxicalEffect.jl"
+topic = "Tutorials: networks"
+desc = "Paradoxical response of an inhibition-stabilised network (Tsodyks et al. 1997)"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/passive_vs_active_dendrites.jl"
+topic = "Tutorials: networks"
+desc = "Networks of passive and NMDA-active dendrites"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/out_degree.jl"
+topic = "Tutorials: networks"
+desc = "Out-degree distributions of the connectivity rules"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/chain.jl"
+topic = "Tutorials: networks"
+desc = "Feed-forward chain of three IF neurons"
+status = "run"
+reason = ""
+changed = "SpikingSynapse takes conn = (μ, p); header added"
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/plasticity/STP_demo.jl"
+topic = "Tutorials: plasticity"
+desc = "Short-term plasticity of one synapse: ρ, u, x"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/AdEx_STP.jl"
+topic = "Tutorials: plasticity"
+desc = "Network with short-term depression"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/STP_het.jl"
+topic = "Tutorials: plasticity"
+desc = "Heterogeneous short-term plasticity from experimental fits"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/stdp_demo.jl"
+topic = "Tutorials: plasticity"
+desc = "Pair STDP: weight change against spike-time difference"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/STDP_kernel.jl"
+topic = "Tutorials: plasticity"
+desc = "Kernels of all long-term plasticity rules"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/plasticity/AdEx_plasticity.jl"
+topic = "Tutorials: plasticity"
+desc = "vSTDP network with synaptic normalisation"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/networks/synaptic_turnover.jl"
+topic = "Tutorials: plasticity"
+desc = "Random synaptic turnover"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/plasticity/AdEx_turnover.jl"
+topic = "Tutorials: plasticity"
+desc = "Activity-dependent turnover in space"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/plasticity/aggregate_scaling.jl"
+topic = "Tutorials: plasticity"
+desc = "Homeostatic aggregate scaling towards a target rate"
+status = "run"
+reason = ""
+changed = "rewritten for SNNModels 2 (AdExReceptorParameter, :he/PoissonParameter, Plots calls removed); the random-walk perturbation loop is replaced by a step of the target rate"
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/rate_models/rate_net.jl"
+topic = "Tutorials: rate models"
+desc = "Rate network"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/rate_models/Oja_rule.jl"
+topic = "Tutorials: rate models"
+desc = "Oja rule in a rate network"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/rate_models/pinning_net.jl"
+topic = "Tutorials: rate models"
+desc = "PINning: recurrent network trained on a target"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/rate_models/ppc.jl"
+topic = "Tutorials: rate models"
+desc = "Rate network with a trained readout"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/perturbations/EI_network_perturbation.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Perturbing a running E/I network"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/extensions/neuron_model.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Defining a new neuron model"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/extensions/stimulus_model.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Defining a new stimulus model"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/extensions/doubleExpCurrent.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Defining a new synapse model"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/analysis/recordings.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Every way to read a recording"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/analysis/simulation_speed.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Simulation speed of AdEx, Tripod and BallAndStick (BenchmarkTools)"
+status = "run"
+reason = ""
+changed = "@profview removed, undefined stimuli fixed, Random imported, @btime limited to 3 samples"
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "tutorials/common.jl"
+topic = "Tutorials: perturbations, extensions, analysis"
+desc = "Set-up shared by tutorials that save figures (not an example)"
+status = "helper"
+reason = "helper, defines ASSET_PATH"
+changed = "ASSET_PATH points to figures/"
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "SNN_usage/load_model.jl"
+topic = "Usage"
+desc = "Save a network, load it, continue it, rerun it without one stimulus"
+status = "run"
+reason = ""
+changed = ""
+origin = "SNN.jl (utils/)"
+note = ""
+
+[[example]]
+path = "SNN_usage/get_graph.jl"
+topic = "Usage"
+desc = "Graph of a model (populations, synapses, stimuli)"
+status = "run"
+reason = ""
+changed = "GLMakie/GraphMakie replaced by a CairoMakie circular layout; v2 constructors"
+origin = "repo, replaced by SNN.jl utils/ version and ported"
+note = ""
+
+[[example]]
+path = "SNN_usage/load_cluster.jl"
+topic = "Usage"
+desc = "SLURM job: one network per worker process, saved to disk"
+status = "run"
+reason = ""
+changed = "v2 constructors; futures are fetched so errors surface; workers use this project"
+origin = "repo, replaced by SNN.jl utils/ version and ported"
+note = ""
+
+[[example]]
+path = "experiments/Mongillo2008_WorkingMemory/STP_onecell.jl"
+topic = "Experiments: papers"
+desc = "Mongillo et al. 2008: Tsodyks-Markram synapse, x and u after a spike train"
+status = "run"
+reason = ""
+changed = "ported: IFParameter/PostSpike/DeltaSynapse, MarkramSTPParameter, SpikeTimeStimulusIdentity for the presynaptic spikes, Makie"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Mongillo2008_WorkingMemory/STP_WM_Mongillo2008.jl"
+topic = "Experiments: papers"
+desc = "Mongillo et al. 2008: working memory by synaptic facilitation, 10,000 neurons"
+status = "run"
+reason = ""
+changed = "ported: API of v2, local stp_plot and attack_decay (reconstructed), Makie, save_model/load_model"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Mongillo2008_WorkingMemory/mongillo_WM2008.jl"
+topic = "Experiments: papers"
+desc = "Mongillo 2008 network and parameters (included by the two scripts above)"
+status = "helper"
+reason = "helper, included by STP_onecell.jl and STP_WM_Mongillo2008.jl"
+changed = "ported (white current noise α = 0; MongilloParam is a top-level constant)"
+origin = "SNN.jl only"
+note = ""
+
+[[example]]
+path = "experiments/OtherPapers/Tsodyks1997_ParadoxicalEffect.jl"
+topic = "Experiments: papers"
+desc = "Tsodyks et al. 1997: paradoxical effect, 2000 AdEx + 500 IF neurons"
+status = "run"
+reason = ""
+changed = "ported: AdExParameterSingleExponential -> AdExParameter + SingleExpSynapse, PoissonFixed, Makie twin axes"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/OtherPapers/LitwinKumar2014_vSTDPNetwork.jl"
+topic = "Experiments: papers"
+desc = "Litwin-Kumar & Doiron 2014: balanced AdEx network with their parameters"
+status = "run"
+reason = ""
+changed = "ported: membrane pair (τm, R), SingleExpSynapse, PoissonFixed; unfinished code removed; input rate N ν and input weight 0.25 chosen to obtain about 5 Hz (the original left them undefined)"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Festa2024_StructuredInhibition/structured_inhibition_symmetric_STDP_network.jl"
+topic = "Experiments: papers"
+desc = "Festa et al. 2024: structured inhibition with symmetric STDP on I -> E (550 s)"
+status = "run"
+reason = ""
+changed = "ported: STDPSymmetric, SingleExpSynapse, v2 stimuli; plot helpers rewritten (the originals were in SNNUtils < 1); mean I -> E weight shows saw-tooth jumps, not checked"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Festa2024_StructuredInhibition/structured_inhibition_asymmetric_STDP_network.jl"
+topic = "Experiments: papers"
+desc = "Festa et al. 2024: structured inhibition with anti-symmetric STDP on I -> E (650 s)"
+status = "run"
+reason = ""
+changed = "ported as the symmetric one, STDPAntiSymmetric"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/LitwinKumar2014_AssociativeMemories/simulation.jl"
+topic = "Experiments: papers"
+desc = "Litwin-Kumar & Doiron 2014: network with vSTDP, iSTDP and normalisation, 3 s"
+status = "run"
+reason = ""
+changed = "ported; run shortened from 10 s to 3 s (normalisation cost); YAML config line removed (unused); weights divided by C = 300 pF and external weights set by hand (E and I about 5 Hz): not checked against the paper"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/LitwinKumar2014_AssociativeMemories/model.jl"
+topic = "Experiments: papers"
+desc = "Network of the LKD 2014 experiment"
+status = "helper"
+reason = "helper, included by simulation.jl"
+changed = "ported"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/LitwinKumar2014_AssociativeMemories/parameters.jl"
+topic = "Experiments: papers"
+desc = "Parameters of the LKD 2014 experiment"
+status = "helper"
+reason = "helper, included by simulation.jl"
+changed = "ported (SingleExp/DoubleExp synapses as a SNN.DoubleExpSynapse)"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/PotjansDiesmann2014_CorticalCircuit/multilayer_potjans-diesmann2015.jl"
+topic = "Experiments: papers"
+desc = "Potjans & Diesmann 2014: 8-population cortical microcircuit at 1 % scale"
+status = "run"
+reason = ""
+changed = "ported; the LKD2014SingleExp parameter set (removed from SNNUtils) is rebuilt from the Litwin-Kumar values (unverified); weights as in the original script: the inhibitory populations fire at 20-170 Hz, regime not validated"
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Zerlaut2019_SpectrumAsynchronous/simulation_example.jl"
+topic = "Experiments: papers"
+desc = "Zerlaut et al. 2019: raster and rates of the 10,000-neuron network at 4 and 10 Hz"
+status = "run"
+reason = ""
+changed = "ported; plots in Makie"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Zerlaut2019_SpectrumAsynchronous/simulation_standalone.jl"
+topic = "Experiments: papers"
+desc = "Zerlaut et al. 2019: transfer function, 4000 E + 1000 I, 20 rates x 5 runs"
+status = "run"
+reason = ""
+changed = "ported; Pkg.add lines removed, model included from model.jl"
+origin = "repo"
+note = ""
+timeout = 600
+
+[[example]]
+path = "experiments/Zerlaut2019_SpectrumAsynchronous/simulation.jl"
+topic = "Experiments: papers"
+desc = "Zerlaut et al. 2019: transfer function, 8000 E + 2000 I, 20 rates x 5 runs"
+status = "run"
+reason = ""
+changed = "ported"
+origin = "repo"
+note = ""
+timeout = 900
+
+[[example]]
+path = "experiments/Zerlaut2019_SpectrumAsynchronous/model.jl"
+topic = "Experiments: papers"
+desc = "Network of the Zerlaut 2019 experiment"
+status = "helper"
+reason = "helper, included by the simulation scripts"
+changed = "ported"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/tripod_soma.jl"
+topic = "Experiments: papers"
+desc = "Tripod neuron: response to one excitatory and one inhibitory somatic spike"
+status = "run"
+reason = ""
+changed = "ported: Tripod with default receptors, SpikeTimeStimulus instead of CompartmentSynapse"
+origin = "SNN.jl only"
+note = ""
+
+[[example]]
+path = "experiments/BistablePopulations/two_competing_populations.jl"
+topic = "Experiments: competing assemblies (BistablePopulations)"
+desc = "Two E/I networks competing through lateral excitation of inhibition"
+status = "run"
+reason = ""
+changed = "ported: conn = (...), LTPParam, MetaPlasticity normalisation, PoissonFixed, Makie"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/BistablePopulations/bistable_network_with_stimulus.jl"
+topic = "Experiments: competing assemblies (BistablePopulations)"
+desc = "Two assemblies and an alternating decaying stimulus"
+status = "run"
+reason = ""
+changed = "ported: PoissonVariable replaces PSParam, At moved to PostSpike"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/BistablePopulations/multistable_network_with_stimulus.jl"
+topic = "Experiments: competing assemblies (BistablePopulations)"
+desc = "Four assemblies with inhibitory plasticity, two cued in turn"
+status = "run"
+reason = ""
+changed = "ported; iSTDPTime (removed) replaced by iSTDPRate"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/BistablePopulations/persistent_adapting_activity.jl"
+topic = "Experiments: competing assemblies (BistablePopulations)"
+desc = "Persistent activity with four inhibitory plasticity rules (40 s each)"
+status = "run"
+reason = ""
+changed = "ported; iSTDPTime case dropped, private project path removed, unused receptor blocks removed; regime not validated: inhibitory rates 50-150 Hz, no visible effect of the cue"
+origin = "repo"
+note = ""
+timeout = 900
+
+[[example]]
+path = "experiments/BistablePopulations/models.jl"
+topic = "Experiments: competing assemblies (BistablePopulations)"
+desc = "Assembly model, protocol and summary figure for the script above"
+status = "helper"
+reason = "helper, included by persistent_adapting_activity.jl"
+changed = "ported, plotting in Makie"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_baseline.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: STDP training of the assembly network over a grid of stimulus rate x timescale x SST count"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_run.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: single STDP training run"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_test.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: 5 s test of the network with NMDA and AMPA receptors"
+status = "not run"
+reason = "a 5 s test, but it needs the removed receptor-set API (Glutamatergic, Synapse, AdExSynapseParam), STDPParameter, OrnsteinUhlenbeckProcess, @symdict and a private project path"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_load.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: load trained networks and analyse the weights"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_load_mixed.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: load trained networks with mixed inhibition"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_stdp_baseline_analysis.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: analysis of the baseline grid"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_auditory_stim_response.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: response of trained networks to recorded sounds"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/simulation_auditory_stim_response_analysis.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: analysis of the sound responses"
+status = "not run"
+reason = "grid search of 500 s STDP simulations on the cluster; reads data/zeus/... (not in the repository); old API (STDPParameter, Glutamatergic/Synapse receptor sets, OrnsteinUhlenbeckProcess, @symdict, model_path_name)"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/auditory_spikes.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: Poisson spikes sampled from auditory cortex rates"
+status = "not run"
+reason = "reads data/zeus/ExpData/ACrates.jld2 (auditory cortex rates, not in the repository); Plots.jl"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/autocor.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: autocorrelation of the Ornstein-Uhlenbeck rate signal"
+status = "not run"
+reason = "uses SNN.OrnsteinUhlenbeckProcess and PoissonStimulusVariable, removed from SNNModels 2; Plots.jl"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/autocor_STDP.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: autocorrelation of the signal after STDP"
+status = "not run"
+reason = "needs trained models and data from data/zeus (not in the repository); removed API (STDPParameter, OrnsteinUhlenbeckProcess, stdp_integral); Plots.jl"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/models.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: network of the Lagzi 2022 experiment"
+status = "helper"
+reason = "helper of the not-run Lagzi scripts, old API"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/parameters.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: parameters"
+status = "helper"
+reason = "helper of the not-run Lagzi scripts, old API"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/plots.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: figures"
+status = "helper"
+reason = "helper of the not-run Lagzi scripts, old API"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/protocol.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: protocol of the sound responses"
+status = "helper"
+reason = "helper of the not-run Lagzi scripts, old API"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Lagzi2022_AssemblyFormation/experiments_config.jl"
+topic = "Experiments: not run"
+desc = "Lagzi et al. 2022: experiment configurations"
+status = "helper"
+reason = "helper of the not-run Lagzi scripts, old API"
+changed = ""
+origin = "both, repo version kept"
+note = ""
+
+[[example]]
+path = "experiments/Vlachos2025_Sequences/simulation.jl"
+topic = "Experiments: not run"
+desc = "Vlachos et al. 2025: sequences in a network of multi-timescale AdEx neurons"
+status = "not run"
+reason = "unfinished (undefined variables stim_param, inh_stim; merge_models call without arguments); AdExMultiTimescale was removed in SNNModels 2"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Vlachos2025_Sequences/model.jl"
+topic = "Experiments: not run"
+desc = "Vlachos 2025 model"
+status = "helper"
+reason = "helper of the not-run Vlachos script"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Vlachos2025_Sequences/parameters.jl"
+topic = "Experiments: not run"
+desc = "Vlachos 2025 parameters"
+status = "helper"
+reason = "helper of the not-run Vlachos script"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Sarazin2022_NeuralSequences/if_CANAHP_net.jl"
+topic = "Experiments: not run"
+desc = "Sarazin et al. 2022: IF network with CAN and AHP currents"
+status = "not run"
+reason = "IF_CANAHP was removed in SNNModels 2; needs PyCall and rastermap"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Seeholzer2019_RingAttractor/simulation.jl"
+topic = "Experiments: not run"
+desc = "Seeholzer et al. 2019: ring attractor network"
+status = "not run"
+reason = "includes projectdir(\"loaders\", \"analysis.jl\") of a private project; needs PyCall and a data table"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Seeholzer2019_RingAttractor/optimization.jl"
+topic = "Experiments: not run"
+desc = "Seeholzer et al. 2019: parameter optimisation on a cluster"
+status = "not run"
+reason = "distributed optimisation with PyCall and a cluster paths file (paths.yaml)"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/Seeholzer2019_RingAttractor/model.jl"
+topic = "Experiments: not run"
+desc = "Seeholzer 2019 model (reads network_parameters.csv)"
+status = "helper"
+reason = "helper of the not-run Seeholzer scripts"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/PotjansDiesamann2014_network/potjans_nmnist.jl"
+topic = "Experiments: not run"
+desc = "Potjans-Diesmann network driven by N-MNIST event data"
+status = "not run"
+reason = "needs the N-MNIST dataset (downloaded by tonic through PyCall) and a few GB of memory"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/PotjansDiesamann2014_network/genPotjansConnectivity.jl"
+topic = "Experiments: not run"
+desc = "Potjans-Diesmann connectivity generator"
+status = "helper"
+reason = "helper, uses SGtSNEpi and a graph layout (not installed)"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/PotjansDiesamann2014_network/Tonic_NMNIST_Stimulus.jl"
+topic = "Experiments: not run"
+desc = "N-MNIST event stimulus"
+status = "helper"
+reason = "helper of potjans_nmnist.jl, needs PyCall"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "experiments/PotjansDiesamann2014_network/batch_nmnist_motions.py"
+topic = "Experiments: not run"
+desc = "N-MNIST batch conversion"
+status = "not run"
+reason = "Python, needs the tonic package and the N-MNIST dataset"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/long_short_memory.jl"
+topic = "Extra and parameters"
+desc = "E/I network with STP, vSTDP, iSTDP and normalisation (scratch test)"
+status = "run"
+reason = ""
+changed = "ported to v2, Makie"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/plasticity_test.jl"
+topic = "Extra and parameters"
+desc = "vSTDP test on one added synapse (scratch test)"
+status = "run"
+reason = ""
+changed = "ported to v2, Makie"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/network_soma.jl"
+topic = "Extra and parameters"
+desc = "AdEx network with vSTDP and normalisation, autocorrelograms (scratch)"
+status = "not run"
+reason = "unfinished scratch (ends in a dangling `r`, uses the removed autocorrelogram and an undefined `model`); the maintained version is tutorials/plasticity/AdEx_plasticity.jl"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/extend_model.jl"
+topic = "Extra and parameters"
+desc = "Defining a model with @snn_kw (old version)"
+status = "not run"
+reason = "superseded by tutorials/extensions/neuron_model.jl; old API"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/test.jl"
+topic = "Extra and parameters"
+desc = "Two-line scratch (quickactivate)"
+status = "not run"
+reason = "scratch"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "extra/CalciumPlasticity_kernel.jl"
+topic = "Extra and parameters"
+desc = "Old STDP-kernel script (named after the calcium rule, which it does not use)"
+status = "not run"
+reason = "superseded by tutorials/STDP_kernel.jl; uses removed names (STDPParameter, SymmetricSTDP, stdp_weight_decorrelated, StatsSNNPlots); moved here from the top level of SNN.jl examples"
+changed = ""
+origin = "SNN.jl"
+note = ""
+
+[[example]]
+path = "extra/PotjansDiesman_scratch.jl"
+topic = "Extra and parameters"
+desc = "Early version of the Potjans-Diesmann script (populations of N = 1)"
+status = "not run"
+reason = "unfinished: every population has N = 1 and the analysis refers to an undefined Trange; superseded by experiments/PotjansDiesmann2014_CorticalCircuit/"
+changed = ""
+origin = "repo (experiments/PotjansDiesamann2014_network/PotjansDiesman.jl)"
+note = ""
+
+[[example]]
+path = "parameters/mongillo_WM2008.jl"
+topic = "Extra and parameters"
+desc = "Mongillo 2008 parameters (includes the maintained version in experiments/)"
+status = "helper"
+reason = "helper, includes experiments/Mongillo2008_WorkingMemory/mongillo_WM2008.jl"
+changed = "replaced by an include of the ported version"
+origin = "repo"
+note = ""
+
+[[example]]
+path = "parameters/dendritic_WM.jl"
+topic = "Extra and parameters"
+desc = "Parameters/network function for a working-memory model of ball-and-stick neurons"
+status = "not run"
+reason = "parameter library of an unpublished project, SNNModels 1.x API (BallAndStickHet, quaresima2022 from SNNUtils < 1)"
+changed = ""
+origin = "repo"
+note = ""
+
+[[example]]
+path = "parameters/dendritic_network_phoncat.jl"
+topic = "Extra and parameters"
+desc = "Parameters of the dendritic networks (Tripod/ball-and-stick, PV, SST) of the phoneme-categorisation project"
+status = "not run"
+reason = "parameter library of an unpublished project, SNNModels 1.x API (Glutamatergic/Synapse receptor sets, IFParameterGsyn, TripodHet)"
+changed = ""
+origin = "repo"
+note = ""
+

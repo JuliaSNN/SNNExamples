@@ -1,20 +1,23 @@
+# Network of Litwin-Kumar & Doiron (2014): 4000 AdEx excitatory and 1000 IF inhibitory neurons with vSTDP on E -> E,
+# inhibitory STDP on I -> E, multiplicative synaptic normalisation and Poisson background input.
+# `soma_network(config)` takes a named tuple with the fields of `LKD_network` (parameters.jl).
 function soma_network(config)
-    @unpack noise, connections, Npop = config
-    E = AdEx(N=Npop.E, param=config.exc, name="E")
-    I = IF(N=Npop.I, param=config.inh, name="I")
+    (; noise, connections, Npop, synapse) = config
+    E = SNN.AdEx(N = Npop.E, param = config.exc, spike = config.exc_spike, synapse = synapse, name = "E")
+    I = SNN.IF(N = Npop.I, param = config.inh, synapse = synapse, name = "I")
 
-    noiseE = PoissonStimulus(E, :he, neurons=:ALL, μ=noise.μE, param=noise.rE, name="noiseE")
-    noiseI = PoissonStimulus(I, :he, neurons=:ALL, μ=noise.μI, param=noise.rI, name="noiseI")
+    noiseE = SNN.PoissonStimulus(E, :he; neurons = :ALL, param = SNN.PoissonFixed(rate = noise.rE, μ = noise.μE), name = "noiseE")
+    noiseI = SNN.PoissonStimulus(I, :he; neurons = :ALL, param = SNN.PoissonFixed(rate = noise.rI, μ = noise.μI), name = "noiseI")
 
-    @unpack iSTDP_rate, vSTDP = config.plasticity
+    (; iSTDP_rate, vSTDP) = config.plasticity
     synapses = (
-        E_to_E = SpikingSynapse(E, E, :he, p=connections.E_to_E.p, μ=connections.E_to_E.μ, name="E_to_E",LTPParam=vSTDP),
-        E_to_I = SpikingSynapse(E, I, :he, p=connections.E_to_I.p, μ=connections.E_to_I.μ, name="E_to_I"),
-        I_to_E = SpikingSynapse(I, E, :hi, p=connections.I_to_E.p, μ=connections.I_to_E.μ, name="I_to_E",LTPParam=iSTDP_rate),
-        I_to_I = SpikingSynapse(I, I, :hi, p=connections.I_to_I.p, μ=connections.I_to_I.μ, name="I_to_I"),
+        E_to_E = SNN.SpikingSynapse(E, E, :he; conn = connections.E_to_E, name = "E_to_E", LTPParam = vSTDP),
+        E_to_I = SNN.SpikingSynapse(E, I, :he; conn = connections.E_to_I, name = "E_to_I"),
+        I_to_E = SNN.SpikingSynapse(I, E, :hi; conn = connections.I_to_E, name = "I_to_E", LTPParam = iSTDP_rate),
+        I_to_I = SNN.SpikingSynapse(I, I, :hi; conn = connections.I_to_I, name = "I_to_I"),
     )
-    model = merge_models(;E,I, noiseI, noiseE, synapses..., silent=true, name="Balanced network") 
-    scaling = SNN.SynapseNormalization(E, [synapses.E_to_E], param = SNN.MultiplicativeNorm(τ = 20ms))
-    monitor!(model.pop, [:fire])
-    return merge_models(;model..., scaling)
+    scaling = SNN.MetaPlasticity(SNN.MultiplicativeNorm(τ = 20ms), [synapses.E_to_E])
+    model = SNN.compose(; E, I, noiseI, noiseE, synapses..., scaling, silent = true, name = "Balanced network")
+    SNN.monitor!(model.pop, [:fire])
+    return model
 end

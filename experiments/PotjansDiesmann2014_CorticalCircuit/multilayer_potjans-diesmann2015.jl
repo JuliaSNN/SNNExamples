@@ -1,16 +1,24 @@
-using Revise
+# Cortical microcircuit of Potjans & Diesmann (2014, Cereb. Cortex 24:785): 8 populations (E and I in layers 2/3,
+# 4, 5 and 6, 77,169 neurons at full scale) with the layer-specific connection probabilities of the paper and
+# neuron parameters of Litwin-Kumar & Doiron (2014) (AdEx excitatory, IF inhibitory, single-exponential
+# synapses). Run at 1 % scale for 15 s with Poisson drive onto the excitatory populations; plots the raster,
+# the population rates, and the matrices of connection probability and synaptic weight.
+# The neuron parameter set `LKD2014SingleExp` of SNNUtils < 1 no longer exists; it is rebuilt below from the
+# Litwin-Kumar & Doiron values (see LitwinKumar2014_AssociativeMemories/parameters.jl); unverified against the original set.
+# Runtime: about 60 s.
 using DrWatson
 using SpikingNeuralNetworks
 SNN.@load_units
-import SpikingNeuralNetworks: AdExParameter, IFParameter
 using Statistics, Random
-using Plots
-using SparseArrays
-using ProgressMeter
-using Plots
-using SpikingNeuralNetworks
-using SNNUtils
+using CairoMakie
 
+# Neuron parameters (Litwin-Kumar & Doiron 2014) with single-exponential synapses
+LKD2014SingleExp = (
+    AdEx = SNN.AdExParameter(El = -70mV, Vt = -52.0mV, τm = 300pF / 15.0nS, R = 1 / 15.0nS, Vr = -60.0mV),
+    PV = SNN.IFParameter(El = -62.0mV, Vr = -57.47mV, Vt = -52.0mV, τm = 20ms, R = 1 / 15.0nS),
+    spike = SNN.PostSpike(τabs = 1ms, At = 10mV),
+    synapse = SNN.SingleExpSynapse(τe = 6ms, τi = 2ms, E_i = -75mV, E_e = 0mV),
+)
 
 """
 Auxiliary Potjans parameters for neural populations with scaled cell counts
@@ -30,9 +38,10 @@ function potjans_neurons(scale=1.0)
     neurons = Dict{Symbol, SNN.AbstractPopulation}()
     for (k, v) in ccu
         if occursin("E", String(k))
-            neurons[k] = AdEx(N = v, param=LKD2014SingleExp.AdEx, name=string(k))
+            neurons[k] = SNN.AdEx(N = Int(v), param = LKD2014SingleExp.AdEx, spike = LKD2014SingleExp.spike,
+                                  synapse = LKD2014SingleExp.synapse, name = string(k))
         else
-            neurons[k] = IF(N = v, param=LKD2014SingleExp.PV, name=string(k))
+            neurons[k] = SNN.IF(N = Int(v), param = LKD2014SingleExp.PV, synapse = LKD2014SingleExp.synapse, name = string(k))
         end
     end
     return neurons
@@ -87,7 +96,7 @@ function potjans_conn(Ne)
     jie = je
     jei = -0.75 * ji
     jii = -ji
-    g_strengths = dict2ntuple(SNN.@symdict jee jie jei jii)
+    g_strengths = (; jee, jie, jei, jii)
     
     conn_j = zeros(Float32, size(conn_probs))
     for pre in eachindex(layer_names)
@@ -124,7 +133,7 @@ function potjans_layer(scale)
             J = conn_j[j, i]
             sym = J>=0 ? :ge : :gi
             μ = abs(J)
-            s = SNN.SpikingSynapse(neurons[pre], neurons[post], sym; μ = μ, p=p, σ=0)
+            s = SNN.SpikingSynapse(neurons[pre], neurons[post], sym; conn = (μ = μ, p = p, σ = 0), name = string(pre, "_", post))
             connections[Symbol(string(pre,"_", post))] = s
         end
     end
@@ -134,28 +143,38 @@ function potjans_layer(scale)
     for pop in exc_pop
         νe = 2.5kHz
         post = neurons[pop]
-        s = SNN.PoissonStimulus(post, :ge; param = νe, neurons=:ALL, μ=1.f0, name="PoissonE_$(post.name)")
+        s = SNN.PoissonStimulus(post, :ge; param = SNN.PoissonFixed(rate = νe, μ = 1.0f0), neurons = :ALL, name = "PoissonE_$(post.name)")
         stimuli[Symbol(string("PoissonE_", pop))] = s
     end
-    return merge_models(neurons, connections, stimuli)
+    return SNN.compose(NamedTuple(neurons), NamedTuple(connections), NamedTuple(stimuli); silent = true)
 end
 
 
 model = potjans_layer(0.01)
 duration = 15000ms
 SNN.monitor!([model.pop...], [:fire])
-SNN.monitor!([model.pop...], [:v], sr=200Hz)
-SNN.sim!(model=model; duration = duration, pbar = true, dt = 0.125)
+SNN.monitor!(model.pop.E23, [:v], sr = 200Hz)
+SNN.sim!(model = model; duration = duration, dt = 0.125f0)
 SNN.raster(model.pop, [10s, 15s])
 
-Trange = 5s:10:15s
-frE, interval, names_pop = SNN.firing_rate(model.pop, interval = Trange)
-plot(interval, mean.(frE), label=hcat(names_pop...), xlabel="Time [ms]", ylabel="Firing rate [Hz]", legend=:topleft)
-##
+frE, interval, names_pop = SNN.firing_rate(model.pop, interval = 5s:10ms:15s, pop_average = true)
+fig = Figure(size = (700, 400))
+ax = Axis(fig[1, 1], xlabel = "Time (s)", ylabel = "Firing rate (Hz)")
+for (f, l) in zip(frE, names_pop)
+    lines!(ax, interval ./ 1000, vec(f), label = string(l))
+end
+axislegend(ax, position = :lt, nbanks = 2)
+fig
 
-vecplot(model.pop.E23, :v, neurons =1, r=0s:15s,label="soma")
-layer_names, conn_probs, conn_j = potjans_conn(4000)
-pj = heatmap(conn_j, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:bluesreds,  title="Synaptic weights", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500), clims=(-maximum(abs.(conn_j)), maximum(abs.(conn_j))))
-pprob=heatmap(conn_probs, xticks=(1:8,layer_names), yticks=(1:8,layer_names), aspect_ratio=1, color=:viridis,  title="Connection probability", xlabel="Presynaptic", ylabel="Postsynaptic", size=(500,500))
-plot(pprob, pj, layout=(1,2), size=(1000,500), margin=5Plots.mm)
 ##
+layer_names, conn_probs, conn_j = potjans_conn(4000)
+fig = Figure(size = (1000, 500))
+ticks = (1:8, string.(layer_names))
+ax1 = Axis(fig[1, 1], xticks = ticks, yticks = ticks, title = "Connection probability", xlabel = "Presynaptic", ylabel = "Postsynaptic", aspect = 1)
+hm1 = heatmap!(ax1, conn_probs', colormap = :viridis)
+Colorbar(fig[1, 2], hm1)
+ax2 = Axis(fig[1, 3], xticks = ticks, yticks = ticks, title = "Synaptic weights", xlabel = "Presynaptic", ylabel = "Postsynaptic", aspect = 1)
+m = maximum(abs.(conn_j))
+hm2 = heatmap!(ax2, conn_j', colormap = :balance, colorrange = (-m, m))
+Colorbar(fig[1, 4], hm2)
+fig
