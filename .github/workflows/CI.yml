@@ -1,0 +1,44 @@
+name: CI
+
+# Smoke run of a few fast examples (headless, CairoMakie PNG backend). The full list is in STATUS.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 5 * * 1'   # weekly, Monday 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: ${{ matrix.script }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        script:
+          - tutorials/neurons/AdEx_neuron.jl                              # neurons
+          - tutorials/networks/AdEx_net.jl                                # network
+          - tutorials/plasticity/STP_demo.jl                              # plasticity
+          - tutorials/usage/load_model.jl                                 # save/load (tutorials/usage)
+          - experiments/Mongillo2008_WorkingMemory/STP_onecell.jl         # include of a helper file
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - uses: julia-actions/cache@v2
+      - name: Instantiate the project
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+      - name: Run ${{ matrix.script }}
+        env:
+          GKSwstype: '100'
+        run: julia --project=. scripts/run_example.jl ${{ matrix.script }} --figdir "$RUNNER_TEMP/figures"

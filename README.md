@@ -17,6 +17,9 @@ record, analyse and plot the results:
 Documentation: <https://juliasnn.github.io/SpikingNeuralNetworks.jl>. The examples run with SNNModels 2.1.0,
 SpikingNeuralNetworks 2.0.1, SNNUtils 1.0.0 and SNNPlots 1.0.0 (see [`Project.toml`](Project.toml)).
 
+This repository is not a Julia package and is not registered: `Project.toml` and `Manifest.toml` only pin the environment the
+examples run in. Clone it and instantiate the project as shown below.
+
 <!-- figures:begin -->
 <table>
 <tr><td align="center"><img src="figures/tutorials__neurons__AdEx_neuron_1.png" width="400"><br><sub>Firing patterns of the AdEx neuron<br><a href="tutorials/neurons/AdEx_neuron.jl"><code>tutorials/neurons/AdEx_neuron.jl</code></a></sub></td><td align="center"><img src="figures/tutorials__networks__AdEx_net_1.png" width="400"><br><sub>E/I network of AdEx and IF neurons: raster, traces, rates<br><a href="tutorials/networks/AdEx_net.jl"><code>tutorials/networks/AdEx_net.jl</code></a></sub></td></tr>
@@ -50,12 +53,10 @@ The tutorials follow the pages of the documentation ([populations](https://julia
 
 | Folder | Content |
 |:--|:--|
-| `tutorials/` | `neurons/`, `networks/`, `plasticity/`, `rate_models/`, `perturbations/`, `extensions/`, `analysis/`, and a few scripts at the top level (spike-time stimulus, STDP) |
-| `experiments/` | re-implementations of published models: Mongillo 2008, Litwin-Kumar & Doiron 2014, Tsodyks 1997, Potjans & Diesmann 2014, Zerlaut 2019, Festa 2024, competing assemblies, and others (some not runnable, see [STATUS.md](STATUS.md)) |
-| `SNN_usage/` | saving and loading models, the graph of a model, a SLURM job |
-| `parameters/` | parameter sets used by other projects |
-| `extra/` | scratch scripts, superseded versions and unfinished code, kept for reference |
+| `tutorials/` | `neurons/`, `networks/`, `plasticity/`, `rate_models/`, `perturbations/`, `extensions/`, `analysis/`, `usage/` (saving and loading models, the graph of a model, a SLURM job), and a few scripts at the top level (spike-time stimulus, STDP) |
+| `experiments/` | re-implementations of published models: Mongillo 2008, Litwin-Kumar & Doiron 2014, Tsodyks 1997, Potjans & Diesmann 2014, Zerlaut 2019, Festa 2024, competing assemblies, and others, plus `parameters/` (parameter sets used by other projects); some are not runnable, see [STATUS.md](STATUS.md) |
 | `scripts/` | `run_example.jl` (headless runner), `run_all.jl` (runs everything with timeouts), `make_status.jl`, `examples.toml` (the list of examples) |
+| `.github/workflows/` | CI: smoke run of a few fast examples |
 | `figures/` | PNG figures written by the runner |
 | `STATUS.md` | result of the last full run: pass, fixed, not run, with the reason |
 
@@ -142,13 +143,13 @@ Status: **pass** = ran as it came from SpikingNeuralNetworks.jl, **fixed** = por
 | [`tutorials/analysis/recordings.jl`](tutorials/analysis/recordings.jl) | Every way to read a recording | pass |
 | [`tutorials/analysis/simulation_speed.jl`](tutorials/analysis/simulation_speed.jl) | Simulation speed of AdEx, Tripod and BallAndStick (BenchmarkTools) | fixed |
 
-### Usage
+### Tutorials: usage
 
 | Example | What it shows | Status |
 |:--|:--|:--|
-| [`SNN_usage/load_model.jl`](SNN_usage/load_model.jl) | Save a network, load it, continue it, rerun it without one stimulus | pass |
-| [`SNN_usage/get_graph.jl`](SNN_usage/get_graph.jl) | Graph of a model (populations, synapses, stimuli) | fixed |
-| [`SNN_usage/load_cluster.jl`](SNN_usage/load_cluster.jl) | SLURM job: one network per worker process, saved to disk | fixed |
+| [`tutorials/usage/load_model.jl`](tutorials/usage/load_model.jl) | Save a network, load it, continue it, rerun it without one stimulus | pass |
+| [`tutorials/usage/get_graph.jl`](tutorials/usage/get_graph.jl) | Graph of a model (populations, synapses, stimuli) | fixed |
+| [`tutorials/usage/load_cluster.jl`](tutorials/usage/load_cluster.jl) | SLURM job: one network per worker process, saved to disk | fixed |
 
 ### Experiments: papers
 
@@ -198,19 +199,12 @@ Status: **pass** = ran as it came from SpikingNeuralNetworks.jl, **fixed** = por
 | [`experiments/PotjansDiesamann2014_network/potjans_nmnist.jl`](experiments/PotjansDiesamann2014_network/potjans_nmnist.jl) | Potjans-Diesmann network driven by N-MNIST event data | not run |
 | [`experiments/PotjansDiesamann2014_network/batch_nmnist_motions.py`](experiments/PotjansDiesamann2014_network/batch_nmnist_motions.py) | N-MNIST batch conversion | not run |
 
-### Extra and parameters
+### Experiments: parameters
 
 | Example | What it shows | Status |
 |:--|:--|:--|
-| [`extra/long_short_memory.jl`](extra/long_short_memory.jl) | E/I network with STP, vSTDP, iSTDP and normalisation (scratch test) | fixed |
-| [`extra/plasticity_test.jl`](extra/plasticity_test.jl) | vSTDP test on one added synapse (scratch test) | fixed |
-| [`extra/network_soma.jl`](extra/network_soma.jl) | AdEx network with vSTDP and normalisation, autocorrelograms (scratch) | not run |
-| [`extra/extend_model.jl`](extra/extend_model.jl) | Defining a model with @snn_kw (old version) | not run |
-| [`extra/test.jl`](extra/test.jl) | Two-line scratch (quickactivate) | not run |
-| [`extra/CalciumPlasticity_kernel.jl`](extra/CalciumPlasticity_kernel.jl) | Old STDP-kernel script (named after the calcium rule, which it does not use) | not run |
-| [`extra/PotjansDiesman_scratch.jl`](extra/PotjansDiesman_scratch.jl) | Early version of the Potjans-Diesmann script (populations of N = 1) | not run |
-| [`parameters/dendritic_WM.jl`](parameters/dendritic_WM.jl) | Parameters/network function for a working-memory model of ball-and-stick neurons | not run |
-| [`parameters/dendritic_network_phoncat.jl`](parameters/dendritic_network_phoncat.jl) | Parameters of the dendritic networks (Tripod/ball-and-stick, PV, SST) of the phoneme-categorisation project | not run |
+| [`experiments/parameters/dendritic_WM.jl`](experiments/parameters/dendritic_WM.jl) | Parameters/network function for a working-memory model of ball-and-stick neurons | not run |
+| [`experiments/parameters/dendritic_network_phoncat.jl`](experiments/parameters/dendritic_network_phoncat.jl) | Parameters of the dendritic networks (Tripod/ball-and-stick, PV, SST) of the phoneme-categorisation project | not run |
 
 <!-- examples:end -->
 
@@ -223,6 +217,14 @@ julia --project=. scripts/make_status.jl        # rewrites STATUS.md and the tab
 ```
 
 Logs are written to `_logs/` (ignored by git).
+
+## Adding an example
+
+1. Put the script in the matching folder of `tutorials/` or `experiments/`. Start it with a comment that says what it shows and
+   how long it takes, for example `# Runtime: about 40 s.` (look at any script in `tutorials/neurons/`).
+2. Add an `[[example]]` entry to `scripts/examples.toml` (`path`, `topic`, `desc`, `status`, `reason`, `changed`, `origin`, `note`).
+3. Check it: `julia --project=. scripts/run_example.jl <path>`; the last output line is `RESULT pass|fail ...`.
+4. Run `julia --project=. scripts/make_status.jl` to rewrite STATUS.md and the table above.
 
 ## Notes
 

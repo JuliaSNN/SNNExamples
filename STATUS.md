@@ -7,12 +7,12 @@ timeout of 300 s unless the table says otherwise. Versions: SNNModels 2.1.0, Spi
 | Status | Meaning | Count |
 |:--|:--|--:|
 | pass | ran as imported (a header comment was added to each script) | 46 |
-| fixed | ran after the changes listed in the table | 23 |
+| fixed | ran after the changes listed in the table | 21 |
 | failed | error (first line in the table) | 0 |
 | timeout | no result within the timeout | 0 |
-| not run | not executed, reason in the table | 25 |
+| not run | not executed, reason in the table | 20 |
 | helper | included by other scripts | 17 |
-| total | | 111 |
+| total | | 104 |
 
 ## Tutorials: neurons
 
@@ -89,13 +89,13 @@ timeout of 300 s unless the table says otherwise. Versions: SNNModels 2.1.0, Spi
 | `tutorials/analysis/simulation_speed.jl` | fixed | 24 s | 0 | @profview removed, undefined stimuli fixed, Random imported, @btime limited to 3 samples |
 | `tutorials/common.jl` | helper |  |  | helper, defines ASSET_PATH; ASSET_PATH points to figures/ |
 
-## Usage
+## Tutorials: usage
 
 | Script | Status | Time | Figures | Notes |
 |:--|:--|--:|--:|:--|
-| `SNN_usage/load_model.jl` | pass | 56 s | 1 |  |
-| `SNN_usage/get_graph.jl` | fixed | 38 s | 1 | GLMakie/GraphMakie replaced by a CairoMakie circular layout; v2 constructors |
-| `SNN_usage/load_cluster.jl` | fixed | 57 s | 0 | v2 constructors; futures are fetched so errors surface; workers use this project |
+| `tutorials/usage/load_model.jl` | pass | 56 s | 1 |  |
+| `tutorials/usage/get_graph.jl` | fixed | 38 s | 1 | GLMakie/GraphMakie replaced by a CairoMakie circular layout; v2 constructors |
+| `tutorials/usage/load_cluster.jl` | fixed | 57 s | 0 | v2 constructors; futures are fetched so errors surface; workers use this project |
 
 ## Experiments: papers
 
@@ -160,18 +160,11 @@ timeout of 300 s unless the table says otherwise. Versions: SNNModels 2.1.0, Spi
 | `experiments/PotjansDiesamann2014_network/Tonic_NMNIST_Stimulus.jl` | helper |  |  | helper of potjans_nmnist.jl, needs PyCall |
 | `experiments/PotjansDiesamann2014_network/batch_nmnist_motions.py` | not run |  |  | Python, needs the tonic package and the N-MNIST dataset |
 
-## Extra and parameters
+## Experiments: parameters
 
 | Script | Status | Time | Figures | Notes |
 |:--|:--|--:|--:|:--|
-| `extra/long_short_memory.jl` | fixed | 56 s | 1 | ported to v2, Makie |
-| `extra/plasticity_test.jl` | fixed | 56 s | 1 | ported to v2, Makie |
-| `extra/network_soma.jl` | not run |  |  | unfinished scratch (ends in a dangling `r`, uses the removed autocorrelogram and an undefined `model`); the maintained version is tutorials/plasticity/AdEx_plasticity.jl |
-| `extra/extend_model.jl` | not run |  |  | superseded by tutorials/extensions/neuron_model.jl; old API |
-| `extra/test.jl` | not run |  |  | scratch |
-| `extra/CalciumPlasticity_kernel.jl` | not run |  |  | superseded by tutorials/STDP_kernel.jl; uses removed names (STDPParameter, SymmetricSTDP, stdp_weight_decorrelated, StatsSNNPlots); moved here from the top level of SNN.jl examples |
-| `extra/PotjansDiesman_scratch.jl` | not run |  |  | unfinished: every population has N = 1 and the analysis refers to an undefined Trange; superseded by experiments/PotjansDiesmann2014_CorticalCircuit/ |
-| `parameters/mongillo_WM2008.jl` | helper |  |  | helper, includes experiments/Mongillo2008_WorkingMemory/mongillo_WM2008.jl; replaced by an include of the ported version |
-| `parameters/dendritic_WM.jl` | not run |  |  | parameter library of an unpublished project, SNNModels 1.x API (BallAndStickHet, quaresima2022 from SNNUtils < 1) |
-| `parameters/dendritic_network_phoncat.jl` | not run |  |  | parameter library of an unpublished project, SNNModels 1.x API (Glutamatergic/Synapse receptor sets, IFParameterGsyn, TripodHet) |
+| `experiments/parameters/mongillo_WM2008.jl` | helper |  |  | helper, includes experiments/Mongillo2008_WorkingMemory/mongillo_WM2008.jl; replaced by an include of the ported version |
+| `experiments/parameters/dendritic_WM.jl` | not run |  |  | parameter library of an unpublished project, SNNModels 1.x API (BallAndStickHet, quaresima2022 from SNNUtils < 1) |
+| `experiments/parameters/dendritic_network_phoncat.jl` | not run |  |  | parameter library of an unpublished project, SNNModels 1.x API (Glutamatergic/Synapse receptor sets, IFParameterGsyn, TripodHet) |
 
