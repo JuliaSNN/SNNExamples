@@ -24,3 +24,6 @@ _logs/
 data/
 plots/
 _stage/
+.vscode/
+*.jld2
+*.log

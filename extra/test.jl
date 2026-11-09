@@ -1,2 +1,0 @@
-using DrWatson
-quickactivate(findproject())
